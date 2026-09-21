@@ -1,0 +1,159 @@
+import { state } from '../core/state/app-state';
+import { GRAPH_LIMITS } from '../config/graph-constants';
+import { getGearColor } from '../config/gear-colors';
+import { t } from '../core/i18n/language';
+import type { ElementRefs } from '../services/dom/element-refs';
+
+/**
+ * Render editable gear ratio rows.
+ * @purpose Rebuild the left-panel gear list after every structural change.
+ * @param refs Cached DOM handles.
+ * @param onChange Callback invoked after any ratio edit or removal.
+ */
+export const renderGearsList = (refs: ElementRefs, onChange: (redrawInputs: boolean) => void): void => {
+	refs.gearsContainer.innerHTML = '';
+	state.gears.forEach((ratio, idx) => {
+		refs.gearsContainer.appendChild(buildGearRow(refs, idx, ratio, onChange));
+	});
+	refs.gearsContainer.appendChild(buildReverseRow());
+	bindGearInputs(refs, onChange);
+	bindRemoveButtons(refs, onChange);
+	bindReverseInput(refs, onChange);
+	updateAddButton(refs);
+};
+
+/**
+ * Enable or disable the Add Gear button at the palette limit.
+ * @brief Keep the 8-gear cap visible instead of silently ignoring clicks.
+ * @param refs Cached DOM handles.
+ * @return void
+ */
+const updateAddButton = (refs: ElementRefs): void => {
+	const atMax = state.gears.length >= GRAPH_LIMITS.maxGears;
+	refs.btnAddGear.disabled = atMax;
+	refs.btnAddGear.classList.toggle('opacity-40', atMax);
+	refs.btnAddGear.classList.toggle('pointer-events-none', atMax);
+	refs.btnAddGear.title = atMax
+		? `${GRAPH_LIMITS.maxGears} ${t('gear.maxReached')}`
+		: t('gears.add');
+};
+
+/**
+ * Build one gear row element.
+ * @purpose Isolate DOM templating from event wiring.
+ */
+const buildGearRow = (
+	refs: ElementRefs,
+	idx: number,
+	ratio: number,
+	onChange: (redrawInputs: boolean) => void,
+): HTMLElement => {
+	const color = getGearColor(idx);
+	const row = document.createElement('div');
+	row.className = 'flex items-center gap-2 bg-gauge/80 border border-gray-800 px-3 py-1.5 rounded-lg';
+	const removable = state.gears.length > 1 ? buildRemoveButton(idx) : '';
+	row.innerHTML = `<span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${color}"></span><span class="gear-label text-xs font-semibold text-gray-300 font-display">${t('gear.prefix')} ${idx + 1}</span><div class="flex-1 min-w-0 flex items-center gap-1.5"><input type="number" step="0.01" min="0.4" max="6.0" value="${ratio}" data-index="${idx}" class="gear-input w-full min-w-0 bg-carbon border border-gray-700/60 rounded px-2 py-1 text-xs text-white font-mono focus:border-gray-400 outline-none" /><span class="text-[10px] text-gray-500 flex-shrink-0">:1</span></div>${removable}`;
+	void refs;
+	void onChange;
+	return row;
+};
+
+/**
+ * Build the reverse-gear editor row.
+ * @brief Optional R ratio with a dedicated gray marker.
+ * @return Reverse row element bound to state on rebuild.
+ */
+const buildReverseRow = (): HTMLElement => {
+	const row = document.createElement('div');
+	row.className = 'flex items-center gap-2 bg-gauge/80 border border-dashed border-gray-700 px-3 py-1.5 rounded-lg';
+	const value = state.reverseRatio === null ? '' : String(state.reverseRatio);
+	row.innerHTML = `<span class="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-gray-400"></span><span class="text-xs font-semibold text-gray-300 w-14 font-display">${t('gear.reverse')}</span><div class="flex-1 flex items-center gap-1.5"><span class="text-[10px] text-gray-500">:1</span><input type="number" step="0.01" min="1.0" max="6.0" value="${value}" placeholder="opt." class="reverse-input w-full bg-carbon border border-gray-700/60 rounded px-2 py-1 text-xs text-white font-mono focus:border-gray-400 outline-none" /></div>`;
+	return row;
+};
+
+/**
+ * Wire the reverse input to state.
+ * @brief Empty value clears the reverse gear entirely.
+ * @param refs Cached DOM handles.
+ * @param onChange Refresh callback without input rebuild.
+ * @return void
+ */
+const bindReverseInput = (refs: ElementRefs, onChange: (redrawInputs: boolean) => void): void => {
+	const inp = refs.gearsContainer.querySelector('.reverse-input') as HTMLInputElement | null;
+	if (!inp) {
+		return;
+	}
+	inp.addEventListener('input', (e) => {
+		const raw = (e.target as HTMLInputElement).value.trim();
+		if (raw === '') {
+			state.reverseRatio = null;
+			onChange(false);
+			return;
+		}
+		const v = parseFloat(raw);
+		if (v > 0) {
+			state.reverseRatio = v;
+			onChange(false);
+		}
+	});
+};
+/**
+ * Build the remove-gear button markup.
+ * @brief Keep the row template readable.
+ * @param idx Zero-based gear index.
+ * @return Button HTML string.
+ */
+const buildRemoveButton = (idx: number): string => {
+	return `<button class="btn-remove-gear text-gray-500 hover:text-rose-400 p-1 rounded transition" data-index="${idx}" title="Remove gear"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>`;
+};
+
+/**
+ * Wire ratio inputs to state.
+ * @purpose Update state live while typing without rebuilding inputs.
+ */
+const bindGearInputs = (refs: ElementRefs, onChange: (redrawInputs: boolean) => void): void => {
+	refs.gearsContainer.querySelectorAll('.gear-input').forEach((inp) => {
+		inp.addEventListener('input', (e) => {
+			const target = e.target as HTMLInputElement;
+			const i = parseInt(target.dataset.index || '0', 10);
+			const v = parseFloat(target.value);
+			if (v > 0) {
+				state.gears[i] = v;
+				onChange(false);
+			}
+		});
+	});
+};
+
+/**
+ * Wire remove buttons to state.
+ * @purpose Delete a gear and trigger a full refresh.
+ */
+const bindRemoveButtons = (refs: ElementRefs, onChange: (redrawInputs: boolean) => void): void => {
+	refs.gearsContainer.querySelectorAll('.btn-remove-gear').forEach((btn) => {
+		btn.addEventListener('click', (e) => {
+			const targetBtn = (e.target as HTMLElement).closest('.btn-remove-gear') as HTMLElement;
+			const i = parseInt(targetBtn.dataset.index || '0', 10);
+			state.gears.splice(i, 1);
+			renderGearsList(refs, onChange);
+			onChange(true);
+		});
+	});
+};
+
+/**
+ * Append a new gear derived from the previous ratio.
+ * @purpose Offer a sensible default shorter ratio.
+ * @param refs Cached DOM handles.
+ * @param onChange Refresh callback.
+ */
+export const addGear = (refs: ElementRefs, onChange: (redrawInputs: boolean) => void): void => {
+	if (state.gears.length >= GRAPH_LIMITS.maxGears) {
+		return;
+	}
+	const lastRatio = state.gears[state.gears.length - 1] || 1.0;
+	const nextRatio = Math.max(0.5, +(lastRatio * 0.82).toFixed(2));
+	state.gears.push(nextRatio);
+	renderGearsList(refs, onChange);
+	onChange(true);
+};

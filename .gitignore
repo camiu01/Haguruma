@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Test and coverage artifacts
+coverage/
+*.lcov
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Environment and secrets (never commit)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor artifacts
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.swp
+*.swo
+
+# Temporary files
+*.tmp

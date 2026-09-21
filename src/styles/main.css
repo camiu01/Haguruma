@@ -1,0 +1,285 @@
+body {
+	background-color: #0b0d11;
+	color: #e2e8f0;
+	font-family: 'Space Grotesk', sans-serif;
+}
+
+:root,
+[data-theme='dark'] {
+	--bg-page: #0b0d11;
+	--bg-card: #141820;
+	--bg-input: #1c222d;
+	--bg-canvas: #0c0e12;
+	--text-main: #e2e8f0;
+	--text-dim: #9ca3af;
+	--border: #1f2937;
+}
+
+[data-theme='oled'] {
+	--bg-page: #000000;
+	--bg-card: #000000;
+	--bg-input: #0a0a0a;
+	--bg-canvas: #000000;
+	--text-main: #f8fafc;
+	--text-dim: #a1a1aa;
+	--border: #27272a;
+}
+
+[data-theme='light'] {
+	--bg-page: #f1f5f9;
+	--bg-card: #ffffff;
+	--bg-input: #f8fafc;
+	--bg-canvas: #ffffff;
+	--text-main: #0f172a;
+	--text-dim: #64748b;
+	--border: #e2e8f0;
+}
+
+[data-theme='oled'] body,
+body[data-theme='oled'] {
+	background-color: #000000;
+	color: #f8fafc;
+}
+
+[data-theme='light'] body,
+body[data-theme='light'] {
+	background-color: #f1f5f9;
+	color: #0f172a;
+}
+
+[data-theme='oled'] .bg-tarmac {
+	background-color: #000000 !important;
+	border-color: #27272a !important;
+}
+
+[data-theme='oled'] .bg-carbon {
+	background-color: #000000 !important;
+}
+
+[data-theme='oled'] .bg-gauge {
+	background-color: #0a0a0a !important;
+}
+
+[data-theme='oled'] .bg-gauge\/80 {
+	background-color: #0a0a0a !important;
+}
+
+[data-theme='oled'] .bg-gauge\/50 {
+	background-color: #000000 !important;
+}
+
+[data-theme='light'] .bg-tarmac {
+	background-color: #ffffff !important;
+	border-color: #e2e8f0 !important;
+}
+
+[data-theme='light'] .bg-carbon {
+	background-color: #ffffff !important;
+	border-color: #e2e8f0 !important;
+}
+
+[data-theme='light'] .bg-gauge\/80 {
+	background-color: #f8fafc !important;
+}
+
+[data-theme='light'] .bg-gauge\/50 {
+	background-color: #f1f5f9 !important;
+}
+
+[data-theme='light'] .bg-gauge {
+	background-color: #f8fafc !important;
+}
+
+[data-theme='light'] .text-white {
+	color: #0f172a !important;
+}
+
+[data-theme='light'] .text-gray-200 {
+	color: #1e293b !important;
+}
+
+[data-theme='light'] .text-gray-300 {
+	color: #334155 !important;
+}
+
+[data-theme='light'] .text-gray-400 {
+	color: #64748b !important;
+}
+
+[data-theme='light'] .text-sky-300 {
+	color: #0284c7 !important;
+}
+
+[data-theme='light'] .text-sky-400 {
+	color: #0369a1 !important;
+}
+
+[data-theme='light'] .text-amber-300 {
+	color: #d97706 !important;
+}
+
+[data-theme='light'] .text-amber-400 {
+	color: #b45309 !important;
+}
+
+[data-theme='light'] .text-emerald-300 {
+	color: #059669 !important;
+}
+
+[data-theme='light'] .text-emerald-400 {
+	color: #047857 !important;
+}
+
+[data-theme='light'] .text-violet-300 {
+	color: #7c3aed !important;
+}
+
+[data-theme='light'] .text-violet-400 {
+	color: #6d28d9 !important;
+}
+
+[data-theme='light'] .text-rose-300 {
+	color: #e11d48 !important;
+}
+
+[data-theme='light'] .text-rose-400 {
+	color: #be123c !important;
+}
+
+[data-theme='light'] .border-gray-800,
+[data-theme='light'] .border-gray-700 {
+	border-color: #e2e8f0 !important;
+}
+
+[data-theme='light'] header {
+	background-color: #ffffff !important;
+}
+
+/* Dark solid buttons keep readable light text in light mode. */
+[data-theme='light'] .bg-gray-800 {
+	background-color: #1e293b !important;
+}
+
+[data-theme='light'] .bg-gray-800 .text-gray-200,
+[data-theme='light'] button.bg-gray-800 {
+	color: #f8fafc !important;
+}
+
+[data-theme='light'] .bg-gray-800:hover {
+	background-color: #334155 !important;
+}
+
+[data-theme='light'] .hover\:text-white:hover {
+	color: #0f172a !important;
+}
+
+[data-theme='light'] .bg-gray-200 {
+	background-color: #1e293b !important;
+	color: #f8fafc !important;
+}
+
+/* Canvas tooltip stays readable in light mode. */
+[data-theme='light'] #canvas-tooltip {
+	background-color: #ffffff !important;
+	border-color: #cbd5e1 !important;
+}
+
+/* Gear rows: keep labels on one line. */
+.gear-label {
+	white-space: nowrap;
+	min-width: 4.5rem;
+}
+
+/* Wide tables: smooth horizontal scroll with sticky first column. */
+.table-scroll {
+	-webkit-overflow-scrolling: touch;
+}
+
+.table-sticky th:first-child,
+.table-sticky td:first-child {
+	position: sticky;
+	left: 0;
+	background-color: var(--bg-card);
+	z-index: 1;
+}
+
+@media (max-width: 640px) {
+	.table-sticky {
+		min-width: 860px;
+		font-size: 11px;
+	}
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input[type='number'] {
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
+.custom-scroll::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+	background: #11141c;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+	background: #273142;
+	border-radius: 3px;
+}
+
+/* Power column help dot: CSS-only tooltip on hover and keyboard focus. */
+.help-dot {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1rem;
+	height: 1rem;
+	margin-left: 0.25rem;
+	border: 1px solid currentColor;
+	border-radius: 9999px;
+	font-size: 10px;
+	line-height: 1;
+	cursor: help;
+	text-decoration: underline dotted;
+	text-underline-offset: 2px;
+	position: relative;
+}
+
+.help-dot::after {
+	content: attr(data-tip);
+	position: absolute;
+	right: 0;
+	top: calc(100% + 6px);
+	width: max-content;
+	max-width: 16rem;
+	white-space: normal;
+	background: #000000;
+	border: 1px solid #374151;
+	border-radius: 6px;
+	color: #e5e7eb;
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: 11px;
+	font-weight: 400;
+	padding: 6px 8px;
+	text-align: left;
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(-4px);
+	transition: opacity 0.15s ease, transform 0.15s ease;
+	z-index: 20;
+}
+
+.help-dot:hover::after,
+.help-dot:focus-visible::after,
+.help-dot:focus::after {
+	opacity: 1;
+	transform: translateY(0);
+}
