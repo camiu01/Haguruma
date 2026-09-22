@@ -7,17 +7,49 @@ import type { PlotFrame } from '../../core/models';
 
 /**
  * Enable crisp rendering on HiDPI displays.
- * @brief Scale the backing store by devicePixelRatio.
+ * @brief Scale the backing store by devicePixelRatio, capped for perf.
  * @param canvas Target canvas element.
  * @param ctx Rendering context to rescale.
- * @returns void
+ * @return False when the layout size did not change.
  */
-export const resizeCanvas = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void => {
+export const resizeCanvas = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): boolean => {
 	const rect = canvas.getBoundingClientRect();
-	const dpr = window.devicePixelRatio || 1;
-	canvas.width = rect.width * dpr;
-	canvas.height = rect.height * dpr;
+	const rawDpr = window.devicePixelRatio || 1;
+	const dpr = Math.min(rawDpr, 2);
+	const nextW = Math.round(rect.width * dpr);
+	const nextH = Math.round(rect.height * dpr);
+	if (nextW <= 0 || nextH <= 0) {
+		return false;
+	}
+	if (canvas.width === nextW && canvas.height === nextH) {
+		return false;
+	}
+	canvas.width = nextW;
+	canvas.height = nextH;
 	ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+	return true;
+};
+
+/**
+ * Watch the canvas box and redraw on resize.
+ * @brief ResizeObserver helper so callers stay declarative.
+ * @param canvas Target canvas element.
+ * @param ctx Rendering context to rescale.
+ * @param onResize Redraw callback after a real size change.
+ * @return Disconnect callback for the observer.
+ */
+export const observeCanvasResize = (
+	canvas: HTMLCanvasElement,
+	ctx: CanvasRenderingContext2D,
+	onResize: () => void,
+): (() => void) => {
+	const observer = new ResizeObserver(() => {
+		if (resizeCanvas(canvas, ctx)) {
+			onResize();
+		}
+	});
+	observer.observe(canvas);
+	return () => observer.disconnect();
 };
 
 /**

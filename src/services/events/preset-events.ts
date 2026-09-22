@@ -1,3 +1,7 @@
+/**
+ * @file preset-events.ts
+ * @brief Primary preset apply plus dropdown wiring (never touches comp slots).
+ */
 import { state } from '../../core/state/app-state';
 import { presets } from '../../config/presets';
 import { CUSTOM_PREFIX, loadCustomPresets } from '../../core/presets/custom-store';

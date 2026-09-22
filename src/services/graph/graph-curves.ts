@@ -1,3 +1,7 @@
+/**
+ * @file graph-curves.ts
+ * @brief Primary and comparison gear curves plus reverse curve.
+ */
 import { getGraphStyle } from './graph-theme';
 import { getGearColor } from '../../config/gear-colors';
 import { calculateSpeed } from '../../core/math/speed-math';
@@ -97,7 +101,7 @@ export const drawReverseCurve = (
 	ctx.save();
 	ctx.translate(midX, midY);
 	ctx.fillStyle = '#9ca3af';
-	ctx.font = 'bold 11px "Orbitron", sans-serif';
+	ctx.font = 'bold 11px Inter, sans-serif';
 	ctx.fillText('R', 10, -5);
 	ctx.restore();
 	return redlineSpeed;
@@ -126,7 +130,7 @@ export const drawGearLabel = (
 	ctx.save();
 	ctx.translate(midX, midY);
 	ctx.fillStyle = color;
-	ctx.font = 'bold 11px "Orbitron", sans-serif';
+	ctx.font = 'bold 11px Inter, sans-serif';
 	ctx.fillText(`G${idx + 1}`, 10, -5);
 	ctx.restore();
 };
@@ -152,7 +156,7 @@ const drawCompareLabel = (
 	ctx.save();
 	ctx.translate(midX, midY);
 	ctx.fillStyle = getGraphStyle().compare;
-	ctx.font = '10px "Orbitron", sans-serif';
+	ctx.font = '10px Inter, sans-serif';
 	ctx.fillText(`G${idx + 1}'`, 10, 12);
 	ctx.restore();
 };

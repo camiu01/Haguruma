@@ -28,6 +28,13 @@ export const encodeState = (s: AppState): string => {
 	p.set('cfd', String(s.compFd));
 	p.set('cg', s.compGears.join(','));
 	p.set('crl', String(s.compRedline));
+	p.set('cmass', String(s.compMassKg));
+	p.set('ccd', String(s.compCd));
+	p.set('carea', String(s.compFrontalAreaM2));
+	p.set('cpw', String(s.compPowerKw));
+	p.set('ctq', String(s.compPeakTorqueRpm));
+	p.set('ctqn', String(s.compPeakTorqueNm));
+	p.set('cpwr', String(s.compPeakPowerRpm));
 	p.set('mass', String(s.vehicleMassKg));
 	p.set('cd', String(s.dragCd));
 	p.set('area', String(s.frontalAreaM2));
@@ -76,13 +83,27 @@ export const decodeState = (hash: string): Partial<AppState> => {
 	if (!clean) {
 		return {};
 	}
-	const out: Partial<AppState> = {};
 	let params: URLSearchParams;
 	try {
 		params = new URLSearchParams(clean);
 	} catch {
 		return {};
 	}
+	return {
+		...decodePrimaryParams(params),
+		...decodeCompareParams(params),
+		...decodeRoadParams(params),
+		...decodeEngineParams(params),
+	};
+};
+
+/**
+ * @brief Decode primary setup params.
+ * @param params Parsed query params.
+ * @return Partial primary fields.
+ */
+const decodePrimaryParams = (params: URLSearchParams): Partial<AppState> => {
+	const out: Partial<AppState> = {};
 	const tire = params.get('tire');
 	if (tire && parseTire(tire)) {
 		out.primaryTire = tire.toUpperCase();
@@ -105,19 +126,39 @@ export const decodeState = (hash: string): Partial<AppState> => {
 	}
 	const revRaw = params.get('rev');
 	if (revRaw !== null) {
-		if (revRaw === '') {
-			out.reverseRatio = null;
-		} else {
-			const rev = Number(revRaw);
-			if (Number.isFinite(rev) && rev >= 1.0 && rev <= 6.0) {
-				out.reverseRatio = rev;
-			}
-		}
+		decodeReverseParam(revRaw, out);
 	}
 	const cmp = params.get('cmp');
 	if (cmp === '1' || cmp === '0') {
 		out.compareEnabled = cmp === '1';
 	}
+	return out;
+};
+
+/**
+ * @brief Decode one reverse param value.
+ * @param revRaw Raw reverse param.
+ * @param out Patch receiving the value.
+ * @return void
+ */
+const decodeReverseParam = (revRaw: string, out: Partial<AppState>): void => {
+	if (revRaw === '') {
+		out.reverseRatio = null;
+		return;
+	}
+	const rev = Number(revRaw);
+	if (Number.isFinite(rev) && rev >= 1.0 && rev <= 6.0) {
+		out.reverseRatio = rev;
+	}
+};
+
+/**
+ * @brief Decode secondary comparison params.
+ * @param params Parsed query params.
+ * @return Partial comparison fields.
+ */
+const decodeCompareParams = (params: URLSearchParams): Partial<AppState> => {
+	const out: Partial<AppState> = {};
 	const ctire = params.get('ctire');
 	if (ctire && parseTire(ctire)) {
 		out.compTire = ctire.toUpperCase();
@@ -134,6 +175,44 @@ export const decodeState = (hash: string): Partial<AppState> => {
 	if (crl !== null) {
 		out.compRedline = Math.round(crl);
 	}
+	const cmass = numParam(params, 'cmass', 500, 3000);
+	if (cmass !== null) {
+		out.compMassKg = cmass;
+	}
+	const ccd = numParam(params, 'ccd', 0.15, 0.6);
+	if (ccd !== null) {
+		out.compCd = ccd;
+	}
+	const carea = numParam(params, 'carea', 1.0, 4.0);
+	if (carea !== null) {
+		out.compFrontalAreaM2 = carea;
+	}
+	const cpw = numParam(params, 'cpw', 30, 500);
+	if (cpw !== null) {
+		out.compPowerKw = cpw;
+	}
+	const ctq = numParam(params, 'ctq', 1000, 12000);
+	if (ctq !== null) {
+		out.compPeakTorqueRpm = Math.round(ctq);
+	}
+	const ctqn = numParam(params, 'ctqn', 20, 1500);
+	if (ctqn !== null) {
+		out.compPeakTorqueNm = ctqn;
+	}
+	const cpwr = numParam(params, 'cpwr', 1000, 12000);
+	if (cpwr !== null) {
+		out.compPeakPowerRpm = Math.round(cpwr);
+	}
+	return out;
+};
+
+/**
+ * @brief Decode road-load params.
+ * @param params Parsed query params.
+ * @return Partial road-load fields.
+ */
+const decodeRoadParams = (params: URLSearchParams): Partial<AppState> => {
+	const out: Partial<AppState> = {};
 	const mass = numParam(params, 'mass', 500, 3000);
 	if (mass !== null) {
 		out.vehicleMassKg = mass;
@@ -170,6 +249,16 @@ export const decodeState = (hash: string): Partial<AppState> => {
 	if (rf !== null) {
 		out.rollingFactor = rf;
 	}
+	return out;
+};
+
+/**
+ * @brief Decode engine-curve params.
+ * @param params Parsed query params.
+ * @return Partial engine fields.
+ */
+const decodeEngineParams = (params: URLSearchParams): Partial<AppState> => {
+	const out: Partial<AppState> = {};
 	const tq = numParam(params, 'tq', 1000, 12000);
 	if (tq !== null) {
 		out.peakTorqueRpm = Math.round(tq);
@@ -196,17 +285,26 @@ export const applySharedState = (patch: Partial<AppState>): boolean => {
 		return false;
 	}
 	for (const key of keys) {
-		const value = patch[key];
-		if (value === undefined) {
-			continue;
-		}
-		if (key === 'gears' || key === 'compGears') {
-			(state[key] as number[]) = [...(value as number[])];
-			continue;
-		}
-		(state[key] as unknown) = value;
+		applySharedKey(key, patch[key]);
 	}
 	return true;
+};
+
+/**
+ * @brief Apply one decoded field with array deep-clone.
+ * @param key State key to write.
+ * @param value Decoded value for the key.
+ * @return void
+ */
+const applySharedKey = (key: keyof AppState, value: Partial<AppState>[keyof AppState]): void => {
+	if (value === undefined) {
+		return;
+	}
+	if (key === 'gears' || key === 'compGears') {
+		(state[key] as number[]) = [...(value as number[])];
+		return;
+	}
+	(state[key] as unknown) = value;
 };
 
 /**

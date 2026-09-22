@@ -85,6 +85,20 @@ export interface AppState {
 	compGears: number[];
 	/** Secondary rev limiter. */
 	compRedline: number;
+	/** Secondary vehicle mass in kilograms for road-load estimates. */
+	compMassKg: number;
+	/** Secondary aerodynamic drag coefficient. */
+	compCd: number;
+	/** Secondary frontal area in square metres. */
+	compFrontalAreaM2: number;
+	/** Secondary engine crank power in kilowatts. */
+	compPowerKw: number;
+	/** Secondary RPM of peak engine torque. */
+	compPeakTorqueRpm: number;
+	/** Secondary peak engine torque in Nm. */
+	compPeakTorqueNm: number;
+	/** Secondary RPM of peak engine power. */
+	compPeakPowerRpm: number;
 	/** Whether the secondary road-load column is visible. */
 	roadLoadEnabled: boolean;
 	/** Vehicle mass in kilograms for rolling resistance. */

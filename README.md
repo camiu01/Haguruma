@@ -8,29 +8,30 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4.5-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.2.0-purple.svg)](https://vitejs.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-1.6.0-green.svg)](https://vitest.dev/)
+[![PWA](https://img.shields.io/badge/PWA-ready-purple.svg)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 
-## What it does
+## Features
 
 - **RPM-vs-speed curves** — one per forward gear up to the rev limiter, with shift-drop connectors showing RPM landing in the next gear.
 - **Reverse gear** — dashed gray `R` curve.
 - **Tire parsing** — `205/55R16` → rolling circumference with instant validation.
-- **Comparison overlay** — secondary tire + final-drive as dashed curves, with delta readout.
+- **Comparison overlay** — full secondary vehicle setup (tire, FD, gears, redline, mass, Cd, frontal area, power, torque/power anchors) as dashed curves with delta readout.
 - **Engine curve model** — peak torque RPM, peak torque Nm, peak power RPM with linear interpolation and over-rev droop. Derived `kW @ torque peak` readout via `P = T × n / 9550`.
 - **Road-load physics** — for every gear peak, computes wheel power required to hold speed against weight, aero drag, rolling resistance, and grade. Flags gears the engine cannot pull as `drag-limited`.
 - **Drag-limited top speed** — bisection solver finds where required wheel power equals available power; marked with an `AERO` line on the graph.
 - **Tractive force analysis** — engine torque → wheel force in Newtons per gear (`F = T × i_total × η / r_dyn`).
 - **Optimal shift advisor** — per-gear-pair shift RPM based on force-curve crossing; appends `LIMIT` when the rev limiter is the optimal point.
+- **Translation** — English and Italian, persisted. Uses `data-i18n` (text), `data-i18n-tip` (tooltip), `data-i18n-ph` (placeholder).
+- **Custom cars** — save/load complete setups (tire, FD, redline, gears, reverse, mass, Cd, area, power, torque curve anchors) to localStorage. Export/import JSON files.
+- **Share via URL** — encodes all setup parameters into the URL hash. One-click copy, paste to share.
+- **PWA** — `manifest.webmanifest` with standalone display, maskable icons; service worker for offline asset caching.
 - **Theme system** — three-way toggle: dark (default) → oled (pure black) → light (white). Persisted in localStorage. Graph canvas palette follows the theme.
-- **i18n** — English and Italian, persisted. Three translation modes: `data-i18n` (text), `data-i18n-tip` (tooltip), `data-i18n-ph` (placeholder).
-- **Custom cars** — save/load complete setups (tire, FD, redline, gears, reverse, mass, Cd, area, power, torque curve anchors) to localStorage. **Export** any saved car as a `.json` file; **import** JSON files back.
-- **Share via URL** — encodes 20+ setup parameters into the URL hash. Copy with one click, paste to share.
-- **HiDPI canvas** — Retina-aware scaling via `devicePixelRatio`.
-- **Live canvas tooltip** — hover any speed to see RPM for every gear, with over-rev highlight in red.
+- **Mobile-first layout** — slide-over drawer (lang/unit/theme/presets), compact header, 16/9 graph canvas, horizontal-scroll tables with sticky first column, 44px touch targets, `visualViewport` keyboard-avoidance.
 
 ## Presets
 
 | Preset | Tire | FD | Redline | Forward gears | Reverse | Power |
-|---|---|---|---|---|---|---|
+|:---|---|---|---|---|---|---|
 | Mitsubishi Eclipse 1G GS (5MT) | `195/60R15` | `4.322` | `7000` | 3.363 / 1.947 / 1.285 / 0.939 / 0.756 | 3.083 | 110 kW |
 | Mazda Miata NA (5MT) | `185/60R14` | `4.30` | `7200` | 3.136 / 1.888 / 1.330 / 1.000 / 0.814 | 3.758 | 85 kW |
 | Honda S2000 AP1 (6MT) | `225/50R16` | `4.10` | `9000` | 3.133 / 2.045 / 1.481 / 1.161 / 0.971 / 0.811 | 2.800 | 177 kW |
@@ -85,7 +86,7 @@ src/
     events/                      # one binder per control group
   components/                    # gear list editor, breakdown table, custom car manager
   views/render-all.ts            # single refresh entry
-  styles/main.css                # theme overrides, scrollbars, help-dot
+  styles/main.css                # theme overrides, cards, drawer, scrollbars, help-dot
 tests/                           # vitest suites mirroring src/
 ```
 

@@ -1,3 +1,7 @@
+/**
+ * @file graph-axes.ts
+ * @brief Plot background, grids, redline band and axis titles.
+ */
 import { GRAPH_LIMITS } from '../../config/graph-constants';
 import { getGraphStyle } from './graph-theme';
 import { getSpeedStep } from '../../core/units/unit-utils';
@@ -29,7 +33,7 @@ export const drawSpeedGrid = (
 	ctx.lineWidth = 1;
 	ctx.strokeStyle = getGraphStyle().grid;
 	ctx.fillStyle = getGraphStyle().axisText;
-	ctx.font = '10px "Space Grotesk", monospace';
+	ctx.font = '10px \'JetBrains Mono\', monospace';
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'alphabetic';
 	for (let s = 0; s <= frame.maxSpeed; s += step) {
@@ -87,7 +91,7 @@ export const drawRedlineBand = (
 	ctx.stroke();
 	ctx.setLineDash([]);
 	ctx.fillStyle = '#ef4444';
-	ctx.font = '10px "Orbitron", sans-serif';
+	ctx.font = '10px Inter, sans-serif';
 	ctx.textAlign = 'right';
 	ctx.fillText(`LIMIT: ${redline} RPM`, frame.paddingLeft + frame.plotWidth - 10, redlineY - 10);
 };
@@ -102,7 +106,7 @@ export const drawAxisTitles = (
 	unit: SpeedUnit,
 ): void => {
 	ctx.fillStyle = getGraphStyle().axisText;
-	ctx.font = '11px "Orbitron", sans-serif';
+	ctx.font = '11px Inter, sans-serif';
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'alphabetic';
 	ctx.fillText(`VEHICLE SPEED (${unit.toUpperCase()})`, frame.paddingLeft + frame.plotWidth / 2, frame.height - 8);
@@ -141,7 +145,7 @@ export const drawAeroLimit = (
 	ctx.stroke();
 	ctx.setLineDash([]);
 	ctx.fillStyle = '#38bdf8';
-	ctx.font = '10px "Orbitron", sans-serif';
+	ctx.font = '10px Inter, sans-serif';
 	ctx.textAlign = unit === 'mph' ? 'right' : 'left';
 	ctx.fillText(`AERO ${Math.round(limitDisplay)}`, x + 6, frame.paddingTop + 12);
 };

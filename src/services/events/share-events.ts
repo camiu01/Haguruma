@@ -21,8 +21,21 @@ import { applyUnitLabels, syncUnitToggle } from './unit-events';
  */
 export const bindShareEvents = (refs: ElementRefs): void => {
 	refs.btnShare.addEventListener('click', () => {
-		void copyShareUrl(refs);
+		void handleShareAction(refs);
 	});
+	refs.shareFab.addEventListener('click', () => {
+		void handleShareAction(refs);
+	});
+};
+
+/**
+ * Reusable share handler for header button and mobile FAB.
+ * @brief Syncs the URL hash then copies it with inline feedback.
+ * @param refs Cached DOM handles.
+ * @return Resolves when feedback was shown.
+ */
+export const handleShareAction = async (refs: ElementRefs): Promise<void> => {
+	await copyShareUrl(refs);
 };
 
 /**
@@ -54,7 +67,8 @@ const writeClipboard = async (text: string): Promise<boolean> => {
 			await navigator.clipboard.writeText(text);
 			return true;
 		}
-	} catch {
+	} catch (err) {
+		console.warn('Clipboard API failed, using fallback.', err);
 		return fallbackCopy(text);
 	}
 	return fallbackCopy(text);
@@ -77,7 +91,8 @@ const fallbackCopy = (text: string): boolean => {
 		const ok = document.execCommand('copy');
 		area.remove();
 		return ok;
-	} catch {
+	} catch (err) {
+		console.warn('Clipboard fallback failed.', err);
 		return false;
 	}
 };
@@ -95,14 +110,23 @@ export const restoreFromUrl = (refs: ElementRefs, render: () => void): void => {
 		return;
 	}
 	syncPrimaryInputs(refs);
-	refs.comparisonToggle.checked = state.compareEnabled;
-	syncComparisonInputs(refs);
-	applyComparisonVisibility(refs);
+	syncRestoredCompInputs(refs);
 	syncRoadLoadInputs(refs);
 	syncEngineInputs(refs);
 	syncUnitToggle(refs);
 	applyUnitLabels(refs);
 	renderGearsList(refs, () => render());
+};
+
+/**
+ * @brief Sync comparison toggle and inputs after URL restore.
+ * @param refs Cached DOM handles.
+ * @return void
+ */
+const syncRestoredCompInputs = (refs: ElementRefs): void => {
+	refs.comparisonToggle.checked = state.compareEnabled;
+	syncComparisonInputs(refs);
+	applyComparisonVisibility(refs);
 };
 
 /**

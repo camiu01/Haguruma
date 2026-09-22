@@ -1,9 +1,17 @@
+/**
+ * @file custom-car.ts
+ * @brief Save, load, export and import user-defined car presets.
+ */
 import { parseTire } from '../core/math/tire-math';
 import { deleteCustomPreset, loadCustomPresets, parseGearsInput, saveCustomPreset, CUSTOM_PREFIX } from '../core/presets/custom-store';
 import { t } from '../core/i18n/language';
 import type { ElementRefs } from '../services/dom/element-refs';
 import type { GearPreset } from '../core/models';
 import { applyPreset, refreshPresetOptions } from '../services/events/preset-events';
+import { applyCompPresetData } from '../services/events/comparison-events';
+
+/** Target slot for a custom preset apply. */
+export type CustomTarget = 'primary' | 'compare';
 
 const INVALID_CLASS = 'border-rose-500';
 
@@ -18,6 +26,11 @@ const mark = (input: HTMLInputElement, valid: boolean): boolean => {
 	return valid;
 };
 
+/**
+ * @brief Parse a positive number from an input.
+ * @param input Input holding the raw value.
+ * @return Positive number or null when invalid.
+ */
 const positive = (input: HTMLInputElement): number | null => {
 	const v = parseFloat(input.value);
 	return v > 0 ? v : null;
@@ -104,13 +117,21 @@ export const renderCustomList = (refs: ElementRefs, render: () => void): void =>
 		label.className = 'flex-1 text-xs text-gray-200 truncate';
 		label.textContent = name;
 		label.title = name;
-		const load = document.createElement('button');
-		load.type = 'button';
-		load.className = 'text-xs text-gray-400 hover:text-white transition-colors';
-		load.textContent = t('custom.load');
-		load.addEventListener('click', () => {
+		const loadPrimary = document.createElement('button');
+		loadPrimary.type = 'button';
+		loadPrimary.className = 'text-xs text-gray-400 hover:text-white transition-colors';
+		loadPrimary.textContent = t('custom.load');
+		loadPrimary.title = t('custom.loadPrimary');
+		loadPrimary.addEventListener('click', () => {
 			refs.presetSelector.value = `${CUSTOM_PREFIX}${name}`;
 			applyPreset(refs, preset, render);
+		});
+		const loadComp = document.createElement('button');
+		loadComp.type = 'button';
+		loadComp.className = 'text-xs text-amber-400/80 hover:text-amber-300 transition-colors';
+		loadComp.textContent = t('custom.loadCompare');
+		loadComp.addEventListener('click', () => {
+			applyCustomToSlot(refs, preset, 'compare', render);
 		});
 		const exportBtn = document.createElement('button');
 		exportBtn.type = 'button';
@@ -135,9 +156,25 @@ export const renderCustomList = (refs: ElementRefs, render: () => void): void =>
 			renderCustomList(refs, render);
 			render();
 		});
-		row.append(label, load, exportBtn, remove);
+		row.append(label, loadPrimary, loadComp, exportBtn, remove);
 		refs.customList.appendChild(row);
 	}
+};
+
+/**
+ * @brief Route a custom preset to the primary or comparison slot.
+ * @param refs Cached DOM handles.
+ * @param preset Custom preset data.
+ * @param target Slot receiving the preset.
+ * @param render Full refresh callback.
+ * @return void
+ */
+export const applyCustomToSlot = (refs: ElementRefs, preset: GearPreset, target: CustomTarget, render: () => void): void => {
+	if (target === 'compare') {
+		applyCompPresetData(refs, preset, render);
+		return;
+	}
+	applyPreset(refs, preset, render);
 };
 
 /**
@@ -148,15 +185,31 @@ export const renderCustomList = (refs: ElementRefs, render: () => void): void =>
  */
 export const bindCustomCar = (refs: ElementRefs, render: () => void): void => {
 	refs.btnSaveCustom.addEventListener('click', () => {
-		const parsed = readCustomForm(refs);
-		refs.customError.classList.toggle('hidden', parsed !== null);
-		if (!parsed) {
-			return;
-		}
-		saveCustomPreset(parsed.name, parsed.preset);
-		refreshPresetOptions(refs);
+		applyCustomFormToSlot(refs, 'primary', render);
+	});
+};
+
+/**
+ * @brief Validate the form then save and apply it to one slot.
+ * @param refs Cached DOM handles.
+ * @param target Slot receiving the saved preset.
+ * @param render Full refresh callback.
+ * @return True when the form was valid and applied.
+ */
+export const applyCustomFormToSlot = (refs: ElementRefs, target: CustomTarget, render: () => void): boolean => {
+	const parsed = readCustomForm(refs);
+	refs.customError.classList.toggle('hidden', parsed !== null);
+	if (!parsed) {
+		return false;
+	}
+	saveCustomPreset(parsed.name, parsed.preset);
+	refreshPresetOptions(refs);
+	if (target === 'compare') {
+		applyCompPresetData(refs, parsed.preset, render);
+	} else {
 		refs.presetSelector.value = `${CUSTOM_PREFIX}${parsed.name}`;
 		applyPreset(refs, parsed.preset, render);
-		renderCustomList(refs, render);
-	});
+	}
+	renderCustomList(refs, render);
+	return true;
 };

@@ -1,18 +1,25 @@
+/**
+ * @file graph-renderer.ts
+ * @brief Full graph orchestration: background, grids, curves, limits.
+ */
 import { state } from '../../core/state/app-state';
 import { effectiveCircumferenceM, parseTire } from '../../core/math/tire-math';
 import { availableWheelKw, dragLimitedSpeedKmh } from '../../core/math/aero-math';
 import { getMaxRpm } from '../../core/units/unit-utils';
 import type { PlotFrame } from '../../core/models';
 import type { ElementRefs } from '../dom/element-refs';
-import { buildPlotFrame, toY } from './canvas-setup';
+import { buildPlotFrame, toX, toY } from './canvas-setup';
 import { drawBackground, drawSpeedGrid, drawRpmGrid, drawRedlineBand, drawAxisTitles, drawAeroLimit } from './graph-axes';
 import { drawComparisonCurves, drawPrimaryCurves, drawReverseCurve } from './graph-curves';
 import { drawShiftDrops } from './graph-shift-drops';
 
 /**
  * Render the full RPM vs speed graph.
- * @purpose Orchestrate background, grids, curves and shift markers.
+ * @brief Orchestrate background, grids, curves and shift markers.
+ * @brief Layer order: background, grid/redline/labels, primary curves,
+ * @brief shift drops, comparison dashed overlay, then axis titles/legend.
  * @param refs Cached DOM handles.
+ * @return void
  */
 export const drawGraph = (refs: ElementRefs): void => {
 	const primaryTire = parseTire(state.primaryTire);
@@ -31,14 +38,15 @@ export const drawGraph = (refs: ElementRefs): void => {
 	drawSpeedGrid(ctx, frame, state.unit);
 	drawRpmGrid(ctx, frame);
 	drawRedlineBand(ctx, frame, state.primaryRedline);
-	drawCompareRedline(ctx, frame);
-	drawOptionalComparison(ctx, frame);
 	const peaks = drawPrimaryCurves(ctx, frame, state.gears, state.primaryFd, circM, state.primaryRedline, state.unit);
 	if (state.reverseRatio !== null && state.reverseRatio > 0) {
 		drawReverseCurve(ctx, frame, state.reverseRatio, state.primaryFd, circM, state.primaryRedline, state.unit);
 	}
 	drawShiftDrops(ctx, frame, peaks, state.gears, state.primaryFd, circM, state.unit);
 	drawOptionalAeroLimit(ctx, frame);
+	drawCompareRedline(ctx, frame);
+	drawOptionalComparison(ctx, frame);
+	drawOptionalCompAeroLimit(ctx, frame);
 	drawAxisTitles(ctx, frame, state.unit);
 };
 
@@ -65,6 +73,51 @@ export const drawOptionalAeroLimit = (
 	if (limit > 0) {
 		drawAeroLimit(ctx, frame, limit, state.unit);
 	}
+};
+
+/**
+ * Draw the comparison aero-limit marker from isolated comp slots.
+ * @brief Secondary drag limit uses comp mass, Cd, area and power.
+ * @param ctx Rendering context.
+ * @param frame Plot geometry and limits.
+ * @return void
+ */
+export const drawOptionalCompAeroLimit = (
+	ctx: CanvasRenderingContext2D,
+	frame: PlotFrame,
+): void => {
+	if (!state.roadLoadEnabled || !state.compareEnabled) {
+		return;
+	}
+	const wheelKw = availableWheelKw(state.compPowerKw, state.drivetrainEff);
+	const limit = dragLimitedSpeedKmh(
+		wheelKw,
+		state.compMassKg,
+		state.compCd,
+		state.compFrontalAreaM2,
+		state.rollingCrr,
+		state.roadGradePercent,
+	);
+	if (limit <= 0) {
+		return;
+	}
+	const limitDisplay = state.unit === 'mph' ? limit * 0.621371 : limit;
+	if (limitDisplay <= 0 || limitDisplay >= frame.maxSpeed) {
+		return;
+	}
+	const x = toX(frame, limitDisplay);
+	ctx.strokeStyle = 'rgba(251, 191, 36, 0.8)';
+	ctx.lineWidth = 1.5;
+	ctx.setLineDash([6, 4]);
+	ctx.beginPath();
+	ctx.moveTo(x, frame.paddingTop);
+	ctx.lineTo(x, frame.paddingTop + frame.plotHeight);
+	ctx.stroke();
+	ctx.setLineDash([]);
+	ctx.fillStyle = '#fbbf24';
+	ctx.font = '10px Inter, sans-serif';
+	ctx.textAlign = 'left';
+	ctx.fillText(`COMP AERO ${Math.round(limitDisplay)}`, x + 6, frame.paddingTop + 26);
 };
 /**
  * Draw comparison curves only when enabled and valid.
@@ -112,7 +165,7 @@ const drawCompareRedline = (ctx: CanvasRenderingContext2D, frame: PlotFrame): vo
 	ctx.stroke();
 	ctx.setLineDash([]);
 	ctx.fillStyle = '#fbbf24';
-	ctx.font = '10px "Orbitron", sans-serif';
+	ctx.font = '10px Inter, sans-serif';
 	ctx.textAlign = 'right';
 	ctx.fillText(`COMPARE LIMIT: ${state.compRedline} RPM`, frame.paddingLeft + frame.plotWidth - 10, y - 8);
 };

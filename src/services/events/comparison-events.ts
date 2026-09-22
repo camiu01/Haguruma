@@ -1,7 +1,12 @@
+/**
+ * @file comparison-events.ts
+ * @brief Secondary comparison controls with isolated aero/power slots.
+ */
 import { state } from '../../core/state/app-state';
 import { presets } from '../../config/presets';
 import { CUSTOM_PREFIX, loadCustomPresets } from '../../core/presets/custom-store';
 import { formatCompGears, parseCompGears } from '../../core/compare/compare-utils';
+import type { GearPreset } from '../../core/models';
 import type { ElementRefs } from '../dom/element-refs';
 import { addGear } from '../../components/gear-list';
 
@@ -35,6 +40,55 @@ export const bindComparisonEvents = (refs: ElementRefs, render: () => void): voi
 		const v = parseInt((e.target as HTMLInputElement).value, 10);
 		if (v > 1000) {
 			state.compRedline = v;
+			render();
+		}
+	});
+	refs.compMass.addEventListener('input', (e) => {
+		const v = parseFloat((e.target as HTMLInputElement).value);
+		if (v > 0) {
+			state.compMassKg = v;
+			render();
+		}
+	});
+	refs.compCd.addEventListener('input', (e) => {
+		const v = parseFloat((e.target as HTMLInputElement).value);
+		if (v > 0) {
+			state.compCd = v;
+			render();
+		}
+	});
+	refs.compArea.addEventListener('input', (e) => {
+		const v = parseFloat((e.target as HTMLInputElement).value);
+		if (v > 0) {
+			state.compFrontalAreaM2 = v;
+			render();
+		}
+	});
+	refs.compPower.addEventListener('input', (e) => {
+		const v = parseFloat((e.target as HTMLInputElement).value);
+		if (v > 0) {
+			state.compPowerKw = v;
+			render();
+		}
+	});
+	refs.compTorqueRpm.addEventListener('input', (e) => {
+		const v = parseInt((e.target as HTMLInputElement).value, 10);
+		if (v > 1000) {
+			state.compPeakTorqueRpm = v;
+			render();
+		}
+	});
+	refs.compTorque.addEventListener('input', (e) => {
+		const v = parseFloat((e.target as HTMLInputElement).value);
+		if (v > 0) {
+			state.compPeakTorqueNm = v;
+			render();
+		}
+	});
+	refs.compPowerRpm.addEventListener('input', (e) => {
+		const v = parseInt((e.target as HTMLInputElement).value, 10);
+		if (v > 1000) {
+			state.compPeakPowerRpm = v;
 			render();
 		}
 	});
@@ -73,6 +127,13 @@ export const syncComparisonInputs = (refs: ElementRefs): void => {
 	refs.compFd.value = String(state.compFd);
 	refs.compGears.value = formatCompGears(state.compGears);
 	refs.compRedline.value = String(state.compRedline);
+	refs.compMass.value = String(state.compMassKg);
+	refs.compCd.value = String(state.compCd);
+	refs.compArea.value = String(state.compFrontalAreaM2);
+	refs.compPower.value = String(state.compPowerKw);
+	refs.compTorqueRpm.value = String(state.compPeakTorqueRpm);
+	refs.compTorque.value = String(state.compPeakTorqueNm);
+	refs.compPowerRpm.value = String(state.compPeakPowerRpm);
 };
 
 /**
@@ -114,10 +175,24 @@ const copyPrimaryToCompare = (refs: ElementRefs, render: () => void): void => {
 	state.compFd = state.primaryFd;
 	state.compGears = [...state.gears];
 	state.compRedline = state.primaryRedline;
+	state.compMassKg = state.vehicleMassKg;
+	state.compCd = state.dragCd;
+	state.compFrontalAreaM2 = state.frontalAreaM2;
+	state.compPowerKw = state.enginePowerKw;
+	state.compPeakTorqueRpm = state.peakTorqueRpm;
+	state.compPeakTorqueNm = state.peakTorqueNm;
+	state.compPeakPowerRpm = state.peakPowerRpm;
 	refs.compTire.value = state.compTire;
 	refs.compFd.value = String(state.compFd);
 	refs.compGears.value = formatCompGears(state.compGears);
 	refs.compRedline.value = String(state.compRedline);
+	refs.compMass.value = String(state.compMassKg);
+	refs.compCd.value = String(state.compCd);
+	refs.compArea.value = String(state.compFrontalAreaM2);
+	refs.compPower.value = String(state.compPowerKw);
+	refs.compTorqueRpm.value = String(state.compPeakTorqueRpm);
+	refs.compTorque.value = String(state.compPeakTorqueNm);
+	refs.compPowerRpm.value = String(state.compPeakPowerRpm);
 	refs.compError.classList.add('hidden');
 	enableComparison(refs);
 	flashCopyButton(refs);
@@ -131,19 +206,58 @@ const copyPrimaryToCompare = (refs: ElementRefs, render: () => void): void => {
  * @param key Preset key from the dropdown.
  * @param render Full refresh callback.
  */
-const applyCompPreset = (refs: ElementRefs, key: string, render: () => void): void => {
+export const applyCompPreset = (refs: ElementRefs, key: string, render: () => void): void => {
 	const preset = key.startsWith(CUSTOM_PREFIX) ? loadCustomPresets()[key.slice(CUSTOM_PREFIX.length)] : presets[key];
 	if (!preset) {
 		return;
 	}
+	applyCompPresetData(refs, preset, render);
+};
+
+/**
+ * @brief Write preset data into the isolated comparison slots.
+ * @param refs Cached DOM handles.
+ * @param preset Preset data, built-in or user-defined.
+ * @param render Full refresh callback.
+ * @return void
+ */
+export const applyCompPresetData = (refs: ElementRefs, preset: GearPreset, render: () => void): void => {
 	state.compTire = preset.tire;
 	state.compFd = preset.fd;
 	state.compGears = [...preset.gears];
 	state.compRedline = preset.redline;
+	if (preset.massKg !== undefined) {
+		state.compMassKg = preset.massKg;
+	}
+	if (preset.dragCd !== undefined) {
+		state.compCd = preset.dragCd;
+	}
+	if (preset.frontalAreaM2 !== undefined) {
+		state.compFrontalAreaM2 = preset.frontalAreaM2;
+	}
+	if (preset.powerKw !== undefined) {
+		state.compPowerKw = preset.powerKw;
+	}
+	if (preset.peakTorqueRpm !== undefined) {
+		state.compPeakTorqueRpm = preset.peakTorqueRpm;
+	}
+	if (preset.peakTorqueNm !== undefined) {
+		state.compPeakTorqueNm = preset.peakTorqueNm;
+	}
+	if (preset.peakPowerRpm !== undefined) {
+		state.compPeakPowerRpm = preset.peakPowerRpm;
+	}
 	refs.compTire.value = preset.tire;
 	refs.compFd.value = String(preset.fd);
 	refs.compGears.value = formatCompGears(preset.gears);
 	refs.compRedline.value = String(preset.redline);
+	refs.compMass.value = preset.massKg !== undefined ? String(preset.massKg) : String(state.compMassKg);
+	refs.compCd.value = preset.dragCd !== undefined ? String(preset.dragCd) : String(state.compCd);
+	refs.compArea.value = preset.frontalAreaM2 !== undefined ? String(preset.frontalAreaM2) : String(state.compFrontalAreaM2);
+	refs.compPower.value = preset.powerKw !== undefined ? String(preset.powerKw) : String(state.compPowerKw);
+	refs.compTorqueRpm.value = preset.peakTorqueRpm !== undefined ? String(preset.peakTorqueRpm) : String(state.compPeakTorqueRpm);
+	refs.compTorque.value = preset.peakTorqueNm !== undefined ? String(preset.peakTorqueNm) : String(state.compPeakTorqueNm);
+	refs.compPowerRpm.value = preset.peakPowerRpm !== undefined ? String(preset.peakPowerRpm) : String(state.compPeakPowerRpm);
 	refs.compError.classList.add('hidden');
 	enableComparison(refs);
 	render();

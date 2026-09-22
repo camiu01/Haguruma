@@ -1,3 +1,7 @@
+/**
+ * @file render-all.ts
+ * @brief Single refresh entry for canvas resize, graph and table.
+ */
 import type { ElementRefs } from '../services/dom/element-refs';
 import { resizeCanvas } from '../services/graph/canvas-setup';
 import { drawGraph } from '../services/graph/graph-renderer';

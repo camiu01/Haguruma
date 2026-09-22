@@ -12,6 +12,13 @@ export type Lang = 'en' | 'it';
  */
 export const en = {
 	'header.presetPlaceholder': 'Load Preset Vehicle...',
+	'header.presets': 'Presets',
+	'menu.open': 'Open menu',
+	'menu.close': 'Close menu',
+	'drawer.settings': 'Settings',
+	'share.label': 'Share setup link',
+	'drawer.close': 'Close',
+	'vehicle.title': 'Vehicle Setup',
 	'primary.title': 'Primary Setup',
 	'primary.tire': 'Tire Spec (e.g. 205/55R16)',
 	'primary.tireError': 'Invalid format (e.g. 225/45R17)',
@@ -77,6 +84,7 @@ export const en = {
 	'road.caption': 'Secondary estimate: required wheel power at each gear peak from weight + aerodynamic drag + rolling resistance.',
 	'tooltip.over': '(OVER)',
 	'custom.title': 'My Cars',
+	'custom.manage': 'Manage my cars',
 	'custom.note': 'Saved in this browser',
 	'custom.name': 'Car name',
 	'custom.gears': 'Gears (comma separated)',
@@ -87,6 +95,8 @@ export const en = {
 	'custom.empty': 'No saved cars yet.',
 	'custom.invalid': 'Check the highlighted fields.',
 	'custom.load': 'Load',
+	'custom.loadPrimary': 'Load into primary',
+	'custom.loadCompare': '2nd',
 	'custom.delete': 'Delete',
 } as const;
 
@@ -99,6 +109,13 @@ export type DictKey = keyof typeof en;
  */
 export const it: Record<DictKey, string> = {
 	'header.presetPlaceholder': 'Carica auto...',
+	'header.presets': 'Preset',
+	'menu.open': 'Apri menu',
+	'menu.close': 'Chiudi menu',
+	'drawer.settings': 'Impostazioni',
+	'share.label': 'Condividi collegamento setup',
+	'drawer.close': 'Chiudi',
+	'vehicle.title': 'Setup veicolo',
 	'primary.title': 'Setup primario',
 	'primary.tire': 'Misura gomme (es. 205/55R16)',
 	'primary.tireError': 'Formato non valido (es. 225/45R17)',
@@ -144,8 +161,8 @@ export const it: Record<DictKey, string> = {
 	'th.shift': 'Cambio ott.',
 	'th.shiftTip': 'LIMIT = cambiata al limitatore perché il rapporto è abbastanza corto da rendere il limitatore il punto ottimale di cambiata.',
 	'table.dragLimited': '· limitata dal drag',
-	'road.title': 'Resistenze (fisica secondaria)',
-	'road.note': 'Peso + Aero',
+	'road.title': 'Resistenze',
+	'road.note': 'fisica secondaria',
 	'road.mass': 'Massa veicolo (kg)',
 	'road.cd': 'Coefficiente Cx',
 	'road.area': 'Superficie frontale (m²)',
@@ -164,6 +181,7 @@ export const it: Record<DictKey, string> = {
 	'road.caption': 'Stima secondaria: potenza alla ruota richiesta al picco di ogni marcia da peso + drag aerodinamico + resistenza al rotolamento.',
 	'tooltip.over': '(OLTRE)',
 	'custom.title': 'Le mie auto',
+	'custom.manage': 'Gestisci le mie auto',
 	'custom.note': 'Salvate in questo browser',
 	'custom.name': 'Nome auto',
 	'custom.gears': 'Marce (separate da virgole)',
@@ -174,6 +192,8 @@ export const it: Record<DictKey, string> = {
 	'custom.empty': 'Nessuna auto salvata.',
 	'custom.invalid': 'Controlla i campi evidenziati.',
 	'custom.load': 'Carica',
+	'custom.loadPrimary': 'Carica nel primario',
+	'custom.loadCompare': '2°',
 	'custom.delete': 'Elimina',
 };
 

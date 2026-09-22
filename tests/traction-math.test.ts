@@ -89,9 +89,11 @@ describe('optimalShiftFor/optimalShiftsForAll', () => {
 		expect(shifts).toHaveLength(3);
 		expect(shifts[0].shiftRpm).toBeGreaterThan(shifts[0].landingRpm);
 	});
-	it('close ratios shift at redline', () => {
+	it('close ratios shift below redline (next gear catches up at high RPM)', () => {
 		const shift = optimalShiftFor([1.0, 0.95], 0, 4.1, 1.935, makeCurve(), 0.85, 'kmh');
-		expect(shift?.atRedline).toBe(true);
+		expect(shift).not.toBeNull();
+		expect(shift!.shiftRpm).toBeGreaterThan(2000);
+		expect(shift!.shiftRpm).toBeLessThan(7200);
 	});
 	it('returns null without a curve', () => {
 		expect(optimalShiftFor([3.58, 2.05], 0, 4.1, 1.935, null, 0.85, 'kmh')).toBeNull();

@@ -1,3 +1,7 @@
+/**
+ * @file gear-table.ts
+ * @brief Primary breakdown table plus isolated secondary comparison rows.
+ */
 import { state } from '../core/state/app-state';
 import { effectiveCircumferenceM, parseTire } from '../core/math/tire-math';
 import { calculateSpeed } from '../core/math/speed-math';
@@ -39,7 +43,11 @@ export const renderTable = (refs: ElementRefs): void => {
 
 /**
  * Build one table row for a gear.
- * @purpose Isolate per-gear arithmetic from DOM code.
+ * @brief Isolate per-gear arithmetic from DOM code.
+ * @param circM Effective rolling circumference in metres.
+ * @param gearRatio Selected gear ratio.
+ * @param idx Zero-based gear index.
+ * @return Table row element with nowrap numeric cells.
  */
 const buildTableRow = (circM: number, gearRatio: number, idx: number): HTMLElement => {
 	const overallRatio = (gearRatio * state.primaryFd).toFixed(2);
@@ -48,8 +56,8 @@ const buildTableRow = (circM: number, gearRatio: number, idx: number): HTMLEleme
 	const powerDisplay = describeRoadLoad(topSpeed);
 	const { torqueDisplay, forceDisplay, shiftDisplay } = describeTraction(circM, gearRatio, idx);
 	const tr = document.createElement('tr');
-	tr.className = 'hover:bg-gauge/50 transition-colors';
-	tr.innerHTML = `<td class="py-2.5 flex items-center gap-2 font-display font-semibold"><span class="w-2 h-2 rounded-full" style="background-color: ${getGearColor(idx)}"></span>${t('gear.prefix')} ${idx + 1}</td><td class="py-2.5">${gearRatio.toFixed(2)}:1</td><td class="py-2.5 text-gray-400">${overallRatio}:1</td><td class="py-2.5 text-right font-bold text-white">${topSpeed.toFixed(1)}</td><td class="py-2.5 text-right text-rose-300">${nextRpmDisplay}</td><td class="py-2.5 text-right text-rose-400 font-semibold">${dropDisplay}</td><td class="py-2.5 text-right text-sky-300">${powerDisplay}</td><td class="py-2.5 text-right text-amber-300">${torqueDisplay}</td><td class="py-2.5 text-right text-emerald-300">${forceDisplay}</td><td class="py-2.5 text-right text-violet-300">${shiftDisplay}</td>`;
+	tr.className = 'hover:bg-gauge/80 transition-colors';
+	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full shrink-0' style='background-color: ${getGearColor(idx)}'></span><span>${t('gear.prefix')} ${idx + 1}</span></span></td><td class='py-2.5 whitespace-nowrap'>${gearRatio.toFixed(2)}:1</td><td class='py-2.5 text-gray-400 whitespace-nowrap'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-white whitespace-nowrap'>${topSpeed.toFixed(1)}</td><td class='py-2.5 text-right text-rose-300 whitespace-nowrap'>${nextRpmDisplay}</td><td class='py-2.5 text-right text-rose-400 font-semibold whitespace-nowrap'>${dropDisplay}</td><td class='py-2.5 text-right text-sky-300 whitespace-nowrap'>${powerDisplay}</td><td class='py-2.5 text-right text-amber-300 whitespace-nowrap'>${torqueDisplay}</td><td class='py-2.5 text-right text-emerald-300 whitespace-nowrap'>${forceDisplay}</td><td class='py-2.5 text-right text-violet-300 whitespace-nowrap'>${shiftDisplay}</td>`;
 	return tr;
 };
 
@@ -89,8 +97,8 @@ const buildReverseRow = (circM: number): HTMLElement => {
 	const topSpeed = calculateSpeed(state.primaryRedline, ratio, state.primaryFd, circM, state.unit);
 	const powerDisplay = describeRoadLoad(topSpeed);
 	const tr = document.createElement('tr');
-	tr.className = 'hover:bg-gauge/50 transition-colors';
-	tr.innerHTML = `<td class="py-2.5 flex items-center gap-2 font-display font-semibold"><span class="w-2 h-2 rounded-full bg-gray-400"></span>${t('gear.reverse')}</td><td class="py-2.5">${ratio.toFixed(2)}:1</td><td class="py-2.5 text-gray-400">${overallRatio}:1</td><td class="py-2.5 text-right font-bold text-white">${topSpeed.toFixed(1)}</td><td class="py-2.5 text-right text-gray-500">-</td><td class="py-2.5 text-right text-gray-500">-</td><td class="py-2.5 text-right text-sky-300">${powerDisplay}</td><td class="py-2.5 text-right text-gray-500">-</td><td class="py-2.5 text-right text-gray-500">-</td><td class="py-2.5 text-right text-gray-500">-</td>`;
+	tr.className = 'hover:bg-gauge/80 transition-colors';
+	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full bg-gray-400 shrink-0'></span><span>${t('gear.reverse')}</span></span></td><td class='py-2.5 whitespace-nowrap'>${ratio.toFixed(2)}:1</td><td class='py-2.5 text-gray-400 whitespace-nowrap'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-white whitespace-nowrap'>${topSpeed.toFixed(1)}</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-sky-300 whitespace-nowrap'>${powerDisplay}</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td>`;
 	return tr;
 };
 /**
@@ -202,6 +210,7 @@ const renderCompareTable = (refs: ElementRefs, primaryCircM: number): void => {
 	if (!compTire || state.compGears.length === 0) {
 		return;
 	}
+	syncCompareHeadLabel(refs);
 	refs.compareWrap.classList.remove('hidden');
 	refs.compareBody.innerHTML = '';
 	const compCircM = effectiveCircumferenceM(compTire, state.rollingFactor);
@@ -213,8 +222,20 @@ const renderCompareTable = (refs: ElementRefs, primaryCircM: number): void => {
 };
 
 /**
- * Build one secondary comparison row.
- * @brief Show ratio, top speed and delta against the same primary gear.
+ * @brief Refresh the comparison power header label on language change.
+ * @param refs Cached DOM handles.
+ * @return void
+ */
+const syncCompareHeadLabel = (refs: ElementRefs): void => {
+	const th = refs.compareWrap.querySelector('[data-comp-power]');
+	if (th) {
+		th.textContent = t('th.power');
+	}
+};
+
+/**
+ * Describe one comparison row with isolated secondary aero/power.
+ * @brief Secondary wheel-power check uses comp slots, never primary.
  * @param idx Zero-based gear index.
  * @param ratio Secondary gear ratio.
  * @param top Secondary top speed in display units.
@@ -223,11 +244,48 @@ const renderCompareTable = (refs: ElementRefs, primaryCircM: number): void => {
  */
 const buildCompareRow = (idx: number, ratio: number, top: number, primaryTop: number | undefined): HTMLElement => {
 	const tr = document.createElement('tr');
-	tr.className = 'hover:bg-gauge/50 transition-colors';
+	tr.className = 'hover:bg-gauge/80 transition-colors';
 	const delta = primaryTop === undefined ? '-' : formatDelta(top - primaryTop);
-	const deltaCls = primaryTop === undefined || Math.abs(top - primaryTop) < 0.05 ? 'text-gray-500' : top > primaryTop ? 'text-emerald-300' : 'text-amber-300';
-	tr.innerHTML = `<td class="py-2 flex items-center gap-2 font-display font-semibold"><span class="w-2 h-2 rounded-full bg-amber-400"></span>${t('gear.prefix')} ${idx + 1}'</td><td class="py-2">${ratio.toFixed(2)}:1</td><td class="py-2 text-right font-bold text-white">${top.toFixed(1)}</td><td class="py-2 text-right font-semibold ${deltaCls}">${delta}</td>`;
+	const deltaCls = describeDeltaClass(top, primaryTop);
+	const power = describeCompRoadLoad(top);
+	tr.innerHTML = `<td class='py-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full bg-amber-400 shrink-0'></span><span>${t('gear.prefix')} ${idx + 1}'</span></span></td><td class='py-2 whitespace-nowrap'>${ratio.toFixed(2)}:1</td><td class='py-2 text-right font-bold text-white whitespace-nowrap'>${top.toFixed(1)}</td><td class='py-2 text-right font-semibold whitespace-nowrap ${deltaCls}'>${delta}</td><td class='py-2 text-right text-sky-300 whitespace-nowrap'>${power}</td>`;
 	return tr;
+};
+
+/**
+ * @brief Pick the delta color for a comparison row.
+ * @param top Secondary top speed in display units.
+ * @param primaryTop Primary top speed or undefined when missing.
+ * @return Tailwind text class for the delta cell.
+ */
+const describeDeltaClass = (top: number, primaryTop: number | undefined): string => {
+	if (primaryTop === undefined || Math.abs(top - primaryTop) < 0.05) {
+		return 'text-gray-500';
+	}
+	return top > primaryTop ? 'text-emerald-300' : 'text-amber-300';
+};
+
+/**
+ * @brief Required wheel power at a secondary gear peak.
+ * @param top Secondary top speed in the active display unit.
+ * @return Display string with drag-limited flag when it exceeds comp power.
+ */
+const describeCompRoadLoad = (top: number): string => {
+	if (!state.roadLoadEnabled) {
+		return '-';
+	}
+	const speedKmh = state.unit === 'mph' ? top / 0.621371 : top;
+	const kw = roadLoadPowerKw(
+		speedKmh,
+		state.compMassKg,
+		state.compCd,
+		state.compFrontalAreaM2,
+		state.rollingCrr,
+		state.roadGradePercent,
+	);
+	const base = `${kw.toFixed(1)} kW (${kwToHp(kw).toFixed(1)} cv)`;
+	const available = availableWheelKw(state.compPowerKw, state.drivetrainEff);
+	return kw > available ? `${base} ${t('table.dragLimited')}` : base;
 };
 
 /**

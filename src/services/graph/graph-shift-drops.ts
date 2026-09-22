@@ -1,3 +1,7 @@
+/**
+ * @file graph-shift-drops.ts
+ * @brief Vertical redline shift-drop connectors and landing markers.
+ */
 import { GRAPH_STYLE } from '../../config/graph-constants';
 import { calculateRpm } from '../../core/math/speed-math';
 import type { PeakPoint, PlotFrame, SpeedUnit } from '../../core/models';

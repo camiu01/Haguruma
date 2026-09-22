@@ -12,6 +12,16 @@ export interface ElementRefs {
 	unitKmh: HTMLButtonElement;
 	unitMph: HTMLButtonElement;
 	themeToggle: HTMLButtonElement;
+	btnMenu: HTMLButtonElement;
+	mobileDrawer: HTMLElement;
+	mobileDrawerBackdrop: HTMLElement;
+	mobileDrawerClose: HTMLButtonElement;
+	drawerLangHost: HTMLElement;
+	drawerUnitHost: HTMLElement;
+	drawerThemeHost: HTMLElement;
+	drawerPresetHost: HTMLElement;
+	langGroup: HTMLElement;
+	unitGroup: HTMLElement;
 	langEn: HTMLButtonElement;
 	langIt: HTMLButtonElement;
 	presetSelector: HTMLSelectElement;
@@ -24,6 +34,13 @@ export interface ElementRefs {
 	compFd: HTMLInputElement;
 	compGears: HTMLInputElement;
 	compRedline: HTMLInputElement;
+	compMass: HTMLInputElement;
+	compCd: HTMLInputElement;
+	compArea: HTMLInputElement;
+	compPower: HTMLInputElement;
+	compTorqueRpm: HTMLInputElement;
+	compTorque: HTMLInputElement;
+	compPowerRpm: HTMLInputElement;
 	btnCopyPrimary: HTMLButtonElement;
 	btnLoadPresetComp: HTMLSelectElement;
 	compError: HTMLElement;
@@ -68,8 +85,13 @@ export interface ElementRefs {
 	compareBody: HTMLElement;
 	compareWrap: HTMLElement;
 	btnShare: HTMLButtonElement;
+	shareFab: HTMLButtonElement;
 	shareFeedback: HTMLElement;
 	unitLabels: NodeListOf<HTMLElement>;
+	btnMyCars: HTMLButtonElement;
+	myCarsModal: HTMLElement;
+	myCarsModalBackdrop: HTMLElement;
+	myCarsModalClose: HTMLButtonElement;
 }
 
 /**
@@ -101,6 +123,16 @@ export const getElementRefs = (): ElementRefs => {
 		unitKmh: get<HTMLButtonElement>('unit-kmh'),
 		unitMph: get<HTMLButtonElement>('unit-mph'),
 		themeToggle: get<HTMLButtonElement>('theme-toggle'),
+		btnMenu: get<HTMLButtonElement>('btn-menu'),
+		mobileDrawer: get<HTMLElement>('mobile-drawer'),
+		mobileDrawerBackdrop: get<HTMLElement>('mobile-drawer-backdrop'),
+		mobileDrawerClose: get<HTMLButtonElement>('mobile-drawer-close'),
+		drawerLangHost: get<HTMLElement>('drawer-lang-host'),
+		drawerUnitHost: get<HTMLElement>('drawer-unit-host'),
+		drawerThemeHost: get<HTMLElement>('drawer-theme-host'),
+		drawerPresetHost: get<HTMLElement>('drawer-preset-host'),
+		langGroup: get<HTMLElement>('lang-group'),
+		unitGroup: get<HTMLElement>('unit-group'),
 		langEn: get<HTMLButtonElement>('lang-en'),
 		langIt: get<HTMLButtonElement>('lang-it'),
 		presetSelector: get<HTMLSelectElement>('preset-selector'),
@@ -113,6 +145,13 @@ export const getElementRefs = (): ElementRefs => {
 		compFd: get<HTMLInputElement>('comp-fd'),
 		compGears: get<HTMLInputElement>('comp-gears'),
 		compRedline: get<HTMLInputElement>('comp-redline'),
+		compMass: get<HTMLInputElement>('comp-mass'),
+		compCd: get<HTMLInputElement>('comp-cd'),
+		compArea: get<HTMLInputElement>('comp-area'),
+		compPower: get<HTMLInputElement>('comp-power'),
+		compTorqueRpm: get<HTMLInputElement>('comp-torque-rpm'),
+		compTorque: get<HTMLInputElement>('comp-torque'),
+		compPowerRpm: get<HTMLInputElement>('comp-power-rpm'),
 		btnCopyPrimary: get<HTMLButtonElement>('btn-copy-primary'),
 		btnLoadPresetComp: get<HTMLSelectElement>('comp-preset-selector'),
 		compError: get<HTMLElement>('comp-error'),
@@ -157,7 +196,12 @@ export const getElementRefs = (): ElementRefs => {
 		compareBody: get<HTMLElement>('compare-breakdown-body'),
 		compareWrap: get<HTMLElement>('compare-table-wrap'),
 		btnShare: get<HTMLButtonElement>('btn-share'),
+		shareFab: get<HTMLButtonElement>('share-fab'),
 		shareFeedback: get<HTMLElement>('share-feedback'),
 		unitLabels: document.querySelectorAll('.unit-label'),
+		btnMyCars: get<HTMLButtonElement>('btn-my-cars'),
+		myCarsModal: get<HTMLElement>('mycars-modal'),
+		myCarsModalBackdrop: get<HTMLElement>('mycars-modal-backdrop'),
+		myCarsModalClose: get<HTMLButtonElement>('mycars-modal-close'),
 	};
 };

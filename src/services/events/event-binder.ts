@@ -9,6 +9,10 @@ import { bindShareEvents } from './share-events';
 import { bindThemeEvents } from './theme-events';
 import { bindCustomCar } from '../../components/custom-car';
 import { bindCanvasEvents } from './canvas-events';
+import { bindDrawerEvents } from './mobile-drawer-events';
+import { bindViewportEvents } from './viewport-events';
+import { bindAccordionEvents } from './accordion-events';
+import { bindMyCarsModalEvents } from './mycars-modal-events';
 
 /**
  * Wire every UI interaction exactly once.
@@ -29,4 +33,8 @@ export const bindAllEvents = (refs: ElementRefs, render: () => void): void => {
 	bindCustomCar(refs, render);
 	bindGearActions(refs, render);
 	bindCanvasEvents(refs);
+	bindDrawerEvents(refs);
+	bindViewportEvents(refs);
+	bindAccordionEvents(refs);
+	bindMyCarsModalEvents(refs);
 };

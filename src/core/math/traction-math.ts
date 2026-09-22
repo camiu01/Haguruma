@@ -193,7 +193,7 @@ export const dynamicRadiusM = (circM: number): number => {
 
 /**
  * @brief Find the optimal shift RPM for one gear pair.
- * @brief Scan from redline downward: the first RPM where the next gear pulls
+ * @brief Scan from idle to redline: the first RPM where the next gear pulls
  * harder than the current gear is the crossing; otherwise shift at redline.
  * @param gears Full gearset from first to top gear.
  * @param fromIndex Zero-based index of the gear being left.
@@ -229,7 +229,8 @@ export const optimalShiftFor = (
 	if (!curve || redline <= 0) {
 		return null;
 	}
-	for (let rpm = redline; rpm >= CURVE_MIN_RPM; rpm -= CURVE_STEP_RPM) {
+	let crossingRpm: number | null = null;
+	for (let rpm = CURVE_MIN_RPM; rpm <= redline; rpm += CURVE_STEP_RPM) {
 		const speed = calculateSpeed(rpm, current, finalDrive, circM, unit);
 		const landing = calculateRpm(speed, next, finalDrive, circM, unit);
 		if (landing < CURVE_MIN_RPM) {
@@ -238,19 +239,22 @@ export const optimalShiftFor = (
 		const forceNow = tractiveForceAt(rpm, current, finalDrive, radius, curve, drivetrainEff);
 		const forceNext = tractiveForceAt(landing, next, finalDrive, radius, curve, drivetrainEff);
 		if (forceNext > forceNow) {
-			const shiftRpm = Math.min(redline, rpm + CURVE_STEP_RPM);
-			const shiftSpeed = calculateSpeed(shiftRpm, current, finalDrive, circM, unit);
-			const landingRpm = calculateRpm(shiftSpeed, next, finalDrive, circM, unit);
-			return {
-				fromIndex,
-				toIndex: fromIndex + 1,
-				shiftRpm: Math.round(shiftRpm),
-				landingRpm: Math.round(landingRpm),
-				shiftSpeed,
-				atRedline: shiftRpm >= redline,
-				fallback: false,
-			};
+			crossingRpm = rpm;
+			break;
 		}
+	}
+	if (crossingRpm !== null) {
+		const shiftSpeed = calculateSpeed(crossingRpm, current, finalDrive, circM, unit);
+		const landingRpm = calculateRpm(shiftSpeed, next, finalDrive, circM, unit);
+		return {
+			fromIndex,
+			toIndex: fromIndex + 1,
+			shiftRpm: Math.round(crossingRpm),
+			landingRpm: Math.round(landingRpm),
+			shiftSpeed,
+			atRedline: crossingRpm >= redline,
+			fallback: false,
+		};
 	}
 	const shiftSpeed = calculateSpeed(redline, current, finalDrive, circM, unit);
 	const landingRpm = calculateRpm(shiftSpeed, next, finalDrive, circM, unit);

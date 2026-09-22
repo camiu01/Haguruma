@@ -15,6 +15,7 @@ import { applyUnitLabels, syncUnitToggle } from './services/events/unit-events';
 import { renderGearsList } from './components/gear-list';
 import { renderAll } from './views/render-all';
 import { state } from './core/state/app-state';
+import { resizeCanvas } from './services/graph/canvas-setup';
 
 /**
  * Bootstrap HAGURUMA.
@@ -41,6 +42,7 @@ const bootstrap = (): void => {
 	renderCustomList(refs, render);
 	renderGearsList(refs, () => render());
 	restoreFromUrl(refs, render);
+	resizeCanvas(refs.canvas, refs.ctx);
 	renderAll(refs);
 };
 

@@ -8,15 +8,19 @@ import type { ElementRefs } from '../dom/element-refs';
 import { buildPlotFrame } from './canvas-setup';
 
 /**
- * Handle mouse movement over the graph canvas.
- * @purpose Show a live telemetry tooltip for all gears.
- * @param event Mouse event from the canvas listener.
+ * Handle pointer or touch positions on the graph canvas.
+ * @brief Shared core used by mouse hover and touch taps.
+ * @param point Client coordinates of the pointer or touch.
  * @param refs Cached DOM handles.
+ * @return void
  */
-export const handleCanvasHover = (event: MouseEvent, refs: ElementRefs): void => {
+export const handleCanvasPointer = (
+	point: { clientX: number; clientY: number },
+	refs: ElementRefs,
+): void => {
 	const rect = refs.canvas.getBoundingClientRect();
-	const mouseX = event.clientX - rect.left;
-	const mouseY = event.clientY - rect.top;
+	const mouseX = point.clientX - rect.left;
+	const mouseY = point.clientY - rect.top;
 	const topRedline = state.compareEnabled ? Math.max(state.primaryRedline, state.compRedline) : state.primaryRedline;
 	const maxRpm = getMaxRpm(topRedline);
 	const frame = buildPlotFrame(refs.canvas, state.maxGraphSpeed, maxRpm);
@@ -30,6 +34,17 @@ export const handleCanvasHover = (event: MouseEvent, refs: ElementRefs): void =>
 	const hoveredSpeed = ((mouseX - frame.paddingLeft) / frame.plotWidth) * frame.maxSpeed;
 	const hoveredRpm = ((frame.paddingTop + frame.plotHeight - mouseY) / frame.plotHeight) * frame.maxRpm;
 	renderTooltip(refs, hoveredSpeed, hoveredRpm, mouseX, mouseY);
+};
+
+/**
+ * Handle mouse movement over the graph canvas.
+ * @brief Mouse wrapper around the shared pointer core.
+ * @param event Mouse event from the canvas listener.
+ * @param refs Cached DOM handles.
+ * @return void
+ */
+export const handleCanvasHover = (event: MouseEvent, refs: ElementRefs): void => {
+	handleCanvasPointer(event, refs);
 };
 
 /**
@@ -65,7 +80,7 @@ const renderTooltip = (
 		return;
 	}
 	const circM = effectiveCircumferenceM(primaryTire, state.rollingFactor);
-	let content = `<div class="font-bold border-b border-gray-700 pb-1 mb-1 text-red-400 font-display">${Math.round(speed)} ${state.unit} @ ${Math.round(rpm)} RPM</div>`;
+	let content = `<div class='font-bold border-b border-gray-700 pb-1 mb-1 text-red-400'>${Math.round(speed)} ${state.unit} @ ${Math.round(rpm)} RPM</div>`;
 	state.gears.forEach((gearRatio, idx) => {
 		const rpmAtSpeed = calculateRpm(speed, gearRatio, state.primaryFd, circM, state.unit);
 		if (rpmAtSpeed <= state.primaryRedline + 400) {
@@ -89,10 +104,10 @@ const buildRow = (idx: number, rpmAtSpeed: number, isCompare: boolean): string =
 	const limit = isCompare ? state.compRedline : state.primaryRedline;
 	const isOver = rpmAtSpeed > limit;
 	const color = isCompare ? '#fbbf24' : getGearColor(idx);
-	const suffix = isCompare ? "'" : '';
+	const suffix = isCompare ? '\'' : '';
 	const cls = isOver ? 'text-rose-400 font-bold' : 'text-gray-200';
 	const over = isOver ? t('tooltip.over') : '';
-	return `<div class="flex justify-between items-center gap-3 text-[10px]"><span style="color: ${color}">${t('gear.prefix')} ${idx + 1}${suffix}:</span><span class="${cls}">${Math.round(rpmAtSpeed)} RPM ${over}</span></div>`;
+	return `<div class='flex justify-between items-center gap-3 text-[10px]'><span style='color: ${color}'>${t('gear.prefix')} ${idx + 1}${suffix}:</span><span class='${cls}'>${Math.round(rpmAtSpeed)} RPM ${over}</span></div>`;
 };
 
 /**
@@ -107,7 +122,7 @@ const buildCompareSection = (speed: number): string => {
 		return '';
 	}
 	const compCircM = effectiveCircumferenceM(compTire, state.rollingFactor);
-	let section = `<div class="font-bold border-b border-gray-700 pb-1 mb-1 mt-2 text-amber-400 font-display text-[10px]">${t('compare.secondary')}</div>`;
+	let section = `<div class='font-bold border-b border-gray-700 pb-1 mb-1 mt-2 text-amber-400 text-[10px]'>${t('compare.secondary')}</div>`;
 	state.compGears.forEach((gearRatio, idx) => {
 		const rpmAtSpeed = calculateRpm(speed, gearRatio, state.compFd, compCircM, state.unit);
 		if (rpmAtSpeed <= state.compRedline + 400) {
