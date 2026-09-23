@@ -22,11 +22,11 @@ jobs:
       - name: Web build
         run: npm run build
 
-      - name: Setup JDK 17
+      - name: Setup JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Android SDK packages
         run: |
