@@ -44,6 +44,8 @@ Development task management for the Haguruma vehicle dynamics simulator.
 - [x] Row/table hover uses theme `surface-input` token instead of `gauge`
 - [x] Build script fails on type errors (`npx tsc --noEmit && npx vite build`)
 - [x] README physics-engine module table (traction/speed/aero/dynamics/shift)
+- [x] JSON car catalog with factory + community presets (`car-catalog.json`)
+- [x] Searchable preset combobox with grouped dropdown (`preset-search.ts`)
 
 ## Pending
 

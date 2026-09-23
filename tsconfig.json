@@ -8,6 +8,7 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "noEmit": true,
+    "resolveJsonModule": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "types": ["vite/client"]
   },

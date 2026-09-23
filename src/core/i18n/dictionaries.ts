@@ -12,6 +12,10 @@ export type Lang = 'en' | 'it';
  */
 export const en = {
 	'header.presetPlaceholder': 'Load Preset Vehicle...',
+	'header.presetSearch': 'Search car...',
+	'preset.noResults': 'No cars found',
+	'preset.groupFactory': 'Factory',
+	'preset.groupCommunity': 'Community',
 	'header.presets': 'Presets',
 	'menu.open': 'Open menu',
 	'menu.close': 'Close menu',
@@ -147,6 +151,10 @@ export type DictKey = keyof typeof en;
  */
 export const it: Record<DictKey, string> = {
 	'header.presetPlaceholder': 'Carica auto...',
+	'header.presetSearch': 'Cerca auto...',
+	'preset.noResults': 'Nessuna auto trovata',
+	'preset.groupFactory': 'Serie',
+	'preset.groupCommunity': 'Community',
 	'header.presets': 'Preset',
 	'menu.open': 'Apri menu',
 	'menu.close': 'Chiudi menu',

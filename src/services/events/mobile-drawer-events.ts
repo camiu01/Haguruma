@@ -102,13 +102,43 @@ const moveInto = (el: HTMLElement, host: HTMLElement): void => {
 const relocateIntoDrawer = (refs: ElementRefs): void => {
 	showInDrawer(refs.langGroup);
 	showInDrawer(refs.unitGroup);
-	refs.presetSelector.classList.remove('hidden');
-	refs.presetSelector.classList.add('block', 'w-full');
+	const node = presetNode(refs);
+	togglePresetVisibility(node, true);
 	moveInto(refs.langGroup, refs.drawerLangHost);
 	moveInto(refs.unitGroup, refs.drawerUnitHost);
-	moveInto(refs.presetSelector, refs.drawerPresetHost);
+	moveInto(node, refs.drawerPresetHost);
 };
 
+/**
+ * @brief Resolve the preset node moved into the drawer (search wrapper first).
+ * @param refs Cached DOM handles.
+ * @return Preset wrapper or raw select.
+ */
+const presetNode = (refs: ElementRefs): HTMLElement => {
+	const wrapped = refs.presetSelector.parentElement;
+	if (wrapped && wrapped.classList.contains('preset-search')) {
+		return wrapped;
+	}
+	return refs.presetSelector;
+};
+
+/**
+ * @brief Toggle search wrapper visibility classes inside the drawer.
+ * @param node Preset wrapper or select.
+ * @param inDrawer True when moving into the drawer.
+ * @return void
+ */
+const togglePresetVisibility = (node: HTMLElement, inDrawer: boolean): void => {
+	if (inDrawer) {
+		node.classList.remove('hidden');
+		node.classList.add('block', 'w-full');
+		node.classList.remove('max-w-[170px]');
+		return;
+	}
+	node.classList.add('hidden');
+	node.classList.remove('block', 'w-full');
+	node.classList.add('max-w-[170px]');
+};
 /**
  * Reveal a relocated group inside the drawer.
  * @brief Hidden header groups become flex rows once moved.
@@ -133,8 +163,7 @@ const restoreHomes = (refs: ElementRefs): void => {
 	homes = [];
 	hideInHeader(refs.langGroup);
 	hideInHeader(refs.unitGroup);
-	refs.presetSelector.classList.add('hidden');
-	refs.presetSelector.classList.remove('block', 'w-full');
+	togglePresetVisibility(presetNode(refs), false);
 };
 
 /**

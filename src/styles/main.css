@@ -577,6 +577,90 @@ input[type='range'] {
 	max-width: none !important;
 }
 
+/* Searchable preset combobox (runtime wrapper around the native select). */
+.preset-search {
+	position: relative;
+	min-width: 0;
+}
+.preset-search-native {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+	pointer-events: none !important;
+}
+.preset-search-input {
+	width: 100%;
+	min-height: 44px;
+	background: var(--bg-surface-input);
+	border: 1px solid var(--border-surface-border);
+	border-radius: 8px;
+	padding: 8px 12px;
+	font-size: 12px;
+	font-family: 'JetBrains Mono', monospace;
+	color: var(--text-output);
+	outline: none;
+	touch-action: manipulation;
+}
+.preset-search-input:focus {
+	border-color: var(--accent-cyan);
+}
+.preset-search-listbox {
+	position: fixed;
+	left: 0;
+	top: 0;
+	z-index: 30;
+	max-height: 15rem;
+	max-height: 50vh;
+	overflow-y: auto;
+	background: var(--bg-surface-card);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	box-shadow: var(--shadow-card);
+	padding: 4px;
+	list-style: none;
+	margin: 0;
+	touch-action: manipulation;
+}
+.preset-search-item,
+.preset-search-empty {
+	min-height: 44px;
+	display: flex;
+	align-items: center;
+	padding: 8px 10px;
+	font-size: 12px;
+	font-family: 'JetBrains Mono', monospace;
+	color: var(--text-main);
+	border-radius: 6px;
+	cursor: pointer;
+	white-space: normal;
+	overflow-wrap: break-word;
+}
+.preset-search-item:hover,
+.preset-search-item.is-active {
+	background: var(--bg-surface-subtle);
+	color: var(--text-output);
+}
+.preset-search-empty {
+	color: var(--text-dim);
+	cursor: default;
+}
+[data-theme='oled'] .preset-search-input,
+[data-theme='oled'] .preset-search-listbox {
+	background: #070709 !important;
+	border-color: #24242e !important;
+}
+[data-theme='light'] .preset-search-input,
+[data-theme='light'] .preset-search-listbox {
+	background: #ffffff !important;
+	border-color: #cbd5e1 !important;
+}
+
 @media (max-width: 767px) {
 	.app-header {
 		flex-wrap: nowrap;

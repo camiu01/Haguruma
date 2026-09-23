@@ -48,18 +48,13 @@ src/
 
 ## Adding a New Vehicle Preset
 
-1. **Add the Preset Entry** in `src/config/presets.ts`:
-   ```ts
-   mx5_nd: {
-     tire: '195/50R16',
-     fd: 4.30,
-     redline: 7500,
-     gears: [3.36, 2.02, 1.46, 1.00, 0.83, 0.68],
-   },
+1. **Add the catalog entry** in `src/config/car-catalog.json`:
+   ```json
+   { "id": "mx5_nd", "label": "Mazda MX-5 ND (6-Speed, 4.30 FD)", "group": "factory", "preset": { "tire": "195/50R16", "fd": 4.3, "redline": 7500, "gears": [3.36, 2.02, 1.46, 1.0, 0.83, 0.68] } }
    ```
-   Keep gears ordered from short (large) to tall (small).
+   Keep gears ordered from short (large) to tall (small). `src/config/presets.ts` loads the catalog at build time and exposes `presets`, `presetMeta` and `presetGroups`.
 
-2. **Expose in `index.html`** — add an `<option>` to `#preset-selector`.
+2. **Option building is runtime** — `buildPresetOptions()` in `src/services/events/preset-events.ts` renders factory/community optgroups into both selectors; never add hardcoded `<option>` elements to `index.html`.
 
 3. **Cover with Tests** — `tests/presets.test.ts` already validates tire format, `fd > 1`, redline range, and descending gears.
 

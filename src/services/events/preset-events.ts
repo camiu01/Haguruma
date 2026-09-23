@@ -3,14 +3,22 @@
  * @brief Primary preset apply plus dropdown wiring (never touches comp slots).
  */
 import { state } from '../../core/state/app-state';
-import { presets } from '../../config/presets';
+import { presetGroups, presetMeta, presets } from '../../config/presets';
 import { CUSTOM_PREFIX, loadCustomPresets } from '../../core/presets/custom-store';
 import type { GearPreset } from '../../core/models';
 import type { ElementRefs } from '../dom/element-refs';
 import { renderGearsList } from '../../components/gear-list';
+import { enhancePresetSearch } from '../../components/preset-search';
+import { t } from '../../core/i18n/language';
 import { syncEngineInputs } from './engine-events';
 import { syncRoadLoadInputs } from './road-load-events';
 import { syncRunningGearInputs } from './running-gear-events';
+
+/** Catalog group to i18n group label key. */
+const GROUP_LABEL_KEYS: Record<string, 'preset.groupFactory' | 'preset.groupCommunity'> = {
+	factory: 'preset.groupFactory',
+	community: 'preset.groupCommunity',
+};
 
 /**
  * @brief Apply a preset to state and refresh every dependent control.
@@ -72,11 +80,45 @@ const resolvePreset = (value: string): GearPreset | null => {
 };
 
 /**
+ * @brief Build grouped factory/community options in a preset selector.
+ * @param select Target dropdown element.
+ * @return void
+ */
+export const buildPresetOptions = (select: HTMLSelectElement): void => {
+	const placeholder = select.querySelector('option[value=""]');
+	const customs = Array.from(select.options).filter((o) => o.value.startsWith(CUSTOM_PREFIX));
+	select.innerHTML = '';
+	if (placeholder) {
+		select.appendChild(placeholder);
+	}
+	for (const group of Object.keys(presetGroups)) {
+		const ids = presetGroups[group];
+		if (!ids || ids.length === 0) {
+			continue;
+		}
+		const optgroup = document.createElement('optgroup');
+		optgroup.label = t(GROUP_LABEL_KEYS[group] ?? 'preset.groupFactory');
+		for (const id of ids) {
+			const option = document.createElement('option');
+			option.value = id;
+			option.textContent = presetMeta[id]?.label ?? id;
+			optgroup.appendChild(option);
+		}
+		select.appendChild(optgroup);
+	}
+	for (const custom of customs) {
+		select.appendChild(custom);
+	}
+};
+
+/**
  * @brief Rebuild the user-preset section of both dropdowns.
  * @param refs Cached DOM handles.
  * @return void
  */
 export const refreshPresetOptions = (refs: ElementRefs): void => {
+	buildPresetOptions(refs.presetSelector);
+	buildPresetOptions(refs.btnLoadPresetComp);
 	appendCustomOptions(refs.presetSelector);
 	appendCustomOptions(refs.btnLoadPresetComp);
 };
@@ -107,6 +149,9 @@ const appendCustomOptions = (selector: HTMLSelectElement): void => {
  * @return void
  */
 export const bindPresetEvents = (refs: ElementRefs, render: () => void): void => {
+	buildPresetOptions(refs.presetSelector);
+	buildPresetOptions(refs.btnLoadPresetComp);
+	enhancePresetSearch(refs.presetSelector);
 	refs.presetSelector.addEventListener('change', (e) => {
 		const preset = resolvePreset((e.target as HTMLSelectElement).value);
 		if (!preset) {
