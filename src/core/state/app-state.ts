@@ -65,6 +65,7 @@ export const defaultState: AppState = {
 	peakPowerRpm: 6500,
 	runningGear: { ...defaultRunningGear },
 	compRunningGear: { ...defaultRunningGear },
+	setupGuide: { phase: 'mid', issue: 'understeer' },
 };
 
 /**
@@ -77,4 +78,5 @@ export const state: AppState = {
 	compGears: [...defaultState.compGears],
 	runningGear: { ...defaultRunningGear },
 	compRunningGear: { ...defaultRunningGear },
+	setupGuide: { ...defaultState.setupGuide },
 };

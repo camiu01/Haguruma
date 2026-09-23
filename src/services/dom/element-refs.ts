@@ -103,6 +103,11 @@ export interface ElementRefs {
 	rgLatg: HTMLInputElement;
 	rgLatgVal: HTMLElement;
 	rgAccordion: HTMLElement;
+	setupPhase: HTMLSelectElement;
+	setupIssue: HTMLSelectElement;
+	setupResult: HTMLElement;
+	setupFeel: HTMLElement;
+	setupProcedure: HTMLElement;
 }
 
 /**
@@ -225,5 +230,10 @@ export const getElementRefs = (): ElementRefs => {
 		rgLatg: get<HTMLInputElement>('rg-latg'),
 		rgLatgVal: get<HTMLElement>('rg-latg-val'),
 		rgAccordion: get<HTMLElement>('running-gear-accordion'),
+		setupPhase: get<HTMLSelectElement>('setup-phase'),
+		setupIssue: get<HTMLSelectElement>('setup-issue'),
+		setupResult: get<HTMLElement>('setup-result'),
+		setupFeel: get<HTMLElement>('setup-feel'),
+		setupProcedure: get<HTMLElement>('setup-procedure'),
 	};
 };

@@ -206,6 +206,7 @@ const bindNavViewButtons = (refs: ElementRefs): void => {
 		aero: '[data-accordion="road"]',
 		compare: '[data-accordion="compare"]',
 		dynamics: '#running-gear-accordion',
+		setup: '[data-accordion="setup"]',
 	};
 	document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((btn) => {
 		btn.addEventListener('click', () => {

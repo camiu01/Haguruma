@@ -1,3 +1,7 @@
+/**
+ * @file main.ts
+ * @brief Application bootstrap wiring DOM, state, events and first render.
+ */
 import { getElementRefs } from './services/dom/element-refs';
 import { bindAllEvents } from './services/events/event-binder';
 import { initLang } from './core/i18n/language';
@@ -14,6 +18,7 @@ import { initUnit } from './core/units/unit-utils';
 import { syncThemeToggle } from './services/events/theme-events';
 import { applyUnitLabels, syncUnitToggle } from './services/events/unit-events';
 import { renderGearsList } from './components/gear-list';
+import { injectSetupGuideShell, renderSetupGuide } from './components/setup-guide';
 import { renderAll } from './views/render-all';
 import { state } from './core/state/app-state';
 import { resizeCanvas } from './services/graph/canvas-setup';
@@ -24,6 +29,11 @@ import { resizeCanvas } from './services/graph/canvas-setup';
  * @return void
  */
 const bootstrap = (): void => {
+	const mount = document.getElementById('setup-guide-mount');
+	if (!mount) {
+		throw new Error('Missing required element: setup-guide-mount');
+	}
+	injectSetupGuideShell(mount);
 	const refs = getElementRefs();
 	const render = (): void => renderAll(refs);
 	initLang();
@@ -43,6 +53,7 @@ const bootstrap = (): void => {
 	refreshPresetOptions(refs);
 	renderCustomList(refs, render);
 	renderGearsList(refs, () => render());
+	renderSetupGuide(refs);
 	restoreFromUrl(refs, render);
 	resizeCanvas(refs.canvas, refs.ctx);
 	renderAll(refs);

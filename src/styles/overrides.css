@@ -1,0 +1,84 @@
+/**
+ * @file overrides.css
+ * @brief OLED and light theme overrides for Tailwind tokens.
+ */
+/* OLED overrides for every Tailwind text/bg/border token in use. */
+[data-theme='oled'] .bg-tarmac { background-color: #000000 !important; border-color: #1a1a22 !important; }
+[data-theme='oled'] .bg-carbon { background-color: #000000 !important; border-color: #1a1a22 !important; }
+[data-theme='oled'] .bg-gauge, [data-theme='oled'] .bg-gauge\/80, [data-theme='oled'] .bg-gauge\/50, [data-theme='oled'] .hover\:bg-gauge\/50:hover, [data-theme='oled'] .hover\:bg-gauge\/80:hover { background-color: #000000 !important; }
+[data-theme='oled'] .bg-gray-800, [data-theme='oled'] .bg-gray-700 { background-color: #18181b !important; border-color: #3f3f46 !important; }
+[data-theme='oled'] .bg-gray-200 { background-color: #fafafa !important; color: #000000 !important; }
+[data-theme='oled'] .bg-gray-200.text-black { color: #000000 !important; }
+[data-theme='oled'] .bg-black { background-color: #000000 !important; }
+[data-theme='oled'] .bg-red-500, [data-theme='oled'] .bg-emerald-500, [data-theme='oled'] .bg-rose-500, [data-theme='oled'] .bg-amber-400, [data-theme='oled'] .bg-gray-400 { filter: brightness(1.05); }
+[data-theme='oled'] .text-white, [data-theme='oled'] .text-gray-200, [data-theme='oled'] .text-gray-300 { color: #f8fafc !important; }
+[data-theme='oled'] .text-gray-400, [data-theme='oled'] .text-gray-500 { color: #a1a1aa !important; }
+[data-theme='oled'] .text-black { color: #000000 !important; }
+[data-theme='oled'] .text-amber-300, [data-theme='oled'] .text-amber-400, [data-theme='oled'] .text-emerald-300, [data-theme='oled'] .text-emerald-400 { color: #fbbf24 !important; }
+[data-theme='oled'] .text-sky-300, [data-theme='oled'] .text-sky-400 { color: #7dd3fc !important; }
+[data-theme='oled'] .text-rose-300, [data-theme='oled'] .text-rose-400, [data-theme='oled'] .text-violet-300 { color: #fda4af !important; }
+[data-theme='oled'] .border-gray-800, [data-theme='oled'] .border-gray-700, [data-theme='oled'] .border-gray-900, [data-theme='oled'] .border-gray-700\/80, [data-theme='oled'] .border-gray-800\/80, [data-theme='oled'] .divide-gray-800\/40 { border-color: #1a1a22 !important; }
+[data-theme='oled'] .border-amber-400\/30, [data-theme='oled'] .border-amber-400\/40, [data-theme='oled'] .border-amber-400\/60, [data-theme='oled'] .border-rose-500 { border-color: #52525b !important; }
+[data-theme='oled'] #mobile-drawer, [data-theme='oled'] header, [data-theme='oled'] .card, [data-theme='oled'] #mycars-modal, [data-theme='oled'] .merged-card { background-color: #070709 !important; }
+[data-theme='oled'] #kpi-strip { background-color: #070709 !important; }
+[data-theme='oled'] #canvas-tooltip { background-color: #000000 !important; border-color: #24242e !important; color: #f8fafc !important; }
+[data-theme='oled'] #share-fab { background-color: #f59e0b !important; color: #000000 !important; }
+[data-theme='oled'] .custom-scroll::-webkit-scrollbar-track { background: #000000; }
+[data-theme='oled'] .custom-scroll::-webkit-scrollbar-thumb { background: #24242e; }
+[data-theme='oled'] .gear-glow-1 { filter: drop-shadow(0 0 4px rgba(255, 59, 48, 0.55)); }
+[data-theme='oled'] .gear-glow-2 { filter: drop-shadow(0 0 4px rgba(255, 149, 0, 0.55)); }
+[data-theme='oled'] .gear-glow-3 { filter: drop-shadow(0 0 4px rgba(255, 214, 10, 0.55)); }
+[data-theme='oled'] .gear-glow-4 { filter: drop-shadow(0 0 4px rgba(48, 209, 88, 0.55)); }
+[data-theme='oled'] .gear-glow-5 { filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.55)); }
+[data-theme='oled'] .gear-glow-6 { filter: drop-shadow(0 0 4px rgba(10, 132, 255, 0.55)); }
+[data-theme='oled'] .gear-glow-7 { filter: drop-shadow(0 0 4px rgba(191, 90, 242, 0.55)); }
+[data-theme='oled'] .gear-glow-8 { filter: drop-shadow(0 0 4px rgba(236, 72, 153, 0.55)); }
+
+/* Light overrides for every Tailwind text/bg/border token in use. */
+[data-theme='light'] .bg-tarmac, [data-theme='light'] header, [data-theme='light'] #mobile-drawer, [data-theme='light'] #mycars-modal { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+[data-theme='light'] .bg-carbon { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+[data-theme='light'] .bg-gauge, [data-theme='light'] .bg-gauge\/80, [data-theme='light'] .bg-gauge\/50 { background-color: #f8fafc !important; }
+[data-theme='light'] .hover\:bg-gauge\/80:hover { background-color: #e2e8f0 !important; }
+[data-theme='light'] .bg-gray-800 { background-color: #1e293b !important; }
+[data-theme='light'] .bg-gray-800 .text-gray-200, [data-theme='light'] button.bg-gray-800 { color: #f8fafc !important; }
+[data-theme='light'] .bg-gray-800:hover, [data-theme='light'] .hover\:bg-gray-700:hover { background-color: #334155 !important; color: #f8fafc !important; }
+[data-theme='light'] .bg-gray-200 { background-color: #0f172a !important; color: #f8fafc !important; }
+[data-theme='light'] .bg-gray-200.text-black { color: #f8fafc !important; }
+[data-theme='light'] #lang-group, [data-theme='light'] #unit-group { background-color: #f1f5f9 !important; }
+[data-theme='light'] #lang-group .text-gray-400, [data-theme='light'] #unit-group .text-gray-400 { color: #475569 !important; }
+[data-theme='light'] #lang-group .hover\:text-white:hover, [data-theme='light'] #unit-group .hover\:text-white:hover { color: #0f172a !important; }
+[data-theme='light'] .bg-black { background-color: #0f172a !important; }
+[data-theme='light'] .text-white { color: #0f172a !important; }
+[data-theme='light'] .text-gray-200 { color: #1e293b !important; }
+[data-theme='light'] .text-gray-300 { color: #334155 !important; }
+[data-theme='light'] .text-gray-400, [data-theme='light'] .text-gray-500 { color: #64748b !important; }
+[data-theme='light'] .text-black { color: #0f172a !important; }
+[data-theme='light'] .text-sky-300, [data-theme='light'] .text-sky-400 { color: #0284c7 !important; }
+[data-theme='light'] .text-amber-300, [data-theme='light'] .text-amber-400 { color: #d97706 !important; }
+[data-theme='light'] .text-emerald-300, [data-theme='light'] .text-emerald-400 { color: #059669 !important; }
+[data-theme='light'] .text-violet-300 { color: #7c3aed !important; }
+[data-theme='light'] .text-rose-300, [data-theme='light'] .text-rose-400, [data-theme='light'] .text-red-400 { color: #e11d48 !important; }
+[data-theme='light'] .text-red-500 { color: #dc2626 !important; }
+[data-theme='light'] .border-gray-800, [data-theme='light'] .border-gray-700, [data-theme='light'] .border-gray-900, [data-theme='light'] .border-gray-700\/80, [data-theme='light'] .border-gray-800\/80, [data-theme='light'] .divide-gray-800\/40 { border-color: #e2e8f0 !important; }
+[data-theme='light'] .border-gray-700\/60 { border-color: #cbd5e1 !important; }
+[data-theme='light'] .border-amber-400\/30, [data-theme='light'] .border-amber-400\/40, [data-theme='light'] .border-amber-400\/60, [data-theme='light'] .border-rose-500 { border-color: #f59e0b !important; }
+[data-theme='light'] .border-dashed { border-style: dashed; }
+[data-theme='light'] .hover\:text-white:hover { color: #0f172a !important; }
+[data-theme='light'] .hover\:text-rose-400:hover { color: #be123c !important; }
+[data-theme='light'] .hover\:text-amber-300:hover, [data-theme='light'] .hover\:text-sky-400:hover { color: #b45309 !important; }
+[data-theme='light'] .hover\:border-gray-400:hover, [data-theme='light'] .focus\:border-gray-400:focus { border-color: #94a3b8 !important; }
+[data-theme='light'] #canvas-tooltip { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+[data-theme='light'] #share-fab { background-color: #f59e0b !important; color: #0f172a !important; }
+[data-theme='light'] .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+[data-theme='light'] .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; }
+[data-theme='light'] .help-dot::after { background: #0f172a; border-color: #0f172a; color: #f8fafc; }
+[data-theme='light'] .gear-glow-1 { filter: drop-shadow(0 0 3px rgba(220, 38, 38, 0.3)); }
+[data-theme='light'] .gear-glow-2 { filter: drop-shadow(0 0 3px rgba(217, 119, 6, 0.3)); }
+[data-theme='light'] .gear-glow-3 { filter: drop-shadow(0 0 3px rgba(202, 138, 4, 0.3)); }
+[data-theme='light'] .gear-glow-4 { filter: drop-shadow(0 0 3px rgba(5, 150, 105, 0.3)); }
+[data-theme='light'] .gear-glow-5 { filter: drop-shadow(0 0 3px rgba(2, 132, 199, 0.3)); }
+[data-theme='light'] .gear-glow-6 { filter: drop-shadow(0 0 3px rgba(37, 99, 235, 0.3)); }
+[data-theme='light'] .gear-glow-7 { filter: drop-shadow(0 0 3px rgba(124, 58, 237, 0.3)); }
+[data-theme='light'] .gear-glow-8 { filter: drop-shadow(0 0 3px rgba(190, 24, 93, 0.3)); }
+[data-theme='light'] .card { background-color: #ffffff !important; }
+[data-theme='light'] #kpi-strip { background-color: #ffffff !important; }

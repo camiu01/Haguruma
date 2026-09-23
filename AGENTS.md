@@ -23,6 +23,7 @@ src/
   core/
     models.ts                     # SpeedUnit, TireSpec, GearPreset, AppState, etc.
     math/                         # tire-math, speed-math, aero-math, traction-math, shift-math
+    setup/                        # setup-matrix.ts (wizard data) + setup-guide-content.ts (handbook copy)
     state/app-state.ts            # defaultState + singleton
     units/unit-utils.ts          # getSpeedStep(), getUnitLabel(), getMaxRpm()
     i18n/                         # en/it dictionaries + language.ts (applyI18n)
@@ -38,9 +39,18 @@ src/
     gear-list.ts                  # Editable gear rows + add/remove
     gear-table.ts                 # Top-speed + shift-drop + torque/traction/opt-shift table
     custom-car.ts                 # Save/load/export/import custom presets
+    setup-guide.ts                # Setup shell injection + wizard/feel/procedure renderers
   views/render-all.ts             # resizeCanvas + drawGraph + renderTable
-  styles/main.css                 # Theme variables, overrides, scrollbars, help-dot
-index.html                        # Shell layout with all inputs
+  styles/
+    main.css                      # Hub only: @imports below, no rules
+    tokens.css                    # Theme variables (dark/oled/light)
+    base.css                      # Base elements, safe-area, scrollbars, small viewports
+    drawer.css                    # Slide-over drawer + relocated header controls
+    components.css                # Cards, accordions, tables, inputs, help-dot
+    shell.css                     # Header controls, modal, preset combobox
+    overrides.css                 # OLED + light Tailwind overrides
+    setup-guide.css               # Wizard badges, feel cues, procedure steps
+index.html                        # Shell layout; feature shells inject into mount points
 ```
 
 ## Key conventions (must follow)
@@ -48,7 +58,9 @@ index.html                        # Shell layout with all inputs
 - **Single quotes** for strings; semicolons required.
 - Every function needs a TSDoc block: `@brief`, `@param`, `@return`.
 - Every file starts with `@file` + `@brief`.
-- Files must stay **under 400 lines**, functions **under 50 lines**.
+- Feature modules must stay **under 400 lines**, functions **under 50 lines**.
+- Exempt from the file cap: `index.html` (app shell) and `styles/main.css` (import hub).
+  New static markup belongs in component-owned `inject*Shell()` builders, not in `index.html`.
 - Avoid nested conditionals deeper than 3 levels.
 - All comments, docs, and commit messages in **English**.
 - Commits follow **Conventional Commits** (`feat:`, `fix:`, etc.).
@@ -58,7 +70,8 @@ index.html                        # Shell layout with all inputs
 - `src/core/theme/theme.ts` — three themes: `'dark' | 'oled' | 'light'`.
 - Toggle cycles dark → oled → light. Persisted in localStorage.
 - CSS uses `[data-theme='dark']`, `[data-theme='oled']`, `[data-theme='light']` selectors.
-- **Every Tailwind text/background/border class needs a light-mode override** in `main.css` (e.g. `[data-theme='light'] .text-gray-300 { color: #334155 !important; }`).
+- **Every Tailwind text/background/border class needs a light-mode override** in `overrides.css` (e.g. `[data-theme='light'] .text-gray-300 { color: #334155 !important; }`).
+- New feature CSS goes in its own `styles/<feature>.css` module (theme tokens only) and is wired via `@import` in `main.css`, keeping hub order: tokens, base, drawer, components, shell, overrides, feature.
 - Same for OLED: `bg-gauge/80`, `bg-gauge/50` need explicit OLED overrides.
 - `document.documentElement.classList.toggle('dark', currentTheme !== 'light')` controls Tailwind dark mode.
 - Graph has separate palettes per theme in `graph-theme.ts`.
@@ -75,6 +88,7 @@ index.html                        # Shell layout with all inputs
 - `data-i18n-tip` for tooltip attributes → sets `title`, `data-tip`, `aria-label`.
 - `data-i18n-ph` for placeholder attributes.
 - All static elements are resolved in `element-refs.ts` via `document.getElementById()`.
+- Feature shells are injected by `inject*Shell(mount)` builders called in `bootstrap()` **before** `getElementRefs()`, so ids, `[data-accordion]` sections and `[data-i18n]` nodes exist for refs, accordion binding and `applyI18n()`.
 - **Do not put help-dot spans inside `data-i18n` elements** — `textContent` replacement strips children. Wrap the span in a separate parent.
 
 ## Custom car system

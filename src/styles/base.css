@@ -1,0 +1,107 @@
+/**
+ * @file base.css
+ * @brief Base elements, safe-area helpers, scrollbars and small viewports.
+ */
+/* Safe-area padding helpers for fixed bottom UI. */
+.pt-safe { padding-top: env(safe-area-inset-top); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+
+/* KPI strip cells (always-visible header metrics). */
+.kpi-cell {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	min-width: 0;
+	gap: 2px;
+	background: var(--bg-surface-card);
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+}
+
+/* Material Symbols icon sizing */
+.material-symbols-outlined {
+	font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+	line-height: 1;
+}
+
+/* Reachable touch targets (44-48px) and 16px inputs stop iOS zoom. */
+button, select {
+	min-height: 44px;
+}
+input, select, textarea {
+	font-size: 16px;
+}
+input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; margin: 0; accent-color: #f59e0b; cursor: pointer; }
+
+input[type='range'] {
+	accent-color: var(--accent-purple);
+	height: 22px;
+	cursor: pointer;
+}
+#rg-bias-wrap.opacity-40 {
+	opacity: 0.4;
+}
+#rg-bias-wrap.pointer-events-none {
+	pointer-events: none;
+}
+
+.brand {
+	white-space: nowrap;
+}
+.graph-wrap { aspect-ratio: 16 / 9; min-height: unset; height: auto; width: 100%; }
+.graph-legend { display: flex; flex-direction: column; gap: 0.375rem; }
+@media (min-width: 640px) { .graph-legend { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 0.75rem; } }
+
+:focus-visible {
+	outline: 2px solid #38bdf8;
+	outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+	.app-header {
+		flex-wrap: nowrap;
+	}
+	.brand-sub {
+		display: none;
+	}
+	.share-label {
+		display: none !important;
+	}
+	.btn-share {
+		min-width: 44px;
+		justify-content: center;
+	}
+}
+@media (max-width: 640px) { .table-sticky { min-width: 880px; font-size: 11px; } .table-compare { min-width: 560px; font-size: 11px; } }
+@media (min-width: 641px) { .table-sticky { font-size: 12px; } }
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input[type='number'] {
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
+.custom-scroll::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+	background: var(--bg-page);
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+	background: var(--border);
+	border-radius: 3px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+	background: var(--text-muted);
+}

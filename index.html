@@ -121,8 +121,8 @@
 		</div>
 	</div>
 
-	<div id='mobile-drawer-backdrop' class='hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm'></div>
-	<aside id='mobile-drawer' role='dialog' aria-modal='true' aria-labelledby='mobile-drawer-title' class='hidden fixed left-0 top-0 h-full h-dvh z-50 bg-surface border-r border-border w-[82vw] max-w-[320px] flex flex-col'>
+	<div id='mobile-drawer-backdrop' class='hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm'></div>
+	<aside id='mobile-drawer' role='dialog' aria-modal='true' aria-labelledby='mobile-drawer-title' class='hidden fixed left-0 top-0 h-full h-dvh z-[70] bg-surface border-r border-border w-[82vw] max-w-[320px] flex flex-col'>
 		<!-- Drawer Header -->
 		<div class='flex items-center justify-between px-4 py-3 border-b border-border/30 shrink-0'>
 			<div class='flex items-center gap-2 min-w-0'>
@@ -152,6 +152,9 @@
 			</button>
 			<button type='button' class='flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors text-text-dim hover:text-text-main hover:bg-surface-subtle/60' data-view='dynamics'>
 				<span class='truncate' data-i18n='nav.dynamics'>Longitudinal Dynamics</span>
+			</button>
+			<button type='button' class='flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors text-text-dim hover:text-text-main hover:bg-surface-subtle/60' data-view='setup'>
+				<span class='truncate' data-i18n='nav.setup'>Setup Guide</span>
 			</button>
 			<div class='my-1.5 border-t border-border/30'></div>
 			<!-- Settings section -->
@@ -199,7 +202,7 @@
 		</div>
 	</aside>
 	<main class='flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 xl:grid-cols-12 gap-4 pb-20 xl:pb-0'>
-		<section class='xl:col-span-5 flex flex-col gap-4 xl:sticky xl:top-[4rem] xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto xl:self-start custom-scroll'>
+		<section class='order-2 xl:order-1 xl:col-span-5 flex flex-col gap-4 xl:sticky xl:top-[4rem] xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto xl:self-start custom-scroll'>
 			<div class='card border border-border rounded-xl p-4 merged-card'>
 				<h2 class='text-sm font-semibold text-text-main pb-3 border-b border-border' data-i18n='vehicle.title'>Vehicle Setup</h2>
 
@@ -590,8 +593,9 @@
 					</div>
 				</div>
 			</div>
+			<div id='setup-guide-mount'></div>
 		</section>
-		<section class='xl:col-span-7 flex flex-col gap-4'>
+		<section class='order-1 xl:order-2 xl:col-span-7 flex flex-col gap-4'>
 			<div class='card graph-card border border-border rounded-xl p-4 flex flex-col'>
 				<div class='flex items-center justify-between mb-3 gap-2'>
 					<h2 class='text-sm font-semibold text-text-main' data-i18n='graph.title'>Engine RPM vs Vehicle Speed</h2>
@@ -676,11 +680,14 @@
 		<button data-view='compare' class='flex-1 flex flex-col items-center py-2 gap-0.5 text-text-dim active:text-text-output transition-colors'>
 			<span class='text-[10px] font-mono' data-i18n='tab.compare'>Compare</span>
 		</button>
+		<button data-view='setup' class='flex-1 flex flex-col items-center py-2 gap-0.5 text-text-dim active:text-text-output transition-colors'>
+			<span class='text-[10px] font-mono' data-i18n='tab.setup'>Setup</span>
+		</button>
 	</nav>
 
 	<!-- My Cars bottom-sheet modal -->
-	<div id='mycars-modal-backdrop' class='hidden fixed inset-0 z-40'></div>
-	<div id='mycars-modal' role='dialog' aria-modal='true' aria-labelledby='mycars-modal-title' class='hidden fixed z-50 bg-surface max-h-[85vh] overflow-y-auto'>
+	<div id='mycars-modal-backdrop' class='hidden fixed inset-0 z-[80]'></div>
+	<div id='mycars-modal' role='dialog' aria-modal='true' aria-labelledby='mycars-modal-title' class='hidden fixed z-[90] bg-surface max-h-[85vh] overflow-y-auto'>
 		<div class='sticky top-0 bg-surface z-10 flex items-center justify-between px-5 pt-3 pb-2 border-b border-border'>
 			<h2 id='mycars-modal-title' class='text-sm font-semibold text-text-main' data-i18n='custom.title'>My Cars</h2>
 			<button id='mycars-modal-close' type='button' class='px-3 py-2 text-xs font-semibold rounded bg-input border border-border text-text-main hover:text-text-output' data-i18n='drawer.close'>Close</button>

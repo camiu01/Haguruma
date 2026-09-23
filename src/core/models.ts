@@ -2,6 +2,7 @@
  * @file models.ts
  * @brief Shared domain models for HAGURUMA.
  */
+import type { CornerPhase, HandlingIssue } from './setup/setup-matrix';
 
 /** Supported speed display units. */
 export type SpeedUnit = 'kmh' | 'mph';
@@ -100,6 +101,17 @@ export interface GearPreset {
 }
 
 /**
+ * Wizard selection for the setup troubleshooting matrix.
+ * @brief Phase + issue pair driving the ranked fix list.
+ */
+export interface SetupGuideSelection {
+	/** Corner phase selected in the wizard. */
+	phase: CornerPhase;
+	/** Handling issue selected in the wizard. */
+	issue: HandlingIssue;
+}
+
+/**
  * Global mutable UI state, kept in a single store object.
  * @brief Single source of truth shared by all renderers.
  */
@@ -170,6 +182,8 @@ export interface AppState {
 	runningGear: RunningGear;
 	/** Secondary chassis and running-gear parameters. */
 	compRunningGear: RunningGear;
+	/** Setup wizard selection (phase + issue). */
+	setupGuide: SetupGuideSelection;
 }
 
 /**

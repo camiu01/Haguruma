@@ -1,0 +1,33 @@
+/**
+ * @file setup-guide.css
+ * @brief Setup troubleshooting wizard and handbook styles.
+ */
+/* Setup guide: wizard result, feel cues and procedure steps. Theme tokens only. */
+[data-accordion='setup'] .section-content.open { max-height: 8000px; }
+.setup-guide { display: flex; flex-direction: column; gap: 12px; }
+.setup-h3 { font-size: 13px; font-weight: 600; color: var(--text-main); margin-top: 8px; }
+.setup-h4 { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 8px; }
+.setup-result { display: flex; flex-direction: column; gap: 8px; }
+.setup-fix { background: var(--bg-surface-row); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.setup-fix-head { display: flex; align-items: center; gap: 8px; }
+.setup-rank { display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; height: 1.5rem; border-radius: 9999px; background: var(--accent-cyan-overlay); color: var(--accent-cyan); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; }
+.setup-fix-title { font-size: 13px; font-weight: 600; color: var(--text-output); flex: 1; min-width: 0; }
+.setup-sev { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 9999px; border: 1px solid var(--border); color: var(--text-dim); white-space: nowrap; }
+.setup-sev-medium { color: var(--accent-yellow); border-color: var(--accent-yellow); }
+.setup-sev-high { color: var(--accent-red); border-color: var(--accent-red); }
+.setup-sev-low { color: var(--accent-green); border-color: var(--accent-green); }
+.setup-fix-detail { font-size: 12px; line-height: 1.5; color: var(--text-main); }
+.setup-tradeoff { font-size: 11px; line-height: 1.5; color: var(--accent-yellow); background: var(--accent-amber-overlay); border: 1px solid var(--accent-yellow); border-radius: 6px; padding: 6px 8px; }
+.setup-feel { display: flex; flex-direction: column; gap: 10px; }
+.setup-feel-block { display: flex; flex-direction: column; gap: 4px; }
+.setup-feel-title { font-size: 12px; font-weight: 600; color: var(--accent-cyan); margin-bottom: 4px; }
+.setup-feel-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.setup-feel-item { font-size: 12px; line-height: 1.55; color: var(--text-main); }
+.setup-feel-item strong { color: var(--text-output); font-weight: 600; }
+.setup-steps { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.setup-step { display: flex; gap: 10px; align-items: flex-start; background: var(--bg-surface-row); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.setup-step-num { display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; height: 1.5rem; border-radius: 6px; background: var(--bg-surface-subtle); color: var(--text-output); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.setup-step-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.setup-step-title { font-size: 12px; font-weight: 600; color: var(--text-output); }
+.setup-step-text { font-size: 12px; line-height: 1.55; color: var(--text-main); margin-top: 2px; }
+.setup-procedure { display: flex; flex-direction: column; gap: 8px; }

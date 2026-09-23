@@ -1,7 +1,12 @@
+/**
+ * @file event-binder.ts
+ * @brief Wire every UI interaction exactly once via focused sub-binders.
+ */
 import type { ElementRefs } from '../dom/element-refs';
 import { bindLanguageEvents } from './language-events';
 import { bindUnitEvents } from './unit-events';
-import { bindPresetEvents } from './preset-events';import { bindPrimaryEvents } from './primary-events';
+import { bindPresetEvents } from './preset-events';
+import { bindPrimaryEvents } from './primary-events';
 import { bindComparisonEvents, bindGearActions } from './comparison-events';
 import { bindRoadLoadEvents } from './road-load-events';
 import { bindEngineEvents } from './engine-events';
@@ -15,6 +20,7 @@ import { bindViewportEvents } from './viewport-events';
 import { bindAccordionEvents } from './accordion-events';
 import { bindMyCarsModalEvents } from './mycars-modal-events';
 import { bindDrawerUtilsEvents } from './drawer-utils-events';
+import { bindSetupGuideEvents } from './setup-guide-events';
 
 /**
  * Wire every UI interaction exactly once.
@@ -41,4 +47,5 @@ export const bindAllEvents = (refs: ElementRefs, render: () => void): void => {
 	bindAccordionEvents(refs);
 	bindMyCarsModalEvents(refs);
 	bindDrawerUtilsEvents(refs, render);
+	bindSetupGuideEvents(refs);
 };

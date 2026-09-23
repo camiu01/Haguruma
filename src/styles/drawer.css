@@ -1,0 +1,221 @@
+/**
+ * @file drawer.css
+ * @brief Mobile slide-over drawer and relocated header controls.
+ */
+/* Drawer theme segment (OLED / Dark / Light). */
+.drawer-theme-seg {
+	display: inline-flex;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 2px;
+	gap: 2px;
+	background: var(--bg-surface-input);
+
+
+}
+.drawer-theme-seg button {
+	flex: 1;
+	min-height: 36px;
+	padding: 6px 10px;
+	font-size: 11px;
+	font-weight: 600;
+	border-radius: 6px;
+	color: var(--text-dim);
+	background: transparent;
+	border: none;
+	cursor: pointer;
+}
+.drawer-theme-seg button[aria-pressed='true'] {
+	background: var(--text-main);
+	color: var(--bg-page);
+}
+
+/* Drawer simulation toggles (road load / comparison). */
+.drawer-sim-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: 44px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-label);
+}
+.drawer-sim-row .switch {
+	position: relative;
+	width: 40px;
+	height: 22px;
+	min-height: 22px;
+	border-radius: 9999px;
+	border: 1px solid var(--border);
+	background: var(--bg-surface-input);
+	cursor: pointer;
+	padding: 0;
+}
+.drawer-sim-row .switch::after {
+	content: '';
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--text-muted);
+	transition: transform 0.15s ease, background 0.15s ease;
+}
+.drawer-sim-row .switch[aria-checked='true'] {
+	border-color: var(--accent-green);
+	background: rgba(48, 209, 88, 0.15);
+}
+.drawer-sim-row .switch[aria-checked='true']::after {
+	transform: translateX(18px);
+	background: var(--accent-green);
+}
+
+/* Drawer JSON export / import buttons. */
+.drawer-json-btn {
+	flex: 1;
+	min-height: 44px;
+	padding: 8px 12px;
+	font-size: 12px;
+	font-weight: 600;
+	border-radius: 8px;
+	border: 1px solid var(--border-surface-border);
+	background: var(--bg-surface-input);
+	color: var(--text-main);
+	cursor: pointer;
+}
+.drawer-json-btn:hover {
+	border-color: var(--accent-cyan);
+	color: var(--accent-cyan);
+}
+
+/* Slide-over drawer + backdrop. */
+#mobile-drawer {
+	transform: translateX(-100%);
+	transition: transform 0.22s ease;
+	border-radius: 0;
+	z-index: 70;
+}
+#mobile-drawer.open {
+	transform: translateX(0);
+	display: flex !important;
+}
+#mobile-drawer-backdrop {
+	background: rgba(0, 0, 0, 0.6);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	transition: opacity 0.22s ease;
+	opacity: 0;
+	z-index: 60;
+}
+#mobile-drawer-backdrop:not(.hidden) {
+	opacity: 1;
+}
+.drawer-section {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding-block: 6px;
+}
+.drawer-section-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-height: 60px;
+	padding-block: 4px;
+}
+.drawer-section-row .drawer-label {
+	flex-shrink: 0;
+	margin-bottom: 0;
+	justify-content: flex-end;
+}
+.drawer-section-row .drawer-host > * {
+	width: auto;
+}
+/* Compact lang/unit segmented controls in the drawer — dark tech dashboard style. */
+.drawer-host > #lang-group,
+.drawer-host > #unit-group {
+	display: inline-flex;
+	align-items: center;
+	height: 32px;
+	padding: 3px;
+	gap: 2px;
+	border-radius: 6px;
+	background: #0b0f17;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	box-sizing: border-box;
+}
+.drawer-host > #lang-group button,
+.drawer-host > #unit-group button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	padding: 0 10px;
+	border: none;
+	background: transparent;
+	color: #717d96;
+	font-size: 0.75rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.15s ease-in-out;
+}
+/* Active indicator: solid cyan accent rectangle. */
+.drawer-host > #lang-group button.bg-gray-200,
+.drawer-host > #unit-group button.bg-gray-200 {
+	background-color: #e2e8f0 !important;
+	color: #002233 !important;
+	border-radius: 4px !important;
+	box-shadow: none;
+}
+/* Idle buttons inside drawer. */
+.drawer-host > #lang-group button.text-gray-400,
+.drawer-host > #unit-group button.text-gray-400 {
+	color: #717d96;
+	background: transparent;
+}
+.drawer-host > #lang-group button.hover\:text-white:hover,
+.drawer-host > #unit-group button.hover\:text-white:hover {
+	color: #e2e8f0;
+}
+/* Light theme track + active override. */
+[data-theme='light'] .drawer-host > #lang-group,
+[data-theme='light'] .drawer-host > #unit-group {
+	background: #e2e8f0;
+	border-color: #cbd5e1;
+}
+[data-theme='light'] .drawer-host > #lang-group button.bg-gray-200,
+[data-theme='light'] .drawer-host > #unit-group button.bg-gray-200 {
+	background-color: #0f172a !important;
+	color: #ffffff !important;
+	box-shadow: none;
+}
+[data-theme='light'] .drawer-host > #lang-group button.text-gray-400,
+[data-theme='light'] .drawer-host > #unit-group button.text-gray-400 {
+	color: #64748b;
+}
+.drawer-label {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-label);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+.drawer-host > * {
+	width: 100%;
+}
+.drawer-host select {
+	width: 100%;
+}
+
+
+/* Override header preset-selector max-width when inside drawer. */
+#mobile-drawer #preset-selector {
+	max-width: none !important;
+}

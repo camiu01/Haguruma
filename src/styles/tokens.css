@@ -1,0 +1,103 @@
+/**
+ * @file tokens.css
+ * @brief Theme tokens for dark, OLED and light themes.
+ */
+body {
+	background-color: var(--bg-page);
+	color: var(--text-main);
+	font-family: 'Inter', system-ui, sans-serif;
+}
+
+:root,
+[data-theme='dark'] {
+	--bg-page: #0f141c;
+	--bg-card: #131924;
+	--bg-input: #161e2b;
+	--bg-surface-input: #0a0e17;
+	--bg-surface-row: #0a0e17;
+	--bg-canvas: #0d121a;
+	--text-main: #e2e8f0;
+	--text-dim: #9ca3af;
+	--text-label: #9ca3af;
+	--text-output: #ffffff;
+	--text-muted: #71717a;
+	--border: #212b3c;
+	--border-input: #212b3c;
+	--border-surface-border: #212b3c;
+	--shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5);
+	--bg-background: var(--bg-page);
+	--bg-surface-card: var(--bg-card);
+	--bg-surface-subtle: var(--bg-input);
+	--accent-red: #ff3b30;
+	--accent-orange: #ff9500;
+	--accent-yellow: #ffd60a;
+	--accent-green: #30d158;
+	--accent-cyan: #00f0ff;
+	--accent-blue: #0a84ff;
+	--accent-purple: #bf5af2;
+	--accent-amber-overlay: rgba(255, 214, 10, 0.12);
+	--accent-red-overlay: rgba(255, 59, 48, 0.12);
+	--accent-cyan-overlay: rgba(0, 240, 255, 0.12);
+}
+
+[data-theme='oled'] {
+	--bg-page: #000000;
+	--bg-card: #070709;
+	--bg-input: #000000;
+	--bg-surface-input: #000000;
+	--bg-surface-row: #000000;
+	--bg-canvas: #000000;
+	--text-main: #f8fafc;
+	--text-dim: #a1a1aa;
+	--text-label: #a1a1aa;
+	--text-output: #ffffff;
+	--text-muted: #71717a;
+	--border: #1a1a22;
+	--border-input: #24242e;
+	--border-surface-border: #24242e;
+	--shadow-card: 0 0 25px -10px rgba(0, 0, 0, 0.9);
+	--bg-background: var(--bg-page);
+	--bg-surface-card: var(--bg-card);
+	--bg-surface-subtle: var(--bg-input);
+	--accent-red: #ff3b30;
+	--accent-orange: #ff9500;
+	--accent-yellow: #ffd60a;
+	--accent-green: #30d158;
+	--accent-cyan: #00f0ff;
+	--accent-blue: #0a84ff;
+	--accent-purple: #bf5af2;
+	--accent-amber-overlay: rgba(255, 214, 10, 0.12);
+	--accent-red-overlay: rgba(255, 59, 48, 0.12);
+	--accent-cyan-overlay: rgba(0, 240, 255, 0.12);
+}
+
+[data-theme='light'] {
+	--bg-page: #f1f5f9;
+	--bg-card: #ffffff;
+	--bg-input: #ffffff;
+	--bg-surface-input: #ffffff;
+	--bg-surface-row: #f8fafc;
+	--bg-canvas: #ffffff;
+	--text-main: #0f172a;
+	--text-dim: #64748b;
+	--text-label: #64748b;
+	--text-output: #0f172a;
+	--text-muted: #64748b;
+	--border: #e2e8f0;
+	--border-input: #cbd5e1;
+	--border-surface-border: #cbd5e1;
+	--shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05);
+	--bg-background: var(--bg-page);
+	--bg-surface-card: var(--bg-card);
+	--bg-surface-subtle: #f8fafc;
+	--accent-red: #dc2626;
+	--accent-orange: #ea580c;
+	--accent-yellow: #ca8a04;
+	--accent-green: #059669;
+	--accent-cyan: #0891b2;
+	--accent-blue: #2563eb;
+	--accent-purple: #7c3aed;
+	--accent-amber-overlay: rgba(217, 119, 6, 0.12);
+	--accent-red-overlay: rgba(220, 38, 38, 0.12);
+	--accent-cyan-overlay: rgba(8, 145, 178, 0.12);
+}
