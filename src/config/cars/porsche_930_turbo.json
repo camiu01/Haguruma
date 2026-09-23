@@ -1,0 +1,37 @@
+{
+  "id": "porsche_930_turbo",
+  "label": "Porsche 911 Turbo 3.3 (930, 1978)",
+  "group": "community",
+  "preset": {
+    "tire": "265/40R16",
+    "fd": 4.22,
+    "redline": 6700,
+    "gears": [
+      2.25,
+      1.3,
+      0.89,
+      0.62
+    ],
+    "reverseRatio": 3.0,
+    "massKg": 1300,
+    "dragCd": 0.4,
+    "frontalAreaM2": 1.77,
+    "powerKw": 224,
+    "peakTorqueRpm": 4000,
+    "peakTorqueNm": 412,
+    "peakPowerRpm": 5500,
+    "runningGear": {
+      "frontWeightDistribution": 0.4,
+      "centerOfGravityHeightMm": 460,
+      "wheelbaseMm": 2272,
+      "trackWidthMm": 1432,
+      "roadFrictionCoefficient": 1.1,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.35,
+      "springRateFrontNmm": 45,
+      "springRateRearNmm": 55,
+      "lateralG": 0
+    }
+  }
+}

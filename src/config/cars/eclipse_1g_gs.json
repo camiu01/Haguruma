@@ -1,0 +1,38 @@
+{
+  "id": "eclipse_1g_gs",
+  "label": "Mitsubishi Eclipse 1G GS (5-Speed, 4.322 FD)",
+  "group": "factory",
+  "preset": {
+    "tire": "195/60R15",
+    "fd": 4.322,
+    "redline": 7000,
+    "gears": [
+      3.363,
+      1.947,
+      1.285,
+      0.939,
+      0.756
+    ],
+    "reverseRatio": 3.083,
+    "massKg": 1270,
+    "dragCd": 0.29,
+    "frontalAreaM2": 1.95,
+    "powerKw": 110,
+    "peakTorqueRpm": 4500,
+    "peakTorqueNm": 180,
+    "peakPowerRpm": 6500,
+    "runningGear": {
+      "frontWeightDistribution": 0.58,
+      "centerOfGravityHeightMm": 500,
+      "wheelbaseMm": 2570,
+      "trackWidthMm": 1460,
+      "roadFrictionCoefficient": 1.1,
+      "drivetrainLayout": "FWD",
+      "differentialType": "open",
+      "differentialBias": 0.25,
+      "springRateFrontNmm": 35,
+      "springRateRearNmm": 32,
+      "lateralG": 0
+    }
+  }
+}

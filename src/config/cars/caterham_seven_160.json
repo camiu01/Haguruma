@@ -1,0 +1,41 @@
+{
+  "id": "caterham_seven_160",
+  "label": "Caterham Seven 160 (Ultra-light Test)",
+  "group": "community",
+  "preset": {
+    "tire": "155/65R14",
+    "fd": 3.909,
+    "redline": 7700,
+    "gears": [
+      3.428,
+      2.108,
+      1.379,
+      1.0,
+      0.757
+    ],
+    "reverseRatio": 3.583,
+    "massKg": 490,
+    "dragCd": 0.62,
+    "frontalAreaM2": 1.3,
+    "powerKw": 59,
+    "peakTorqueRpm": 3400,
+    "peakTorqueNm": 107,
+    "peakPowerRpm": 7000,
+    "runningGear": {
+      "frontWeightDistribution": 0.46,
+      "centerOfGravityHeightMm": 320,
+      "wheelbaseMm": 2225,
+      "trackWidthMm": 1336,
+      "roadFrictionCoefficient": 0.65,
+      "drivetrainLayout": "RWD",
+      "differentialType": "open",
+      "differentialBias": 0.25,
+      "springRateFrontNmm": 24,
+      "springRateRearNmm": 20,
+      "lateralG": 0.15,
+      "liftCoefficient": 0.35,
+      "liftReferenceAreaM2": 1.45,
+      "downforceFrontShare": 0.45
+    }
+  }
+}

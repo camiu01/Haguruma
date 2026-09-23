@@ -1,0 +1,39 @@
+{
+  "id": "viper_rt10",
+  "label": "Dodge Viper RT/10 (1992)",
+  "group": "community",
+  "preset": {
+    "tire": "335/35R17",
+    "fd": 3.07,
+    "redline": 6000,
+    "gears": [
+      2.66,
+      1.78,
+      1.3,
+      1.0,
+      0.74,
+      0.5
+    ],
+    "reverseRatio": 2.9,
+    "massKg": 1490,
+    "dragCd": 0.45,
+    "frontalAreaM2": 1.95,
+    "powerKw": 298,
+    "peakTorqueRpm": 3600,
+    "peakTorqueNm": 630,
+    "peakPowerRpm": 4600,
+    "runningGear": {
+      "frontWeightDistribution": 0.49,
+      "centerOfGravityHeightMm": 460,
+      "wheelbaseMm": 2446,
+      "trackWidthMm": 1530,
+      "roadFrictionCoefficient": 1.15,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.35,
+      "springRateFrontNmm": 38,
+      "springRateRearNmm": 40,
+      "lateralG": 0
+    }
+  }
+}

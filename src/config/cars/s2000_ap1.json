@@ -1,0 +1,39 @@
+{
+  "id": "s2000_ap1",
+  "label": "Honda S2000 AP1 (6-Speed, 4.10 FD)",
+  "group": "factory",
+  "preset": {
+    "tire": "225/50R16",
+    "fd": 4.1,
+    "redline": 9000,
+    "gears": [
+      3.133,
+      2.045,
+      1.481,
+      1.161,
+      0.971,
+      0.811
+    ],
+    "reverseRatio": 2.8,
+    "massKg": 1240,
+    "dragCd": 0.34,
+    "frontalAreaM2": 1.9,
+    "powerKw": 177,
+    "peakTorqueRpm": 6500,
+    "peakTorqueNm": 208,
+    "peakPowerRpm": 8300,
+    "runningGear": {
+      "frontWeightDistribution": 0.5,
+      "centerOfGravityHeightMm": 400,
+      "wheelbaseMm": 2400,
+      "trackWidthMm": 1470,
+      "roadFrictionCoefficient": 1.1,
+      "drivetrainLayout": "RWD",
+      "differentialType": "open",
+      "differentialBias": 0.25,
+      "springRateFrontNmm": 35,
+      "springRateRearNmm": 32,
+      "lateralG": 0
+    }
+  }
+}

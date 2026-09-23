@@ -1,0 +1,41 @@
+{
+  "id": "sierra_rs_cosworth",
+  "label": "Ford Sierra RS Cosworth (Low Grip Test)",
+  "group": "community",
+  "preset": {
+    "tire": "195/60R14",
+    "fd": 3.64,
+    "redline": 6800,
+    "gears": [
+      3.36,
+      1.81,
+      1.26,
+      1.0,
+      0.83
+    ],
+    "reverseRatio": 3.36,
+    "massKg": 1210,
+    "dragCd": 0.34,
+    "frontalAreaM2": 1.9,
+    "powerKw": 150,
+    "peakTorqueRpm": 3500,
+    "peakTorqueNm": 280,
+    "peakPowerRpm": 6000,
+    "runningGear": {
+      "frontWeightDistribution": 0.54,
+      "centerOfGravityHeightMm": 480,
+      "wheelbaseMm": 2608,
+      "trackWidthMm": 1450,
+      "roadFrictionCoefficient": 0.65,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.35,
+      "springRateFrontNmm": 28,
+      "springRateRearNmm": 24,
+      "lateralG": 0.1,
+      "liftCoefficient": 0.18,
+      "liftReferenceAreaM2": 1.95,
+      "downforceFrontShare": 0.5
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "uno_turbo_ie",
+  "label": "Fiat Uno Turbo i.e. (1985)",
+  "group": "community",
+  "preset": {
+    "tire": "175/60R13",
+    "fd": 3.59,
+    "redline": 6500,
+    "gears": [
+      3.91,
+      2.24,
+      1.52,
+      1.16,
+      0.91
+    ],
+    "reverseRatio": 3.91,
+    "massKg": 845,
+    "dragCd": 0.35,
+    "frontalAreaM2": 1.64,
+    "powerKw": 78,
+    "peakTorqueRpm": 3200,
+    "peakTorqueNm": 147,
+    "peakPowerRpm": 5750,
+    "runningGear": {
+      "frontWeightDistribution": 0.61,
+      "centerOfGravityHeightMm": 470,
+      "wheelbaseMm": 2360,
+      "trackWidthMm": 1413,
+      "roadFrictionCoefficient": 1.05,
+      "drivetrainLayout": "FWD",
+      "differentialType": "open",
+      "differentialBias": 0.2,
+      "springRateFrontNmm": 28,
+      "springRateRearNmm": 25,
+      "lateralG": 0
+    }
+  }
+}

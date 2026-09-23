@@ -1,0 +1,41 @@
+{
+  "id": "samurai_sj413",
+  "label": "Suzuki Samurai SJ413 (High CG Test)",
+  "group": "community",
+  "preset": {
+    "tire": "195/80R15",
+    "fd": 3.727,
+    "redline": 6000,
+    "gears": [
+      3.652,
+      1.947,
+      1.423,
+      1.0,
+      0.795
+    ],
+    "reverseRatio": 3.466,
+    "massKg": 930,
+    "dragCd": 0.48,
+    "frontalAreaM2": 2.1,
+    "powerKw": 47,
+    "peakTorqueRpm": 3500,
+    "peakTorqueNm": 100,
+    "peakPowerRpm": 6000,
+    "runningGear": {
+      "frontWeightDistribution": 0.51,
+      "centerOfGravityHeightMm": 620,
+      "wheelbaseMm": 2030,
+      "trackWidthMm": 1300,
+      "roadFrictionCoefficient": 0.5,
+      "drivetrainLayout": "RWD",
+      "differentialType": "open",
+      "differentialBias": 0.25,
+      "springRateFrontNmm": 18,
+      "springRateRearNmm": 20,
+      "lateralG": 0.05,
+      "liftCoefficient": 0.3,
+      "liftReferenceAreaM2": 2.15,
+      "downforceFrontShare": 0.5
+    }
+  }
+}

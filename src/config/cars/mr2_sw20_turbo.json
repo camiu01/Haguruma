@@ -1,0 +1,41 @@
+{
+  "id": "mr2_sw20_turbo",
+  "label": "Toyota MR2 Turbo SW20 (Mid-Engine Grip Test)",
+  "group": "community",
+  "preset": {
+    "tire": "225/50R15",
+    "fd": 4.285,
+    "redline": 7200,
+    "gears": [
+      3.23,
+      1.913,
+      1.258,
+      0.918,
+      0.731
+    ],
+    "reverseRatio": 3.545,
+    "massKg": 1260,
+    "dragCd": 0.31,
+    "frontalAreaM2": 1.82,
+    "powerKw": 165,
+    "peakTorqueRpm": 3200,
+    "peakTorqueNm": 304,
+    "peakPowerRpm": 6000,
+    "runningGear": {
+      "frontWeightDistribution": 0.42,
+      "centerOfGravityHeightMm": 440,
+      "wheelbaseMm": 2400,
+      "trackWidthMm": 1475,
+      "roadFrictionCoefficient": 0.68,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.35,
+      "springRateFrontNmm": 28,
+      "springRateRearNmm": 42,
+      "lateralG": 0.2,
+      "liftCoefficient": 0.14,
+      "liftReferenceAreaM2": 1.85,
+      "downforceFrontShare": 0.4
+    }
+  }
+}

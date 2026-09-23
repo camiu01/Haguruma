@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { presets } from '../src/config/presets';
 import { parseTire } from '../src/core/math/tire-math';
-import catalog from '../src/config/car-catalog.json';
+import { catalogEntries as catalog } from '../src/config/car-catalog';
 
 describe('presets', () => {
 	it('exposes eighteen catalog vehicles', () => {

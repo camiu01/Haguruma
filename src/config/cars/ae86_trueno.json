@@ -1,0 +1,38 @@
+{
+  "id": "ae86_trueno",
+  "label": "Toyota AE86 Sprinter Trueno (1983)",
+  "group": "community",
+  "preset": {
+    "tire": "185/60R14",
+    "fd": 4.3,
+    "redline": 7600,
+    "gears": [
+      3.587,
+      2.022,
+      1.384,
+      1.0,
+      0.861
+    ],
+    "reverseRatio": 3.56,
+    "massKg": 950,
+    "dragCd": 0.38,
+    "frontalAreaM2": 1.75,
+    "powerKw": 95,
+    "peakTorqueRpm": 5200,
+    "peakTorqueNm": 149,
+    "peakPowerRpm": 6600,
+    "runningGear": {
+      "frontWeightDistribution": 0.53,
+      "centerOfGravityHeightMm": 450,
+      "wheelbaseMm": 2400,
+      "trackWidthMm": 1345,
+      "roadFrictionCoefficient": 1.05,
+      "drivetrainLayout": "RWD",
+      "differentialType": "open",
+      "differentialBias": 0.25,
+      "springRateFrontNmm": 26,
+      "springRateRearNmm": 23,
+      "lateralG": 0
+    }
+  }
+}

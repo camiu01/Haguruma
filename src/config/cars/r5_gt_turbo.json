@@ -1,0 +1,41 @@
+{
+  "id": "r5_gt_turbo",
+  "label": "Renault 5 GT Turbo (Turbo-Lag Slip Test)",
+  "group": "community",
+  "preset": {
+    "tire": "175/60R13",
+    "fd": 3.733,
+    "redline": 6500,
+    "gears": [
+      3.09,
+      1.842,
+      1.32,
+      0.967,
+      0.757
+    ],
+    "reverseRatio": 3.727,
+    "massKg": 850,
+    "dragCd": 0.35,
+    "frontalAreaM2": 1.7,
+    "powerKw": 88,
+    "peakTorqueRpm": 3750,
+    "peakTorqueNm": 165,
+    "peakPowerRpm": 5750,
+    "runningGear": {
+      "frontWeightDistribution": 0.64,
+      "centerOfGravityHeightMm": 465,
+      "wheelbaseMm": 2407,
+      "trackWidthMm": 1333,
+      "roadFrictionCoefficient": 0.65,
+      "drivetrainLayout": "FWD",
+      "differentialType": "open",
+      "differentialBias": 0.2,
+      "springRateFrontNmm": 22,
+      "springRateRearNmm": 19,
+      "lateralG": 0.08,
+      "liftCoefficient": 0.24,
+      "liftReferenceAreaM2": 1.75,
+      "downforceFrontShare": 0.62
+    }
+  }
+}

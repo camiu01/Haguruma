@@ -1,0 +1,39 @@
+{
+  "id": "e46_m3",
+  "label": "BMW M3 E46 (6-Speed, 3.62 FD)",
+  "group": "factory",
+  "preset": {
+    "tire": "255/40R18",
+    "fd": 3.62,
+    "redline": 8000,
+    "gears": [
+      4.23,
+      2.53,
+      1.67,
+      1.23,
+      1.0,
+      0.83
+    ],
+    "reverseRatio": 3.75,
+    "massKg": 1495,
+    "dragCd": 0.32,
+    "frontalAreaM2": 2.05,
+    "powerKw": 252,
+    "peakTorqueRpm": 4900,
+    "peakTorqueNm": 365,
+    "peakPowerRpm": 7900,
+    "runningGear": {
+      "frontWeightDistribution": 0.51,
+      "centerOfGravityHeightMm": 460,
+      "wheelbaseMm": 2730,
+      "trackWidthMm": 1500,
+      "roadFrictionCoefficient": 1.1,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.35,
+      "springRateFrontNmm": 35,
+      "springRateRearNmm": 32,
+      "lateralG": 0
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "rx7_fb_12a",
+  "label": "Mazda RX-7 FB 12A (Live Axle Test)",
+  "group": "community",
+  "preset": {
+    "tire": "185/70R13",
+    "fd": 3.909,
+    "redline": 7000,
+    "gears": [
+      3.674,
+      2.217,
+      1.432,
+      1.0,
+      0.825
+    ],
+    "reverseRatio": 3.542,
+    "massKg": 1020,
+    "dragCd": 0.34,
+    "frontalAreaM2": 1.68,
+    "powerKw": 85,
+    "peakTorqueRpm": 4000,
+    "peakTorqueNm": 152,
+    "peakPowerRpm": 6000,
+    "runningGear": {
+      "frontWeightDistribution": 0.51,
+      "centerOfGravityHeightMm": 440,
+      "wheelbaseMm": 2420,
+      "trackWidthMm": 1420,
+      "roadFrictionCoefficient": 0.68,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.3,
+      "springRateFrontNmm": 22,
+      "springRateRearNmm": 19,
+      "lateralG": 0.1,
+      "liftCoefficient": 0.16,
+      "liftReferenceAreaM2": 1.7,
+      "downforceFrontShare": 0.5
+    }
+  }
+}

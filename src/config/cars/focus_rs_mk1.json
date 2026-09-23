@@ -1,0 +1,38 @@
+{
+  "id": "focus_rs_mk1",
+  "label": "Ford Focus RS Mk1 (2002)",
+  "group": "community",
+  "preset": {
+    "tire": "215/40R18",
+    "fd": 3.82,
+    "redline": 7000,
+    "gears": [
+      3.67,
+      2.14,
+      1.45,
+      1.03,
+      0.77
+    ],
+    "reverseRatio": 3.56,
+    "massKg": 1280,
+    "dragCd": 0.36,
+    "frontalAreaM2": 2.06,
+    "powerKw": 160,
+    "peakTorqueRpm": 3500,
+    "peakTorqueNm": 310,
+    "peakPowerRpm": 5500,
+    "runningGear": {
+      "frontWeightDistribution": 0.61,
+      "centerOfGravityHeightMm": 470,
+      "wheelbaseMm": 2615,
+      "trackWidthMm": 1490,
+      "roadFrictionCoefficient": 1.15,
+      "drivetrainLayout": "FWD",
+      "differentialType": "torsen",
+      "differentialBias": 0.25,
+      "springRateFrontNmm": 32,
+      "springRateRearNmm": 28,
+      "lateralG": 0
+    }
+  }
+}

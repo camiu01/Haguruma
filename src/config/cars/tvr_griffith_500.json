@@ -1,0 +1,41 @@
+{
+  "id": "tvr_griffith_500",
+  "label": "TVR Griffith 500 (Torque Test)",
+  "group": "community",
+  "preset": {
+    "tire": "225/50R15",
+    "fd": 3.31,
+    "redline": 6250,
+    "gears": [
+      2.95,
+      1.95,
+      1.34,
+      1.0,
+      0.73
+    ],
+    "reverseRatio": 2.76,
+    "massKg": 1060,
+    "dragCd": 0.37,
+    "frontalAreaM2": 1.72,
+    "powerKw": 254,
+    "peakTorqueRpm": 4000,
+    "peakTorqueNm": 430,
+    "peakPowerRpm": 5500,
+    "runningGear": {
+      "frontWeightDistribution": 0.5,
+      "centerOfGravityHeightMm": 420,
+      "wheelbaseMm": 2286,
+      "trackWidthMm": 1460,
+      "roadFrictionCoefficient": 0.8,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.4,
+      "springRateFrontNmm": 38,
+      "springRateRearNmm": 42,
+      "lateralG": 0.12,
+      "liftCoefficient": 0.15,
+      "liftReferenceAreaM2": 1.78,
+      "downforceFrontShare": 0.48
+    }
+  }
+}

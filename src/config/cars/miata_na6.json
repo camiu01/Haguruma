@@ -1,0 +1,38 @@
+{
+  "id": "miata_na6",
+  "label": "Mazda Miata NA (5-Speed, 4.30 FD)",
+  "group": "factory",
+  "preset": {
+    "tire": "185/60R14",
+    "fd": 4.3,
+    "redline": 7200,
+    "gears": [
+      3.136,
+      1.888,
+      1.33,
+      1.0,
+      0.814
+    ],
+    "reverseRatio": 3.758,
+    "massKg": 960,
+    "dragCd": 0.38,
+    "frontalAreaM2": 1.7,
+    "powerKw": 85,
+    "peakTorqueRpm": 4500,
+    "peakTorqueNm": 140,
+    "peakPowerRpm": 6600,
+    "runningGear": {
+      "frontWeightDistribution": 0.52,
+      "centerOfGravityHeightMm": 420,
+      "wheelbaseMm": 2265,
+      "trackWidthMm": 1400,
+      "roadFrictionCoefficient": 1.1,
+      "drivetrainLayout": "RWD",
+      "differentialType": "open",
+      "differentialBias": 0.25,
+      "springRateFrontNmm": 35,
+      "springRateRearNmm": 32,
+      "lateralG": 0
+    }
+  }
+}

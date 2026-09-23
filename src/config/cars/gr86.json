@@ -1,0 +1,39 @@
+{
+  "id": "gr86",
+  "label": "Toyota GR86 / BRZ (6-Speed, 4.10 FD)",
+  "group": "factory",
+  "preset": {
+    "tire": "215/40R18",
+    "fd": 4.1,
+    "redline": 7500,
+    "gears": [
+      3.626,
+      2.188,
+      1.541,
+      1.213,
+      1.0,
+      0.767
+    ],
+    "reverseRatio": 3.438,
+    "massKg": 1270,
+    "dragCd": 0.27,
+    "frontalAreaM2": 1.95,
+    "powerKw": 168,
+    "peakTorqueRpm": 3700,
+    "peakTorqueNm": 250,
+    "peakPowerRpm": 7000,
+    "runningGear": {
+      "frontWeightDistribution": 0.53,
+      "centerOfGravityHeightMm": 430,
+      "wheelbaseMm": 2575,
+      "trackWidthMm": 1520,
+      "roadFrictionCoefficient": 1.1,
+      "drivetrainLayout": "RWD",
+      "differentialType": "torsen",
+      "differentialBias": 0.25,
+      "springRateFrontNmm": 35,
+      "springRateRearNmm": 32,
+      "lateralG": 0
+    }
+  }
+}

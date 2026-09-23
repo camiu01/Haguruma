@@ -1,0 +1,39 @@
+{
+  "id": "porsche_gt3",
+  "label": "Porsche 911 GT3 991 (6-Speed, 3.97 FD)",
+  "group": "factory",
+  "preset": {
+    "tire": "305/30R20",
+    "fd": 3.97,
+    "redline": 9000,
+    "gears": [
+      3.75,
+      2.38,
+      1.72,
+      1.34,
+      1.11,
+      0.96
+    ],
+    "reverseRatio": 3.42,
+    "massKg": 1430,
+    "dragCd": 0.33,
+    "frontalAreaM2": 2.0,
+    "powerKw": 349,
+    "peakTorqueRpm": 6250,
+    "peakTorqueNm": 470,
+    "peakPowerRpm": 8500,
+    "runningGear": {
+      "frontWeightDistribution": 0.4,
+      "centerOfGravityHeightMm": 380,
+      "wheelbaseMm": 2450,
+      "trackWidthMm": 1550,
+      "roadFrictionCoefficient": 1.1,
+      "drivetrainLayout": "RWD",
+      "differentialType": "torsen",
+      "differentialBias": 0.25,
+      "springRateFrontNmm": 60,
+      "springRateRearNmm": 65,
+      "lateralG": 0
+    }
+  }
+}
