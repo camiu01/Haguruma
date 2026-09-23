@@ -1,6 +1,9 @@
 import { state } from '../../core/state/app-state';
 import { effectiveCircumferenceM, parseTire } from '../../core/math/tire-math';
-import { calculateRpm } from '../../core/math/speed-math';
+import { calculateRpm, fromDisplaySpeed } from '../../core/math/speed-math';
+import { dynamicRadiusM, tractiveForceAt, validateCurve } from '../../core/math/traction-math';
+import { maxDriveForceAtSpeed } from '../../core/math/dynamics-math';
+import { defaultRunningGear } from '../../core/state/app-state';
 import { getMaxRpm } from '../../core/units/unit-utils';
 import { getGearColor } from '../../config/gear-colors';
 import { t } from '../../core/i18n/language';
@@ -90,6 +93,7 @@ const renderTooltip = (
 	if (state.compareEnabled) {
 		content += buildCompareSection(speed);
 	}
+	content += buildGripSection(speed, circM);
 	refs.tooltip.innerHTML = content;
 	refs.tooltip.style.left = `${mouseX}px`;
 	refs.tooltip.style.top = `${mouseY}px`;
@@ -108,6 +112,41 @@ const buildRow = (idx: number, rpmAtSpeed: number, isCompare: boolean): string =
 	const cls = isOver ? 'text-rose-400 font-bold' : 'text-gray-200';
 	const over = isOver ? t('tooltip.over') : '';
 	return `<div class='flex justify-between items-center gap-3 text-[10px]'><span style='color: ${color}'>${t('gear.prefix')} ${idx + 1}${suffix}:</span><span class='${cls}'>${Math.round(rpmAtSpeed)} RPM ${over}</span></div>`;
+};
+
+/**
+ * Build the grip-limit section for the hovered speed.
+ * @brief Compare 1st reachable gear force against the friction limit.
+ * @param speed Hovered speed in display units.
+ * @param circM Primary rolling circumference in metres.
+ * @return HTML fragment, empty when inputs are invalid.
+ */
+const buildGripSection = (speed: number, circM: number): string => {
+	const rg = state.runningGear ?? defaultRunningGear;
+	const curve = validateCurve({
+		redline: state.primaryRedline,
+		peakTorqueRpm: state.peakTorqueRpm,
+		peakTorqueNm: state.peakTorqueNm,
+		peakPowerRpm: state.peakPowerRpm,
+		peakPowerKw: state.enginePowerKw,
+	});
+	if (!curve || state.gears.length === 0) {
+		return '';
+	}
+	const radius = dynamicRadiusM(circM);
+	const speedKmh = fromDisplaySpeed(speed, state.unit);
+	let engineForce = 0;
+	for (const gear of state.gears) {
+		const rpm = calculateRpm(speed, gear, state.primaryFd, circM, state.unit);
+		if (rpm > 0 && rpm <= state.primaryRedline + 400) {
+			engineForce = tractiveForceAt(rpm, gear, state.primaryFd, radius, curve, state.drivetrainEff);
+			break;
+		}
+	}
+	const grip = maxDriveForceAtSpeed(rg, state.vehicleMassKg, speedKmh, engineForce, 0);
+	const cls = grip.isSpin ? 'text-rose-400 font-bold' : 'text-emerald-300';
+	const label = grip.isSpin ? 'Wheelspin' : 'Grip';
+	return `<div class='flex justify-between items-center gap-3 text-[10px] mt-1 border-t border-gray-700 pt-1'><span class='text-amber-300'>GRIP ${Math.round(grip.limitN)} N · ${Math.round(grip.perWheelN)}/wheel</span><span class='${cls}'>${label}</span></div>`;
 };
 
 /**

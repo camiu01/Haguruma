@@ -58,4 +58,18 @@ describe('presets', () => {
 		expect(eclipse.dragCd).toBeCloseTo(0.29, 2);
 		expect(eclipse.frontalAreaM2).toBeCloseTo(1.95, 2);
 	});
+	it('ships a valid runningGear on every preset', () => {
+		const layouts = ['FWD', 'RWD', 'AWD'];
+		const diffs = ['open', 'torsen', 'clutch_lsd', 'spool'];
+		for (const key of Object.keys(presets)) {
+			const rg = presets[key].runningGear;
+			expect(rg).toBeDefined();
+			expect(rg?.frontWeightDistribution).toBeGreaterThanOrEqual(0.4);
+			expect(rg?.frontWeightDistribution).toBeLessThanOrEqual(0.7);
+			expect(rg?.roadFrictionCoefficient).toBeGreaterThanOrEqual(1.0);
+			expect(rg?.roadFrictionCoefficient).toBeLessThanOrEqual(1.3);
+			expect(layouts).toContain(rg?.drivetrainLayout);
+			expect(diffs).toContain(rg?.differentialType);
+		}
+	});
 });

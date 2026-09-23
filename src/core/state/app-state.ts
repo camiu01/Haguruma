@@ -2,7 +2,29 @@
  * @file app-state.ts
  * @brief Default state and mutable singleton store.
  */
-import type { AppState } from '../models';
+import type { AppState, RunningGear } from '../models';
+
+/**
+ * Default chassis and running-gear parameters.
+ * @brief Factory baseline for load-transfer physics.
+ * @returns Default RunningGear value.
+ */
+export const defaultRunningGear: RunningGear = {
+	frontWeightDistribution: 0.52,
+	centerOfGravityHeightMm: 450,
+	wheelbaseMm: 2570,
+	trackWidthMm: 1480,
+	roadFrictionCoefficient: 1.10,
+	drivetrainLayout: 'FWD',
+	differentialType: 'open',
+	differentialBias: 0.25,
+	springRateFrontNmm: 35,
+	springRateRearNmm: 32,
+	lateralG: 0,
+	liftCoefficient: 0.15,
+	liftReferenceAreaM2: 2.0,
+	downforceFrontShare: 0.52,
+};
 
 /**
  * Default application state.
@@ -41,10 +63,18 @@ export const defaultState: AppState = {
 	peakTorqueRpm: 4500,
 	peakTorqueNm: 180,
 	peakPowerRpm: 6500,
+	runningGear: { ...defaultRunningGear },
+	compRunningGear: { ...defaultRunningGear },
 };
 
 /**
  * Mutable singleton store shared by all renderers.
  * @purpose Avoid prop drilling in this small vanilla-TS app.
  */
-export const state: AppState = { ...defaultState, gears: [...defaultState.gears], compGears: [...defaultState.compGears] };
+export const state: AppState = {
+	...defaultState,
+	gears: [...defaultState.gears],
+	compGears: [...defaultState.compGears],
+	runningGear: { ...defaultRunningGear },
+	compRunningGear: { ...defaultRunningGear },
+};

@@ -3,6 +3,7 @@
  * @brief User-defined car presets persisted in localStorage.
  */
 import type { GearPreset } from '../models';
+import { defaultRunningGear } from '../state/app-state';
 
 const STORAGE_KEY = 'haguruma-custom-presets';
 
@@ -51,7 +52,7 @@ export const slugify = (name: string): string => {
  * @param value Unknown parsed JSON value.
  * @return True when the value looks like a GearPreset.
  */
-const isPreset = (value: unknown): value is GearPreset => {
+export const isPreset = (value: unknown): value is GearPreset => {
 	if (typeof value !== 'object' || value === null) {
 		return false;
 	}
@@ -84,7 +85,7 @@ export const loadCustomPresets = (): Record<string, GearPreset> => {
 		for (const name of Object.keys(parsed)) {
 			const candidate = parsed[name];
 			if (isPreset(candidate)) {
-				out[name] = candidate;
+				out[name] = candidate.runningGear ? candidate : { ...candidate, runningGear: { ...defaultRunningGear } };
 			}
 		}
 		return out;

@@ -9,6 +9,7 @@ import { formatCompGears, parseCompGears } from '../../core/compare/compare-util
 import type { GearPreset } from '../../core/models';
 import type { ElementRefs } from '../dom/element-refs';
 import { addGear } from '../../components/gear-list';
+import { bindCompGearGrid, syncCompGearCells } from './comp-gear-grid';
 
 /**
  * Bind comparison toggle and secondary inputs.
@@ -17,6 +18,7 @@ import { addGear } from '../../components/gear-list';
  * @param render Full refresh callback.
  */
 export const bindComparisonEvents = (refs: ElementRefs, render: () => void): void => {
+	bindCompGearGrid(refs);
 	refs.comparisonToggle.addEventListener('change', (e) => {
 		state.compareEnabled = (e.target as HTMLInputElement).checked;
 		applyComparisonVisibility(refs);
@@ -126,6 +128,7 @@ export const syncComparisonInputs = (refs: ElementRefs): void => {
 	refs.compTire.value = state.compTire;
 	refs.compFd.value = String(state.compFd);
 	refs.compGears.value = formatCompGears(state.compGears);
+	syncCompGearCells(refs);
 	refs.compRedline.value = String(state.compRedline);
 	refs.compMass.value = String(state.compMassKg);
 	refs.compCd.value = String(state.compCd);
@@ -182,9 +185,11 @@ const copyPrimaryToCompare = (refs: ElementRefs, render: () => void): void => {
 	state.compPeakTorqueRpm = state.peakTorqueRpm;
 	state.compPeakTorqueNm = state.peakTorqueNm;
 	state.compPeakPowerRpm = state.peakPowerRpm;
+	state.compRunningGear = { ...state.runningGear };
 	refs.compTire.value = state.compTire;
 	refs.compFd.value = String(state.compFd);
 	refs.compGears.value = formatCompGears(state.compGears);
+	syncCompGearCells(refs);
 	refs.compRedline.value = String(state.compRedline);
 	refs.compMass.value = String(state.compMassKg);
 	refs.compCd.value = String(state.compCd);
@@ -247,9 +252,13 @@ export const applyCompPresetData = (refs: ElementRefs, preset: GearPreset, rende
 	if (preset.peakPowerRpm !== undefined) {
 		state.compPeakPowerRpm = preset.peakPowerRpm;
 	}
+	if (preset.runningGear !== undefined) {
+		state.compRunningGear = { ...preset.runningGear };
+	}
 	refs.compTire.value = preset.tire;
 	refs.compFd.value = String(preset.fd);
 	refs.compGears.value = formatCompGears(preset.gears);
+	syncCompGearCells(refs);
 	refs.compRedline.value = String(preset.redline);
 	refs.compMass.value = preset.massKg !== undefined ? String(preset.massKg) : String(state.compMassKg);
 	refs.compCd.value = preset.dragCd !== undefined ? String(preset.dragCd) : String(state.compCd);

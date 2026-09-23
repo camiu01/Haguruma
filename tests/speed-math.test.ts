@@ -3,7 +3,7 @@
  * @brief Unit tests for RPM to speed conversions.
  */
 import { describe, expect, it } from 'vitest';
-import { calculateRpm, calculateSpeed } from '../src/core/math/speed-math';
+import { calculateRpm, calculateSpeed, MPH_PER_KMH } from '../src/core/math/speed-math';
 import { parseTire } from '../src/core/math/tire-math';
 
 describe('speed-math', () => {
@@ -17,7 +17,7 @@ describe('speed-math', () => {
 		const circM = 1.985;
 		const kmh = calculateSpeed(5000, 1.0, 4.1, circM, 'kmh');
 		const mph = calculateSpeed(5000, 1.0, 4.1, circM, 'mph');
-		expect(mph).toBeCloseTo(kmh * 0.621371, 5);
+		expect(mph).toBeCloseTo(kmh * MPH_PER_KMH, 8);
 	});
 	it('returns zero for invalid ratio', () => {
 		expect(calculateSpeed(5000, 0, 4.1, 2.0, 'kmh')).toBe(0);

@@ -12,13 +12,16 @@ let lastFocused: HTMLElement | null = null;
 let homes: { el: HTMLElement; parent: HTMLElement; next: ChildNode | null }[] = [];
 
 /**
- * Wire the mobile drawer open/close interactions.
- * @brief Controls relocate into drawer hosts below 768px, restore on close.
+ * Wire the mobile drawer open/close interactions and navigation data-view buttons.
+ * @brief Controls relocate into drawer hosts; nav buttons scroll to sections.
  * @param refs Cached DOM handles.
  * @return void
  */
 export const bindDrawerEvents = (refs: ElementRefs): void => {
 	refs.btnMenu.addEventListener('click', () => {
+		if (!isMobileViewport()) {
+			return;
+		}
 		if (isOpen(refs)) {
 			closeDrawer(refs);
 		} else {
@@ -37,6 +40,7 @@ export const bindDrawerEvents = (refs: ElementRefs): void => {
 			closeDrawer(refs);
 		}
 	});
+	bindNavViewButtons(refs);
 };
 
 /**
@@ -91,19 +95,17 @@ const moveInto = (el: HTMLElement, host: HTMLElement): void => {
 
 /**
  * Relocate header controls into the drawer hosts.
- * @brief Language, unit, theme and preset groups share the slide-over.
+ * @brief Language, unit and preset groups share the slide-over.
  * @param refs Cached DOM handles.
  * @return void
  */
 const relocateIntoDrawer = (refs: ElementRefs): void => {
 	showInDrawer(refs.langGroup);
 	showInDrawer(refs.unitGroup);
-	refs.themeToggle.classList.remove('hidden');
 	refs.presetSelector.classList.remove('hidden');
 	refs.presetSelector.classList.add('block', 'w-full');
 	moveInto(refs.langGroup, refs.drawerLangHost);
 	moveInto(refs.unitGroup, refs.drawerUnitHost);
-	moveInto(refs.themeToggle, refs.drawerThemeHost);
 	moveInto(refs.presetSelector, refs.drawerPresetHost);
 };
 
@@ -131,7 +133,6 @@ const restoreHomes = (refs: ElementRefs): void => {
 	homes = [];
 	hideInHeader(refs.langGroup);
 	hideInHeader(refs.unitGroup);
-	refs.themeToggle.classList.add('hidden');
 	refs.presetSelector.classList.add('hidden');
 	refs.presetSelector.classList.remove('block', 'w-full');
 };
@@ -160,6 +161,38 @@ const syncMenuButton = (refs: ElementRefs, open: boolean): void => {
 	refs.btnMenu.setAttribute('aria-label', label);
 	refs.btnMenu.title = label;
 	refs.btnMenu.setAttribute('data-tip', label);
+};
+
+/**
+ * Data-view button handler — scrolls to the matching section, closes drawer on mobile.
+ * @brief Matches data-view values to section selectors for smooth scrolling.
+ * @param refs Cached DOM handles.
+ * @return void
+ */
+const bindNavViewButtons = (refs: ElementRefs): void => {
+	const targets: Record<string, string> = {
+		dashboard: '[data-accordion="primary"]',
+		gears: '[data-accordion="gears"]',
+		engine: '[data-accordion="engine"]',
+		aero: '[data-accordion="road"]',
+		compare: '[data-accordion="compare"]',
+		dynamics: '#running-gear-accordion',
+	};
+	document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const view = btn.dataset.view;
+			if (!view || !targets[view]) {
+				return;
+			}
+			const el = document.querySelector(targets[view]) as HTMLElement | null;
+			if (el) {
+				el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+			if (isMobileViewport() && isOpen(refs)) {
+				closeDrawer(refs);
+			}
+		});
+	});
 };
 
 /**

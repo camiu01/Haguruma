@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { applySharedState, decodeState, encodeState } from '../src/core/share/share-utils';
 import { defaultState, state } from '../src/core/state/app-state';
+import { defaultRunningGear } from '../src/core/state/app-state';
 
 describe('encodeState/decodeState', () => {
 	it('roundtrips primary and compare setups', () => {
@@ -39,6 +40,19 @@ describe('encodeState/decodeState', () => {
 	it('returns empty patch for empty hash', () => {
 		expect(decodeState('')).toEqual({});
 		expect(decodeState('#')).toEqual({});
+	});
+	it('roundtrips running-gear keys', () => {
+		const hash = encodeState({ ...defaultState, runningGear: { ...defaultRunningGear, frontWeightDistribution: 0.58, roadFrictionCoefficient: 1.1 } });
+		const patch = decodeState(`#${hash}`);
+		expect(patch.runningGear?.frontWeightDistribution).toBeCloseTo(0.58, 2);
+		expect(patch.runningGear?.roadFrictionCoefficient).toBeCloseTo(1.1, 2);
+		expect(patch.compRunningGear?.roadFrictionCoefficient).toBeCloseTo(1.1, 2);
+	});
+	it('decodes old hashes without running-gear keys', () => {
+		const patch = decodeState('#tire=205%2F55R16&fd=4.1&rl=7200');
+		expect(patch.primaryFd).toBe(4.1);
+		expect(patch.runningGear).toBeUndefined();
+		expect(patch.compRunningGear).toBeUndefined();
 	});
 });
 

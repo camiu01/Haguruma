@@ -18,7 +18,6 @@ export interface ElementRefs {
 	mobileDrawerClose: HTMLButtonElement;
 	drawerLangHost: HTMLElement;
 	drawerUnitHost: HTMLElement;
-	drawerThemeHost: HTMLElement;
 	drawerPresetHost: HTMLElement;
 	langGroup: HTMLElement;
 	unitGroup: HTMLElement;
@@ -92,6 +91,18 @@ export interface ElementRefs {
 	myCarsModal: HTMLElement;
 	myCarsModalBackdrop: HTMLElement;
 	myCarsModalClose: HTMLButtonElement;
+	rgLayout: HTMLSelectElement;
+	rgDiff: HTMLSelectElement;
+	rgBias: HTMLInputElement;
+	rgWeight: HTMLInputElement;
+	rgCog: HTMLInputElement;
+	rgWheelbase: HTMLInputElement;
+	rgTrack: HTMLInputElement;
+	rgSpringF: HTMLInputElement;
+	rgSpringR: HTMLInputElement;
+	rgLatg: HTMLInputElement;
+	rgLatgVal: HTMLElement;
+	rgAccordion: HTMLElement;
 }
 
 /**
@@ -129,7 +140,6 @@ export const getElementRefs = (): ElementRefs => {
 		mobileDrawerClose: get<HTMLButtonElement>('mobile-drawer-close'),
 		drawerLangHost: get<HTMLElement>('drawer-lang-host'),
 		drawerUnitHost: get<HTMLElement>('drawer-unit-host'),
-		drawerThemeHost: get<HTMLElement>('drawer-theme-host'),
 		drawerPresetHost: get<HTMLElement>('drawer-preset-host'),
 		langGroup: get<HTMLElement>('lang-group'),
 		unitGroup: get<HTMLElement>('unit-group'),
@@ -203,5 +213,17 @@ export const getElementRefs = (): ElementRefs => {
 		myCarsModal: get<HTMLElement>('mycars-modal'),
 		myCarsModalBackdrop: get<HTMLElement>('mycars-modal-backdrop'),
 		myCarsModalClose: get<HTMLButtonElement>('mycars-modal-close'),
+		rgLayout: get<HTMLSelectElement>('rg-layout'),
+		rgDiff: get<HTMLSelectElement>('rg-diff'),
+		rgBias: get<HTMLInputElement>('rg-bias'),
+		rgWeight: get<HTMLInputElement>('rg-weight'),
+		rgCog: get<HTMLInputElement>('rg-cog'),
+		rgWheelbase: get<HTMLInputElement>('rg-wheelbase'),
+		rgTrack: get<HTMLInputElement>('rg-track'),
+		rgSpringF: get<HTMLInputElement>('rg-spring-f'),
+		rgSpringR: get<HTMLInputElement>('rg-spring-r'),
+		rgLatg: get<HTMLInputElement>('rg-latg'),
+		rgLatgVal: get<HTMLElement>('rg-latg-val'),
+		rgAccordion: get<HTMLElement>('running-gear-accordion'),
 	};
 };

@@ -5,6 +5,7 @@ import { bindPresetEvents } from './preset-events';import { bindPrimaryEvents } 
 import { bindComparisonEvents, bindGearActions } from './comparison-events';
 import { bindRoadLoadEvents } from './road-load-events';
 import { bindEngineEvents } from './engine-events';
+import { bindRunningGearEvents } from './running-gear-events';
 import { bindShareEvents } from './share-events';
 import { bindThemeEvents } from './theme-events';
 import { bindCustomCar } from '../../components/custom-car';
@@ -13,6 +14,7 @@ import { bindDrawerEvents } from './mobile-drawer-events';
 import { bindViewportEvents } from './viewport-events';
 import { bindAccordionEvents } from './accordion-events';
 import { bindMyCarsModalEvents } from './mycars-modal-events';
+import { bindDrawerUtilsEvents } from './drawer-utils-events';
 
 /**
  * Wire every UI interaction exactly once.
@@ -28,13 +30,15 @@ export const bindAllEvents = (refs: ElementRefs, render: () => void): void => {
 	bindComparisonEvents(refs, render);
 	bindRoadLoadEvents(refs, render);
 	bindEngineEvents(refs, render);
+	bindRunningGearEvents(refs, render);
 	bindShareEvents(refs);
 	bindThemeEvents(refs, render);
 	bindCustomCar(refs, render);
 	bindGearActions(refs, render);
 	bindCanvasEvents(refs);
 	bindDrawerEvents(refs);
-	bindViewportEvents(refs);
+	bindViewportEvents(refs, render);
 	bindAccordionEvents(refs);
 	bindMyCarsModalEvents(refs);
+	bindDrawerUtilsEvents(refs, render);
 };

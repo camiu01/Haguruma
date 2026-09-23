@@ -49,10 +49,11 @@ const buildGearRow = (
 	onChange: (redrawInputs: boolean) => void,
 ): HTMLElement => {
 	const color = getGearColor(idx);
+	const glowClass = `gear-glow-${(idx % 8) + 1}`;
 	const row = document.createElement('div');
-	row.className = 'flex items-center gap-2 bg-gauge/80 border border-gray-800 px-3 py-1.5 rounded-lg';
+	row.className = 'flex items-center gap-2 bg-surface-row border border-surface-border hover:border-input px-2 py-1.5 rounded-lg transition-colors';
 	const removable = state.gears.length > 1 ? buildRemoveButton(idx) : '';
-	row.innerHTML = `<span class='w-2.5 h-2.5 rounded-full flex-shrink-0' style='background-color: ${color}'></span><span class='gear-label text-xs font-semibold text-gray-300 font-mono'>${t('gear.prefix')} ${idx + 1}</span><div class='flex-1 min-w-0 flex items-center gap-1.5'><input type='number' inputmode='decimal' step='0.01' min='0.4' max='6.0' value='${ratio}' data-index='${idx}' class='gear-input w-full min-w-0 bg-carbon border border-gray-700/60 rounded px-2 py-2.5 text-sm text-white font-mono focus:border-gray-400 outline-none' /><span class='text-[10px] text-gray-500 flex-shrink-0'>:1</span></div>${removable}`;
+	row.innerHTML = `<span class='w-2.5 h-2.5 rounded-full flex-shrink-0 ${glowClass}' style='background-color: ${color}'></span><span class='gear-label text-xs font-medium text-text-dim font-mono w-16'>${t('gear.prefix')} ${idx + 1}</span><input type='number' inputmode='decimal' step='0.01' min='0.4' max='6.0' value='${ratio}' data-index='${idx}' class='gear-input flex-1 bg-surface-input border border-surface-border rounded px-2.5 py-1 text-xs font-mono font-bold text-text-output text-right focus:border-text-dim outline-none' /><span class='text-text-muted font-mono text-xs flex-shrink-0'>: 1</span>${removable}`;
 	void refs;
 	void onChange;
 	return row;
@@ -65,9 +66,9 @@ const buildGearRow = (
  */
 const buildReverseRow = (): HTMLElement => {
 	const row = document.createElement('div');
-	row.className = 'flex items-center gap-2 bg-gauge/80 border border-dashed border-gray-700 px-3 py-1.5 rounded-lg';
+	row.className = 'flex items-center gap-2 bg-surface-row border border-dashed border-surface-border px-2 py-1.5 rounded-lg';
 	const value = state.reverseRatio === null ? '' : String(state.reverseRatio);
-	row.innerHTML = `<span class='w-2.5 h-2.5 rounded-full flex-shrink-0 bg-gray-400'></span><span class='gear-label text-xs font-semibold text-gray-300 font-mono'>${t('gear.reverse')}</span><div class='flex-1 flex items-center gap-1.5'><span class='text-[10px] text-gray-500'>:1</span><input type='number' inputmode='decimal' step='0.01' min='1.0' max='6.0' value='${value}' placeholder='opt.' class='reverse-input w-full bg-carbon border border-gray-700/60 rounded px-2 py-2.5 text-sm text-white font-mono focus:border-gray-400 outline-none' /></div>`;
+	row.innerHTML = `<span class='w-2.5 h-2.5 rounded-full flex-shrink-0 bg-text-muted'></span><span class='gear-label text-xs font-medium text-text-dim font-mono w-16'>${t('gear.reverse')}</span><input type='number' inputmode='decimal' step='0.01' min='1.0' max='6.0' value='${value}' placeholder='opt.' class='reverse-input flex-1 bg-surface-input border border-surface-border rounded px-2.5 py-1 text-xs font-mono font-bold text-text-output text-right focus:border-text-dim outline-none' /><span class='text-text-muted font-mono text-xs flex-shrink-0'>: 1</span>`;
 	return row;
 };
 
@@ -104,7 +105,7 @@ const bindReverseInput = (refs: ElementRefs, onChange: (redrawInputs: boolean) =
  * @return Button HTML string.
  */
 const buildRemoveButton = (idx: number): string => {
-	return `<button type='button' class='btn-remove-gear text-gray-500 hover:text-rose-400 p-1 rounded transition' data-index='${idx}' title='Remove gear' aria-label='Remove gear ${idx + 1}'><svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12'/></svg></button>`;
+	return `<button type='button' class='btn-remove-gear text-text-muted hover:text-neon-red px-1.5 text-xs transition rounded hover:bg-surface-subtle' data-index='${idx}' title='Remove gear' aria-label='Remove gear ${idx + 1}'><svg class='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12'/></svg></button>`;
 };
 
 /**

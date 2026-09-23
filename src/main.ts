@@ -4,6 +4,7 @@ import { initLang } from './core/i18n/language';
 import { syncLangToggle } from './services/events/language-events';
 import { syncRoadLoadInputs } from './services/events/road-load-events';
 import { syncEngineInputs } from './services/events/engine-events';
+import { syncRunningGearInputs } from './services/events/running-gear-events';
 import { refreshPresetOptions } from './services/events/preset-events';
 import { syncComparisonInputs, applyComparisonVisibility } from './services/events/comparison-events';
 import { restoreFromUrl } from './services/events/share-events';
@@ -35,6 +36,7 @@ const bootstrap = (): void => {
 	applyUnitLabels(refs);
 	syncRoadLoadInputs(refs);
 	syncEngineInputs(refs);
+	syncRunningGearInputs(refs);
 	syncComparisonInputs(refs);
 	refs.comparisonToggle.checked = state.compareEnabled;
 	applyComparisonVisibility(refs);

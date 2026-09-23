@@ -131,14 +131,24 @@ export const availableWheelKw = (engineKw: number, drivetrainEff: number): numbe
 
 /**
  * @brief Solve the drag-limited top speed for a given wheel power.
- * @brief Finds v where road-load power equals available power (bisection).
+ *
+ * Physics: find v such that P_load(v) = P_avail, with
+ * P_load(v) = [F_drag(v) + F_roll + F_grade] × v. On steep descents
+ * F_grade is negative and at low v the road-load power can become
+ * negative: the bisection then starts from a low > 0 where P_load is
+ * again positive (gravity alone cannot sustain arbitrarily low speeds
+ * against zero drag + rolling), or returns 0 if P_avail never exceeds
+ * P_load across the interval.
+ * If the solution saturates at TOP_SPEED_HARD_CAP the returned value is
+ * still the cap (documented in the caller's TSDoc as an instrumental
+ * limit, not a physical one).
  * @param wheelKw Available wheel power in kilowatts.
  * @param massKg Vehicle mass in kilograms.
  * @param dragCd Drag coefficient.
  * @param frontalAreaM2 Frontal area in square metres.
  * @param crr Rolling-resistance coefficient.
  * @param gradePercent Road slope in percent (+uphill, -downhill).
- * @return Drag-limited speed in km/h, or 0 when power is zero.
+ * @return Drag-limited speed in km/h, 0 when power is zero or never sufficient.
  */
 export const dragLimitedSpeedKmh = (
 	wheelKw: number,
@@ -152,8 +162,11 @@ export const dragLimitedSpeedKmh = (
 		return 0;
 	}
 	const loadAt = (v: number): number => roadLoadPowerKw(v, massKg, dragCd, frontalAreaM2, crr, gradePercent);
+	if (!Number.isFinite(loadAt(0))) {
+		return 0;
+	}
 	let low = 0;
-	let high = TOP_SPEED_MIN_HIGH;
+	let high = Math.max(TOP_SPEED_MIN_HIGH, low * 1.5);
 	while (high < TOP_SPEED_HARD_CAP && loadAt(high) <= wheelKw) {
 		low = high;
 		high = Math.min(TOP_SPEED_HARD_CAP, high * 1.5);

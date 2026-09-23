@@ -27,6 +27,11 @@ export const presets: Record<string, GearPreset> = {
 		peakTorqueRpm: 4500,
 		peakTorqueNm: 180,
 		peakPowerRpm: 6500,
+		runningGear: {
+			frontWeightDistribution: 0.58, centerOfGravityHeightMm: 500, wheelbaseMm: 2570, trackWidthMm: 1460,
+			roadFrictionCoefficient: 1.10, drivetrainLayout: 'FWD', differentialType: 'open', differentialBias: 0.25,
+			springRateFrontNmm: 35, springRateRearNmm: 32, lateralG: 0,
+		},
 	},
 	miata_na6: {
 		tire: '185/60R14',
@@ -41,6 +46,11 @@ export const presets: Record<string, GearPreset> = {
 		peakTorqueRpm: 4500,
 		peakTorqueNm: 140,
 		peakPowerRpm: 6600,
+		runningGear: {
+			frontWeightDistribution: 0.52, centerOfGravityHeightMm: 420, wheelbaseMm: 2265, trackWidthMm: 1400,
+			roadFrictionCoefficient: 1.10, drivetrainLayout: 'RWD', differentialType: 'open', differentialBias: 0.25,
+			springRateFrontNmm: 35, springRateRearNmm: 32, lateralG: 0,
+		},
 	},
 	s2000_ap1: {
 		tire: '225/50R16',
@@ -55,6 +65,11 @@ export const presets: Record<string, GearPreset> = {
 		peakTorqueRpm: 6500,
 		peakTorqueNm: 208,
 		peakPowerRpm: 8300,
+		runningGear: {
+			frontWeightDistribution: 0.50, centerOfGravityHeightMm: 400, wheelbaseMm: 2400, trackWidthMm: 1470,
+			roadFrictionCoefficient: 1.10, drivetrainLayout: 'RWD', differentialType: 'open', differentialBias: 0.25,
+			springRateFrontNmm: 35, springRateRearNmm: 32, lateralG: 0,
+		},
 	},
 	e46_m3: {
 		tire: '255/40R18',
@@ -69,6 +84,11 @@ export const presets: Record<string, GearPreset> = {
 		peakTorqueRpm: 4900,
 		peakTorqueNm: 365,
 		peakPowerRpm: 7900,
+		runningGear: {
+			frontWeightDistribution: 0.51, centerOfGravityHeightMm: 460, wheelbaseMm: 2730, trackWidthMm: 1500,
+			roadFrictionCoefficient: 1.10, drivetrainLayout: 'RWD', differentialType: 'clutch_lsd', differentialBias: 0.35,
+			springRateFrontNmm: 35, springRateRearNmm: 32, lateralG: 0,
+		},
 	},
 	gr86: {
 		tire: '215/40R18',
@@ -83,6 +103,11 @@ export const presets: Record<string, GearPreset> = {
 		peakTorqueRpm: 3700,
 		peakTorqueNm: 250,
 		peakPowerRpm: 7000,
+		runningGear: {
+			frontWeightDistribution: 0.53, centerOfGravityHeightMm: 430, wheelbaseMm: 2575, trackWidthMm: 1520,
+			roadFrictionCoefficient: 1.10, drivetrainLayout: 'RWD', differentialType: 'torsen', differentialBias: 0.25,
+			springRateFrontNmm: 35, springRateRearNmm: 32, lateralG: 0,
+		},
 	},
 	porsche_gt3: {
 		tire: '305/30R20',
@@ -97,5 +122,10 @@ export const presets: Record<string, GearPreset> = {
 		peakTorqueRpm: 6250,
 		peakTorqueNm: 470,
 		peakPowerRpm: 8500,
+		runningGear: {
+			frontWeightDistribution: 0.40, centerOfGravityHeightMm: 380, wheelbaseMm: 2450, trackWidthMm: 1550,
+			roadFrictionCoefficient: 1.10, drivetrainLayout: 'RWD', differentialType: 'torsen', differentialBias: 0.25,
+			springRateFrontNmm: 60, springRateRearNmm: 65, lateralG: 0,
+		},
 	},
 };

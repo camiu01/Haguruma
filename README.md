@@ -16,17 +16,31 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 - **Reverse gear** — dashed gray `R` curve.
 - **Tire parsing** — `205/55R16` → rolling circumference with instant validation.
 - **Comparison overlay** — full secondary vehicle setup (tire, FD, gears, redline, mass, Cd, frontal area, power, torque/power anchors) as dashed curves with delta readout.
-- **Engine curve model** — peak torque RPM, peak torque Nm, peak power RPM with linear interpolation and over-rev droop. Derived `kW @ torque peak` readout via `P = T × n / 9550`.
+- **Engine curve model** — peak torque RPM, peak torque Nm, peak power RPM with linear **torque interpolation** below peak torque (smooth real-world profile) and linear power interpolation above. Derived `kW @ torque peak` readout via `P = T × n × π / 30000`.
 - **Road-load physics** — for every gear peak, computes wheel power required to hold speed against weight, aero drag, rolling resistance, and grade. Flags gears the engine cannot pull as `drag-limited`.
-- **Drag-limited top speed** — bisection solver finds where required wheel power equals available power; marked with an `AERO` line on the graph.
+- **Drag-limited top speed** — bisection solver finds where required wheel power equals available power; marked with an `AERO` line on the graph. Handles steep downhill grades robustly.
 - **Tractive force analysis** — engine torque → wheel force in Newtons per gear (`F = T × i_total × η / r_dyn`).
-- **Optimal shift advisor** — per-gear-pair shift RPM based on force-curve crossing; appends `LIMIT` when the rev limiter is the optimal point.
+- **Optimal shift advisor** — per-gear-pair shift RPM based on force-curve crossing with anti-false-positive scanning (immune to turbo-lag oscillations at low RPM); appends `LIMIT` when the rev limiter is the optimal point.
+- **Load transfer & grip model** — lateral load transfer per axle (full inner→outer transfer), Kamm friction circle, differential torque bias (open/clutch LSD/Torsen/spool), wheelspin detection, and proportional lateral force distribution based on instantaneous wheel load.
+- **Downforce integration** — aerodynamic downforce from lift coefficient and reference area, split front/rear, adds to vertical load for friction-limited grip.
 - **Translation** — English and Italian, persisted. Uses `data-i18n` (text), `data-i18n-tip` (tooltip), `data-i18n-ph` (placeholder).
 - **Custom cars** — save/load complete setups (tire, FD, redline, gears, reverse, mass, Cd, area, power, torque curve anchors) to localStorage. Export/import JSON files.
 - **Share via URL** — encodes all setup parameters into the URL hash. One-click copy, paste to share.
 - **PWA** — `manifest.webmanifest` with standalone display, maskable icons; service worker for offline asset caching.
 - **Theme system** — three-way toggle: dark (default) → oled (pure black) → light (white). Persisted in localStorage. Graph canvas palette follows the theme.
-- **Mobile-first layout** — slide-over drawer (lang/unit/theme/presets), compact header, 16/9 graph canvas, horizontal-scroll tables with sticky first column, 44px touch targets, `visualViewport` keyboard-avoidance.
+- **Mobile-first layout** — slide-over drawer (lang/unit/presets/settings), compact header, 16/9 graph canvas, horizontal-scroll tables with sticky first column, 44px touch targets, `visualViewport` keyboard-avoidance.
+
+## Physics engine
+
+HAGURUMA uses strict SI discipline internally:
+
+| Module | Key physics |
+|---|---|
+| `traction-math.ts` | Engine torque from power anchors (`KW_TO_NM = 30000/π` ≈ 9549.3); linear torque interpolation below peak torque; tractive force `F = T × i × η / r_dyn`; optimal shift via force-curve crossing with backward scan |
+| `speed-math.ts` | SI core `speedKmh` / `rpmFromKmh`; mph applied only at display boundary (`KMH_PER_MPH = 1.609344`) |
+| `aero-math.ts` | Drag, rolling resistance, grade forces; drag-limited top-speed bisection; handles negative-grade power |
+| `dynamics-math.ts` | Longitudinal & lateral load transfer (full per-axle lateral transfer, no 50% undercount); Kamm friction circle; differential torque bias; downforce from lift coefficients; proportional lateral force distribution (`Fy ∝ Fz`) |
+| `shift-math.ts` | Kinematic landing RPM (`n_land = n_shift × i_next / i_curr`); direct ratio calculation eliminates conversion drift |
 
 ## Presets
 
@@ -72,7 +86,7 @@ src/
   main.ts                        # bootstrap
   core/
     models.ts                    # shared types
-    math/                        # tire, speed, aero, traction, shift
+    math/                        # tire, speed, aero, traction, shift, dynamics
     state/app-state.ts           # mutable singleton store
     units/unit-utils.ts          # kmh/mph helpers
     i18n/                        # en/it dictionaries + language state

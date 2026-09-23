@@ -2,8 +2,11 @@
  * @file graph-renderer.ts
  * @brief Full graph orchestration: background, grids, curves, limits.
  */
-import { state } from '../../core/state/app-state';
+import { state, defaultRunningGear } from '../../core/state/app-state';
 import { effectiveCircumferenceM, parseTire } from '../../core/math/tire-math';
+import { rpmFromKmh, toDisplaySpeed } from '../../core/math/speed-math';
+import { dynamicRadiusM, tractiveForceAt, validateCurve } from '../../core/math/traction-math';
+import { maxDriveForceAtSpeed } from '../../core/math/dynamics-math';
 import { availableWheelKw, dragLimitedSpeedKmh } from '../../core/math/aero-math';
 import { getMaxRpm } from '../../core/units/unit-utils';
 import type { PlotFrame } from '../../core/models';
@@ -12,6 +15,7 @@ import { buildPlotFrame, toX, toY } from './canvas-setup';
 import { drawBackground, drawSpeedGrid, drawRpmGrid, drawRedlineBand, drawAxisTitles, drawAeroLimit } from './graph-axes';
 import { drawComparisonCurves, drawPrimaryCurves, drawReverseCurve } from './graph-curves';
 import { drawShiftDrops } from './graph-shift-drops';
+import { drawGripCurve, shadeWheelspin } from './graph-limits';
 
 /**
  * Render the full RPM vs speed graph.
@@ -47,6 +51,7 @@ export const drawGraph = (refs: ElementRefs): void => {
 	drawCompareRedline(ctx, frame);
 	drawOptionalComparison(ctx, frame);
 	drawOptionalCompAeroLimit(ctx, frame);
+	drawOptionalGripLimit(ctx, frame);
 	drawAxisTitles(ctx, frame, state.unit);
 };
 
@@ -101,7 +106,7 @@ export const drawOptionalCompAeroLimit = (
 	if (limit <= 0) {
 		return;
 	}
-	const limitDisplay = state.unit === 'mph' ? limit * 0.621371 : limit;
+	const limitDisplay = toDisplaySpeed(limit, state.unit);
 	if (limitDisplay <= 0 || limitDisplay >= frame.maxSpeed) {
 		return;
 	}
@@ -118,6 +123,72 @@ export const drawOptionalCompAeroLimit = (
 	ctx.font = '10px Inter, sans-serif';
 	ctx.textAlign = 'left';
 	ctx.fillText(`COMP AERO ${Math.round(limitDisplay)}`, x + 6, frame.paddingTop + 26);
+};
+/**
+ * Draw the friction-limited grip curve and 1st-gear spin shading.
+ * @brief Grip after aero limits, before titles to keep legend on top.
+ * @param ctx Rendering context.
+ * @param frame Plot geometry and limits.
+ * @return void
+ */
+export const drawOptionalGripLimit = (ctx: CanvasRenderingContext2D, frame: PlotFrame): void => {
+	const rg = state.runningGear ?? defaultRunningGear;
+	const gripFn = (vKmh: number): number => maxDriveForceAtSpeed(rg, state.vehicleMassKg, vKmh, 0, 0).limitN;
+	drawGripCurve(ctx, frame, gripFn, '#f59e0b');
+	shadePrimarySpin(ctx, frame, gripFn);
+	drawOptionalCompGrip(ctx, frame);
+};
+
+/**
+ * Shade 1st-gear wheelspin against the primary grip limit.
+ * @brief Convert display speed to RPM, then compare tractive force.
+ * @param ctx Rendering context.
+ * @param frame Plot geometry and limits.
+ * @param gripFn Grip limit in newtons from speed in km/h.
+ * @return void
+ */
+const shadePrimarySpin = (ctx: CanvasRenderingContext2D, frame: PlotFrame, gripFn: (v: number) => number): void => {
+	const primaryTire = parseTire(state.primaryTire);
+	if (!primaryTire || state.gears.length === 0) {
+		return;
+	}
+	const circM = effectiveCircumferenceM(primaryTire, state.rollingFactor);
+	const curve = validateCurve({
+		redline: state.primaryRedline,
+		peakTorqueRpm: state.peakTorqueRpm,
+		peakTorqueNm: state.peakTorqueNm,
+		peakPowerRpm: state.peakPowerRpm,
+		peakPowerKw: state.enginePowerKw,
+	});
+	if (!curve) {
+		return;
+	}
+	const radius = dynamicRadiusM(circM);
+	const first = state.gears[0];
+	const gearForceFn = (vKmh: number): number => {
+		const rpm = rpmFromKmh(vKmh, first, state.primaryFd, circM);
+		if (rpm <= 0) {
+			return 0;
+		}
+		return tractiveForceAt(rpm, first, state.primaryFd, radius, curve, state.drivetrainEff);
+	};
+	shadeWheelspin(ctx, frame, gripFn, gearForceFn);
+};
+
+/**
+ * Draw the dashed secondary grip curve when comparing.
+ * @brief Comp grip uses comp mass and comp running gear.
+ * @param ctx Rendering context.
+ * @param frame Plot geometry and limits.
+ * @return void
+ */
+const drawOptionalCompGrip = (ctx: CanvasRenderingContext2D, frame: PlotFrame): void => {
+	if (!state.compareEnabled) {
+		return;
+	}
+	const rg = state.compRunningGear ?? state.runningGear ?? defaultRunningGear;
+	const gripFn = (vKmh: number): number => maxDriveForceAtSpeed(rg, state.compMassKg, vKmh, 0, 0).limitN;
+	drawGripCurve(ctx, frame, gripFn, '#ef4444');
 };
 /**
  * Draw comparison curves only when enabled and valid.

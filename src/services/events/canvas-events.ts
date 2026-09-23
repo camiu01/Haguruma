@@ -1,7 +1,7 @@
 import type { ElementRefs } from '../dom/element-refs';
 import { handleCanvasHover, handleCanvasPointer } from '../graph/graph-tooltip';
 import { drawGraph } from '../graph/graph-renderer';
-import { observeCanvasResize, resizeCanvas } from '../graph/canvas-setup';
+import { observeCanvasResize } from '../graph/canvas-setup';
 
 /**
  * Bind canvas hover and window resize.
@@ -15,11 +15,6 @@ export const bindCanvasEvents = (refs: ElementRefs): void => {
 	refs.canvas.addEventListener('mouseleave', () => refs.tooltip.classList.add('hidden'));
 	refs.canvas.addEventListener('touchend', () => refs.tooltip.classList.add('hidden'));
 	observeCanvasResize(refs.canvas, refs.ctx, () => drawGraph(refs));
-	window.addEventListener('resize', () => {
-		if (resizeCanvas(refs.canvas, refs.ctx)) {
-			drawGraph(refs);
-		}
-	});
 };
 
 /**

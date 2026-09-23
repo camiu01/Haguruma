@@ -3,7 +3,7 @@
 <head>
 	<meta charset='UTF-8' />
 	<meta name='viewport' content='width=device-width, initial-scale=1.0, viewport-fit=cover' />
-	<meta name='theme-color' content='#0b0d11' />
+	<meta name='theme-color' content='#0f141c' />
 	<meta name='apple-mobile-web-app-capable' content='yes' />
 	<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />
 	<meta name='apple-mobile-web-app-title' content='Haguruma' />
@@ -14,6 +14,7 @@
 	<link rel='preconnect' href='https://fonts.googleapis.com'>
 	<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
 	<link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap' rel='stylesheet'>
+	<link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200' />
 	<script>
 		tailwind.config = {
 			darkMode: 'class',
@@ -25,12 +26,32 @@
 						display: ['Inter', 'sans-serif'],
 					},
 					colors: {
-						carbon: '#0c0e12',
-						tarmac: '#141820',
-						gauge: '#1c222d',
-						needle: '#ef4444',
-						accent: '#38bdf8',
-						amberGlow: '#f59e0b',
+						page: 'var(--bg-page)',
+						surface: 'var(--bg-card)',
+						'surface-card': 'var(--bg-surface-card)',
+						'surface-subtle': 'var(--bg-surface-subtle)',
+						'surface-input': 'var(--bg-surface-input)',
+						'surface-border': 'var(--border-surface-border)',
+						'surface-row': 'var(--bg-surface-row)',
+						background: 'var(--bg-background)',
+						input: 'var(--bg-input)',
+						canvas: 'var(--bg-canvas)',
+						'text-main': 'var(--text-main)',
+						'text-dim': 'var(--text-dim)',
+						'text-output': 'var(--text-output)',
+						'text-muted': 'var(--text-muted)',
+						border: 'var(--border)',
+						'border-input': 'var(--border-input)',
+						'accent-amber-overlay': 'var(--accent-amber-overlay)',
+						'accent-red-overlay': 'var(--accent-red-overlay)',
+						'accent-cyan-overlay': 'var(--accent-cyan-overlay)',
+						'neon-red': 'var(--accent-red)',
+						'neon-orange': 'var(--accent-orange)',
+						'neon-yellow': 'var(--accent-yellow)',
+						'neon-green': 'var(--accent-green)',
+						'neon-cyan': 'var(--accent-cyan)',
+						'neon-blue': 'var(--accent-blue)',
+						'neon-purple': 'var(--accent-purple)',
 					}
 				}
 			}
@@ -38,34 +59,32 @@
 	</script>
 	<link rel='stylesheet' href='/src/styles/main.css' />
 </head>
-<body class='min-h-screen flex flex-col'>
-	<header class='app-header border-b border-gray-800 bg-tarmac sticky top-0 z-30 px-3 lg:px-6 py-2 flex items-center justify-between gap-2 overflow-hidden flex-nowrap'>
+<body class='min-h-screen flex flex-col bg-page text-text-main pt-safe'>
+	<header class='app-header border-b border-border bg-surface sticky top-0 z-30 px-3 lg:px-6 py-2 h-14 flex items-center justify-between gap-2 overflow-hidden flex-nowrap'>
 		<div class='flex items-center gap-2 min-w-0 flex-shrink-1'>
 			<button id='btn-menu' type='button' class='hamburger md:hidden' aria-expanded='false' aria-controls='mobile-drawer' data-i18n-tip='menu.open' title='Open menu' data-tip='Open menu' aria-label='Open menu'>
-				<span aria-hidden='true'></span>
-				<span aria-hidden='true'></span>
-				<span aria-hidden='true'></span>
+				<span class="material-symbols-outlined text-[20px]">menu</span>
 			</button>
-			<svg xmlns='http://www.w3.org/2000/svg' class='w-6 h-6 text-gray-400 flex-shrink-0' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+			<svg xmlns='http://www.w3.org/2000/svg' class='w-6 h-6 text-text-dim flex-shrink-0' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
 				<circle cx='12' cy='12' r='3'></circle>
 				<path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'></path>
 			</svg>
 			<div class='min-w-0'>
-				<h1 class='brand text-sm md:text-base font-semibold text-white whitespace-nowrap'>HAGURUMA</h1>
-				<p class='text-xs text-gray-400 brand-sub'>Heuristic Application for Gear-ratio, Up-shift, &amp; Redline Unit Mapping Architecture</p>
+				<h1 class='brand text-sm md:text-base font-semibold text-text-output whitespace-nowrap'>HAGURUMA</h1>
+				<p class='text-xs text-text-dim brand-sub'>Heuristic Application for Gear-ratio, Up-shift, &amp; Redline Unit Mapping Architecture</p>
 			</div>
 		</div>
 		<div class='flex items-center gap-2 flex-shrink-0 min-w-0'>
-			<div id='lang-group' class='hidden md:inline-flex rounded-lg bg-gauge p-0.5 border border-gray-800'>
-				<button id='lang-en' type='button' class='px-2 py-1 text-xs font-semibold rounded bg-gray-200 text-black'>EN</button>
-				<button id='lang-it' type='button' class='px-2 py-1 text-xs font-semibold rounded text-gray-400 hover:text-white'>IT</button>
+			<div id='lang-group' class='hidden md:inline-flex items-center rounded-lg bg-input p-0.5 border border-border h-8'>
+				<button id='lang-en' type='button' class='px-2 py-1 text-xs font-mono font-semibold rounded bg-text-main text-black'>EN</button>
+				<button id='lang-it' type='button' class='px-2 py-1 text-xs font-mono font-semibold rounded text-text-dim hover:text-text-output'>IT</button>
 			</div>
-			<div id='unit-group' class='hidden md:inline-flex rounded-lg bg-gauge p-0.5 border border-gray-800'>
-				<button id='unit-kmh' type='button' class='px-2 py-1 text-xs font-semibold rounded bg-gray-200 text-black'>km/h</button>
-				<button id='unit-mph' type='button' class='px-2 py-1 text-xs font-semibold rounded text-gray-400 hover:text-white'>mph</button>
+			<div id='unit-group' class='hidden md:inline-flex items-center rounded-lg bg-input p-0.5 border border-border h-8'>
+				<button id='unit-kmh' type='button' class='px-2 py-1 text-xs font-mono font-semibold rounded bg-text-main text-black'>km/h</button>
+				<button id='unit-mph' type='button' class='px-2 py-1 text-xs font-mono font-semibold rounded text-text-dim hover:text-text-output'>mph</button>
 			</div>
-			<button id='theme-toggle' type='button' role='switch' aria-checked='true' aria-label='Theme: dark' title='Theme: dark (click to switch)' class='hidden md:block px-2 py-1 text-xs font-semibold rounded bg-gauge border border-gray-800 text-gray-200 hover:text-white transition'>Dark</button>
-			<select id='preset-selector' aria-label='Load Preset Vehicle' class='hidden md:block bg-gauge border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-gray-400 max-w-[170px] truncate'>
+			<button id='theme-toggle' type='button' role='switch' aria-checked='true' aria-label='Theme: dark' title='Theme: dark (click to switch)' class='hidden md:block px-2 py-1 h-8 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition'>Dark</button>
+			<select id='preset-selector' aria-label='Load Preset Vehicle' class='hidden md:block bg-input border border-border rounded-lg px-2 py-1 h-8 text-xs font-mono text-text-main focus:outline-none focus:border-text-dim max-w-[170px] truncate'>
 				<option value='' disabled selected data-i18n='header.presetPlaceholder'>Load Preset Vehicle...</option>
 				<option value='miata_na6'>Mazda Miata NA (5-Speed, 4.30 FD)</option>
 				<option value='s2000_ap1'>Honda S2000 AP1 (6-Speed, 4.10 FD)</option>
@@ -75,50 +94,130 @@
 				<option value='porsche_gt3'>Porsche 911 GT3 991 (6-Speed, 3.97 FD)</option>
 			</select>
 			<div class='flex items-center gap-2'>
-				<button id='btn-share' type='button' class='btn-share bg-gauge border border-gray-700 hover:border-amber-400/60 hover:text-amber-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-200 transition flex items-center gap-1.5' data-i18n-tip='share.label' title='Share setup link' data-tip='Share setup link' aria-label='Share setup link'>
+				<button id='btn-share' type='button' class='btn-share bg-input border border-border hover:border-neon-yellow/60 hover:text-neon-yellow rounded-lg px-2.5 py-1 h-8 text-xs font-mono font-semibold text-text-main transition flex items-center gap-1.5' data-i18n-tip='share.label' title='Share setup link' data-tip='Share setup link' aria-label='Share setup link'>
 					<svg class='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8.59 13.51l6.83 3.98m-.01-10.98l-6.82 3.98M21 5a3 3 0 11-6 0 3 3 0 016 0zM9 12a3 3 0 11-6 0 3 3 0 016 0zm12 7a3 3 0 11-6 0 3 3 0 016 0z'/></svg>
 					<span class='share-label hidden sm:inline' data-i18n='share.button'>Share</span>
 				</button>
-				<span id='share-feedback' class='text-[11px] text-emerald-400 font-mono hidden'></span>
+				<span id='share-feedback' class='text-[11px] text-neon-green font-mono hidden'></span>
 			</div>
 		</div>
 	</header>
-	<div id='mobile-drawer-backdrop' class='hidden fixed inset-0 z-40'></div>
-	<aside id='mobile-drawer' role='dialog' aria-modal='true' aria-labelledby='mobile-drawer-title' class='hidden fixed left-0 top-0 h-full z-50 bg-tarmac border-r border-gray-800 p-4'>
-		<div class='flex items-center justify-between mb-4'>
-			<h2 id='mobile-drawer-title' class='text-sm font-semibold text-gray-200' data-i18n='drawer.settings'>Settings</h2>
-			<button id='mobile-drawer-close' type='button' class='px-3 py-2 text-xs font-semibold rounded bg-gauge border border-gray-700 text-gray-200' data-i18n='drawer.close'>Close</button>
+
+	<!-- KPI strip (always visible) -->
+	<div id='kpi-strip' class='max-w-[1920px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-2.5 px-4 py-2'>
+		<div class='kpi-cell bg-surface-card border border-border rounded-lg p-2 text-center'>
+			<span class='font-mono text-[9px] uppercase tracking-wider text-text-dim' data-i18n='kpi.redline'>Redline</span>
+			<span id='kpi-redline' class='font-mono text-base font-bold tabular-nums text-neon-red'>7,200</span>
+			<span class='font-mono text-[9px] text-text-muted'>RPM</span>
 		</div>
-		<div class='drawer-body'>
-			<div class='drawer-section'>
-				<p class='drawer-label'>Language</p>
+		<div class='kpi-cell bg-surface-card border border-border rounded-lg p-2 text-center'>
+			<span class='font-mono text-[9px] uppercase tracking-wider text-text-dim' data-i18n='kpi.topSpeed'>Top Speed</span>
+			<span id='kpi-top-speed' class='font-mono text-base font-bold tabular-nums text-neon-cyan'>299.9</span>
+			<span class='font-mono text-[9px] text-text-muted unit-label'>km/h</span>
+		</div>
+		<div class='kpi-cell bg-surface-card border border-border rounded-lg p-2 text-center'>
+			<span class='font-mono text-[9px] uppercase tracking-wider text-text-dim' data-i18n='kpi.aeroWall'>Aero Wall</span>
+			<span id='kpi-aero-wall' class='font-mono text-base font-bold tabular-nums text-neon-blue'>281.0</span>
+			<span class='font-mono text-[9px] text-text-muted unit-label'>km/h</span>
+		</div>
+		<div class='kpi-cell bg-surface-card border border-border rounded-lg p-2 text-center'>
+			<span class='font-mono text-[9px] uppercase tracking-wider text-text-dim' data-i18n='kpi.gripLimit'>Grip Limit</span>
+			<span id='kpi-0-100' class='font-mono text-base font-bold tabular-nums text-neon-purple'>6,310</span>
+			<span class='font-mono text-[9px] text-text-muted'>N</span>
+		</div>
+	</div>
+
+	<div id='mobile-drawer-backdrop' class='hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm'></div>
+	<aside id='mobile-drawer' role='dialog' aria-modal='true' aria-labelledby='mobile-drawer-title' class='hidden fixed left-0 top-0 h-full h-dvh z-50 bg-surface border-r border-border w-[82vw] max-w-[320px] flex flex-col'>
+		<!-- Drawer Header -->
+		<div class='flex items-center justify-between px-4 py-3 border-b border-border/30 shrink-0'>
+			<div class='flex items-center gap-2 min-w-0'>
+				<h2 id='mobile-drawer-title' class='text-xs font-semibold text-neon-cyan uppercase tracking-wider'>HAGURUMA</h2>
+			</div>
+			<button id='mobile-drawer-close' type='button' class='w-9 h-9 rounded-lg flex items-center justify-center text-text-dim hover:text-text-main hover:bg-surface-subtle transition-colors' aria-label='Close menu'>
+				<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12'/></svg>
+			</button>
+		</div>
+
+		<!-- Navigation Items + Settings Hosts -->
+		<div class='flex-1 overflow-y-auto px-4 py-1 flex flex-col gap-1 custom-scroll'>
+			<button type='button' class='flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors text-text-dim hover:text-text-main hover:bg-surface-subtle/60' data-view='dashboard'>
+				<span class='truncate' data-i18n='nav.dashboard'>Garage / My Vehicles</span>
+			</button>
+			<button type='button' class='flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors text-text-dim hover:text-text-main hover:bg-surface-subtle/60' data-view='gears'>
+				<span class='truncate' data-i18n='nav.gears'>Transmission &amp; Gears</span>
+			</button>
+			<button type='button' class='flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors text-text-dim hover:text-text-main hover:bg-surface-subtle/60' data-view='engine'>
+				<span class='truncate' data-i18n='nav.engine'>Engine Curve &amp; Traction</span>
+			</button>
+			<button type='button' class='flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors text-text-dim hover:text-text-main hover:bg-surface-subtle/60' data-view='aero'>
+				<span class='truncate' data-i18n='nav.aero'>Aerodynamics &amp; Weight</span>
+			</button>
+			<button type='button' class='flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors text-text-dim hover:text-text-main hover:bg-surface-subtle/60' data-view='compare'>
+				<span class='truncate' data-i18n='nav.compare'>Secondary Comparison (A/B)</span>
+			</button>
+			<button type='button' class='flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors text-text-dim hover:text-text-main hover:bg-surface-subtle/60' data-view='dynamics'>
+				<span class='truncate' data-i18n='nav.dynamics'>Longitudinal Dynamics</span>
+			</button>
+			<div class='my-1.5 border-t border-border/30'></div>
+			<!-- Settings section -->
+			<div class='px-3 py-2 text-[10px] text-text-dim uppercase tracking-wider font-semibold flex items-center gap-2' data-i18n='drawer.settings'>
+				<span>Settings</span>
+			</div>
+			<div class='drawer-section drawer-section-row'>
+				<p class='drawer-label' data-i18n='nav.language'>Language</p>
 				<div id='drawer-lang-host' class='drawer-host'></div>
 			</div>
-			<div class='drawer-section'>
-				<p class='drawer-label'>Units</p>
+			<div class='drawer-section drawer-section-row'>
+				<p class='drawer-label' data-i18n='nav.units'>Units</p>
 				<div id='drawer-unit-host' class='drawer-host'></div>
 			</div>
 			<div class='drawer-section'>
-				<p class='drawer-label'>Theme</p>
-				<div id='drawer-theme-host' class='drawer-host'></div>
+				<p class='drawer-label' data-i18n='nav.theme'>Theme</p>
+				<div class='drawer-theme-seg' role='group' aria-label='Theme'>
+					<button type='button' data-set-theme='oled' aria-pressed='false'>OLED</button>
+					<button type='button' data-set-theme='dark' aria-pressed='true'>Dark</button>
+					<button type='button' data-set-theme='light' aria-pressed='false'>Light</button>
+				</div>
 			</div>
 			<div class='drawer-section'>
 				<p class='drawer-label' data-i18n='header.presets'>Presets</p>
 				<div id='drawer-preset-host' class='drawer-host'></div>
 			</div>
+			<div class='drawer-section'>
+				<p class='drawer-label' data-i18n='nav.simulation'>Simulation</p>
+				<div class='drawer-sim-row'>
+					<span data-i18n='road.title'>Road Load</span>
+					<button type='button' class='switch' role='switch' aria-checked='true' data-drawer-sim='roadload-toggle' aria-label='Road Load'></button>
+				</div>
+				<div class='drawer-sim-row'>
+					<span data-i18n='compare.title'>Secondary Comparison</span>
+					<button type='button' class='switch' role='switch' aria-checked='false' data-drawer-sim='comparison-toggle' aria-label='Secondary Comparison'></button>
+				</div>
+			</div>
+			<div class='drawer-section'>
+				<p class='drawer-label' data-i18n='nav.data'>Data</p>
+				<div class='flex gap-2'>
+					<button id='btn-drawer-export' type='button' class='drawer-json-btn' data-i18n='custom.export'>Export</button>
+					<button id='btn-drawer-import' type='button' class='drawer-json-btn' data-i18n='custom.import'>Import JSON</button>
+				</div>
+			</div>
 		</div>
 	</aside>
-	<main class='flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-4'>
-		<section class='lg:col-span-5 flex flex-col gap-4'>
-			<div class='card bg-tarmac border border-gray-800 rounded-xl p-4 merged-card'>
-				<h2 class='text-sm font-semibold text-gray-200 pb-3 border-b border-gray-800' data-i18n='vehicle.title'>Vehicle Setup</h2>
+	<main class='flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 xl:grid-cols-12 gap-4 pb-20 xl:pb-0'>
+		<section class='xl:col-span-5 flex flex-col gap-4 xl:sticky xl:top-[4rem] xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto xl:self-start custom-scroll'>
+			<div class='card border border-border rounded-xl p-4 merged-card'>
+				<h2 class='text-sm font-semibold text-text-main pb-3 border-b border-border' data-i18n='vehicle.title'>Vehicle Setup</h2>
 
-				<!-- Section 1: Setup primario -->
+				<!-- Section 1: Primary Setup -->
 				<div data-accordion='primary'>
 					<div class='section-header' data-accordion-header>
-						<span class='text-sm font-semibold text-gray-200' data-i18n='primary.title'>Primary Setup</span>
 						<div class='flex items-center gap-2'>
-							<span id='primary-circ-display' class='text-[11px] text-gray-400 font-mono'>Circ: 1985 mm</span>
+							<span class='w-2 h-2 rounded-full bg-neon-cyan'></span>
+							<span class='text-sm font-semibold text-text-main' data-i18n='primary.title'>Primary Setup</span>
+						</div>
+						<div class='flex items-center gap-2'>
+							<span id='primary-circ-display' class='text-[11px] text-text-dim font-mono'>Circ: 1985 mm</span>
 							<svg class='chevron open' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
 								<polyline points='6 9 12 15 18 9'></polyline>
 							</svg>
@@ -127,35 +226,42 @@
 					<div class='section-content open' data-accordion-content>
 						<div class='grid grid-cols-2 gap-4 pt-1'>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='primary-tire' data-i18n='primary.tire'>Tire Spec (e.g. 205/55R16)</label>
+								<label class='block text-xs font-medium text-text-dim mb-1' for='primary-tire' data-i18n='primary.tire'>Tire Spec (e.g. 205/55R16)</label>
 								<div class='relative'>
-									<input type='text' id='primary-tire' value='205/55R16' inputmode='text' autocomplete='off' spellcheck='false' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-sm text-white font-mono uppercase focus:border-gray-400 outline-none' />
+									<input type='text' id='primary-tire' value='205/55R16' inputmode='text' autocomplete='off' spellcheck='false' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-sm text-text-output font-mono uppercase focus:border-text-dim outline-none' />
 									<div id='tire-valid-indicator' class='absolute right-2.5 top-2.5 w-2 h-2 rounded-full bg-emerald-500'></div>
 								</div>
-								<p id='tire-error' class='text-[10px] text-rose-400 mt-1 hidden' data-i18n='primary.tireError'>Invalid format (e.g. 225/45R17)</p>
+								<p id='tire-error' class='text-[10px] text-neon-red mt-1 hidden' data-i18n='primary.tireError'>Invalid format (e.g. 225/45R17)</p>
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='primary-fd' data-i18n='primary.fd'>Final Drive (Differential)</label>
-								<input type='number' inputmode='decimal' step='0.01' min='1.0' max='10.0' id='primary-fd' value='4.10' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='primary-fd' data-i18n='primary.fd'>Final Drive (Differential)</label>
+								<div class='relative'>
+									<input type='number' inputmode='decimal' step='0.01' min='1.0' max='10.0' id='primary-fd' value='4.10' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-sm text-text-output font-mono focus:border-text-dim outline-none' />
+									<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>: 1</span>
+								</div>
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='primary-redline' data-i18n='primary.redline'>Redline RPM</label>
-								<input type='number' inputmode='decimal' step='100' min='3000' max='12000' id='primary-redline' value='7200' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='primary-redline' data-i18n='primary.redline'>Redline RPM</label>
+								<div class='relative'>
+									<input type='number' inputmode='decimal' step='100' min='3000' max='12000' id='primary-redline' value='7200' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-sm text-text-output font-mono focus:border-text-dim outline-none' />
+									<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>RPM</span>
+								</div>
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='graph-max-speed'><span data-i18n='primary.maxSpeed'>Graph Max Speed</span> (<span class='unit-label'>km/h</span>)</label>
-								<input type='number' inputmode='decimal' step='10' min='100' max='500' id='graph-max-speed' value='300' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-sm text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='graph-max-speed'><span data-i18n='primary.maxSpeed'>Graph Max Speed</span> (<span class='unit-label'>km/h</span>)</label>
+								<input type='number' inputmode='decimal' step='10' min='100' max='500' id='graph-max-speed' value='300' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-sm text-text-output font-mono focus:border-text-dim outline-none' />
 							</div>
 						</div>
 					</div>
 				</div>
 
-				<!-- Section 2: Rapporti del cambio -->
+				<!-- Section 2: Transmission Gears -->
 				<div data-accordion='gears'>
 					<div class='section-header' data-accordion-header>
 						<div class='flex items-center gap-2'>
-							<span class='text-sm font-semibold text-gray-200' data-i18n='gears.title'>Transmission Gears</span>
-							<button id='btn-add-gear' type='button' class='px-2.5 py-2 text-xs bg-gray-800 hover:bg-gray-700 text-gray-200 rounded border border-gray-700 transition flex items-center gap-1'>
+							<span class='w-2 h-2 rounded-full bg-neon-green'></span>
+							<span class='text-sm font-semibold text-text-main' data-i18n='gears.title'>Transmission Gears</span>
+							<button id='btn-add-gear' type='button' class='px-2.5 py-2 text-xs bg-input hover:bg-input/80 text-text-main rounded border border-border transition flex items-center gap-1'>
 								<svg class='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 4v16m8-8H4'/></svg>
 								<span data-i18n='gears.add'>Add Gear</span>
 							</button>
@@ -165,17 +271,18 @@
 						</svg>
 					</div>
 					<div class='section-content open' data-accordion-content>
-						<div id='gears-container' class='space-y-2 max-h-60 overflow-y-auto pr-1 custom-scroll pt-1'></div>
+						<div id='gears-container' class='space-y-2 max-h-60 overflow-y-auto pr-1 custom-scroll pt-1 gear-rows-container'></div>
 					</div>
 				</div>
 
-				<!-- Section 3: Resistenze -->
+				<!-- Section 3: Road Load -->
 				<div data-accordion='road'>
 					<div class='section-header' data-accordion-header>
 						<div class='flex items-center gap-2'>
-							<input type='checkbox' id='roadload-toggle' checked class='rounded bg-gauge border-gray-700 cursor-pointer w-4 h-4' />
-							<span class='text-sm font-semibold text-gray-200' data-i18n='road.title'>Road Load (Secondary Physics)</span>
-							<span class='text-[10px] text-gray-400' data-i18n='road.note'>Weight + Aero</span>
+							<input type='checkbox' id='roadload-toggle' checked class='rounded bg-surface-input border-surface-border cursor-pointer w-4 h-4' />
+							<span class='w-2 h-2 rounded-full bg-neon-orange'></span>
+							<span class='text-sm font-semibold text-text-main' data-i18n='road.title'>Road Load (Secondary Physics)</span>
+							<span class='text-[10px] text-text-dim' data-i18n='road.note'>Weight + Aero</span>
 						</div>
 						<svg class='chevron open' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
 							<polyline points='6 9 12 15 18 9'></polyline>
@@ -184,48 +291,58 @@
 					<div class='section-content open' data-accordion-content>
 						<div id='roadload-fields' class='grid grid-cols-2 gap-4 transition-opacity duration-200 pt-1'>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='roadload-mass' data-i18n='road.mass'>Vehicle Mass (kg)</label>
-								<input type='number' inputmode='decimal' step='10' min='500' max='3000' id='roadload-mass' value='1200' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='roadload-mass' data-i18n='road.mass'>Vehicle Mass (kg)</label>
+								<div class='relative'>
+									<input type='number' inputmode='decimal' step='10' min='500' max='3000' id='roadload-mass' value='1200' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+									<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>kg</span>
+								</div>
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='roadload-cd' data-i18n='road.cd'>Drag Coefficient Cd</label>
-								<input type='number' inputmode='decimal' step='0.01' min='0.15' max='0.60' id='roadload-cd' value='0.30' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='roadload-cd' data-i18n='road.cd'>Drag Coefficient Cd</label>
+								<div class='relative'>
+									<input type='number' inputmode='decimal' step='0.01' min='0.15' max='0.60' id='roadload-cd' value='0.30' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+									<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>Cd</span>
+								</div>
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='roadload-area' data-i18n='road.area'>Frontal Area (m²)</label>
-								<input type='number' inputmode='decimal' step='0.05' min='1.0' max='4.0' id='roadload-area' value='2.00' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='roadload-area' data-i18n='road.area'>Frontal Area (m²)</label>
+								<div class='relative'>
+									<input type='number' inputmode='decimal' step='0.05' min='1.0' max='4.0' id='roadload-area' value='2.00' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+									<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>m²</span>
+								</div>
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='roadload-crr' data-i18n='road.crr'>Rolling Coeff Crr</label>
-								<input type='number' inputmode='decimal' step='0.001' min='0.005' max='0.030' id='roadload-crr' value='0.012' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='roadload-crr' data-i18n='road.crr'>Rolling Coeff Crr</label>
+								<input type='number' inputmode='decimal' step='0.001' min='0.005' max='0.030' id='roadload-crr' value='0.012' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='roadload-power' data-i18n='road.power'>Engine Power (kW / ~cv)</label>
-								<input type='number' inputmode='decimal' step='5' min='30' max='500' id='roadload-power' value='110' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='roadload-power' data-i18n='road.power'>Engine Power (kW / ~cv)</label>
+								<input type='number' inputmode='decimal' step='5' min='30' max='500' id='roadload-power' value='110' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='roadload-eff' data-i18n='road.eff'>Drivetrain Eff (0-1)</label>
-								<input type='number' inputmode='decimal' step='0.01' min='0.70' max='1.00' id='roadload-eff' value='0.85' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='roadload-eff' data-i18n='road.eff'>Drivetrain Eff (0-1)</label>
+								<input type='number' inputmode='decimal' step='0.01' min='0.70' max='1.00' id='roadload-eff' value='0.85' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='roadload-grade' data-i18n='road.grade'>Road Grade (%)</label>
-								<input type='number' inputmode='decimal' step='0.5' min='-30' max='30' id='roadload-grade' value='0' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='roadload-grade' data-i18n='road.grade'>Road Grade (%)</label>
+								<input type='number' inputmode='decimal' step='0.5' min='-30' max='30' id='roadload-grade' value='0' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='roadload-rollfactor' data-i18n='road.rollFactor'>Tire Load Factor</label>
-								<input type='number' inputmode='decimal' step='0.005' min='0.90' max='1.00' id='roadload-rollfactor' value='0.975' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='roadload-rollfactor' data-i18n='road.rollFactor'>Tire Load Factor</label>
+								<input type='number' inputmode='decimal' step='0.005' min='0.90' max='1.00' id='roadload-rollfactor' value='0.975' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 							</div>
 						</div>
-						<p class='text-[10px] text-gray-500 mt-3 font-mono' data-i18n='road.caption'>Secondary estimate: required wheel power at each gear peak from weight + aerodynamic drag + rolling resistance.</p>
+						<p class='text-[10px] text-text-dim mt-3 font-mono' data-i18n='road.caption'>Secondary estimate: required wheel power at each gear peak from weight + aerodynamic drag + rolling resistance.</p>
 					</div>
 				</div>
 
-				<!-- Section 4: Curva motore -->
+				<!-- Section 4: Engine Curve -->
 				<div data-accordion='engine'>
 					<div class='section-header' data-accordion-header>
 						<div class='flex items-center gap-2'>
-							<span class='text-sm font-semibold text-gray-200' data-i18n='engine.title'>Engine Curve</span>
-							<span class='text-[10px] text-gray-400' data-i18n='engine.note'>Torque + Power anchors</span>
+							<span class='w-2 h-2 rounded-full bg-neon-yellow'></span>
+							<span class='text-sm font-semibold text-text-main' data-i18n='engine.title'>Engine Curve</span>
+							<span class='text-[10px] text-text-dim' data-i18n='engine.note'>Torque + Power anchors</span>
 						</div>
 						<svg class='chevron open' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
 							<polyline points='6 9 12 15 18 9'></polyline>
@@ -234,115 +351,243 @@
 					<div class='section-content open' data-accordion-content>
 						<div class='grid grid-cols-2 gap-4 pt-1'>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='engine-torque-rpm' data-i18n='engine.torqueRpm'>Peak Torque RPM</label>
-								<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='engine-torque-rpm' value='4500' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='engine-torque-rpm' data-i18n='engine.torqueRpm'>Peak Torque RPM</label>
+								<div class='relative'>
+									<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='engine-torque-rpm' value='4500' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+									<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>RPM</span>
+								</div>
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='engine-torque' data-i18n='engine.torque'>Peak Torque (Nm)</label>
-								<input type='number' inputmode='decimal' step='5' min='20' max='1500' id='engine-torque' value='180' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='engine-torque' data-i18n='engine.torque'>Peak Torque (Nm)</label>
+								<div class='relative'>
+									<input type='number' inputmode='decimal' step='5' min='20' max='1500' id='engine-torque' value='180' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+									<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>Nm</span>
+								</div>
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='engine-power-rpm' data-i18n='engine.powerRpm'>Peak Power RPM</label>
-								<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='engine-power-rpm' value='6500' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='engine-power-rpm' data-i18n='engine.powerRpm'>Peak Power RPM</label>
+								<div class='relative'>
+									<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='engine-power-rpm' value='6500' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+									<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>RPM</span>
+								</div>
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
-								<label class='block text-xs font-medium text-gray-400 mb-1' for='engine-power-at' data-i18n='engine.powerAt'>Power @ Torque Peak (kW)</label>
-								<input type='text' id='engine-power-at' readonly tabindex='-1' value='-' class='w-full bg-carbon border border-gray-800 rounded-lg px-3 py-2 text-xs text-gray-400 font-mono outline-none cursor-default' />
+								<label class='block text-xs font-medium text-text-dim mb-1' for='engine-power-at' data-i18n='engine.powerAt'>Power @ Torque Peak (kW)</label>
+								<input type='text' id='engine-power-at' readonly tabindex='-1' value='-' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-dim font-mono outline-none cursor-default' />
 							</div>
 						</div>
-						<p class='text-[10px] text-gray-500 mt-3 font-mono'><span data-i18n='engine.caption'>Anchors for tractive force and optimal shift: T = P × 9550 / n.</span> <span class='help-dot' tabindex='0' data-i18n-tip='engine.caption' title='Anchors for tractive force and optimal shift: T = P × 9550 / n.' data-tip='Anchors for tractive force and optimal shift: T = P × 9550 / n.' aria-label='Anchors for tractive force and optimal shift: T = P × 9550 / n.'>?</span></p>
+						<p class='text-[10px] text-text-dim mt-3 font-mono'><span data-i18n='engine.caption'>Anchors for tractive force and optimal shift: T = P × 9549.3 / n.</span> <span class='help-dot' tabindex='0' data-i18n-tip='engine.caption' title='Anchors for tractive force and optimal shift: T = P × 9549.3 / n.' data-tip='Anchors for tractive force and optimal shift: T = P × 9549.3 / n.' aria-label='Anchors for tractive force and optimal shift: T = P × 9549.3 / n.'>?</span></p>
 					</div>
 				</div>
 
+				<!-- Section 5: Running Gear -->
+				<details class='accordion' id='running-gear-accordion' open>
+					<summary class='section-header'>
+						<div class='flex items-center gap-2'>
+							<span class='w-2 h-2 rounded-full bg-neon-purple'></span>
+							<span class='text-sm font-semibold text-text-main' data-i18n='running.title'>Running Gear</span>
+							<span class='text-[10px] text-text-dim' data-i18n='running.note'>Load transfer + grip</span>
+						</div>
+						<svg class='chevron open' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+							<polyline points='6 9 12 15 18 9'></polyline>
+						</svg>
+					</summary>
+					<div class='grid grid-cols-2 gap-4 pt-1 pb-2'>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-layout' data-i18n='running.layout'>Drivetrain layout</label>
+							<select id='rg-layout' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim'>
+								<option value='FWD'>FWD</option>
+								<option value='RWD' selected>RWD</option>
+								<option value='AWD'>AWD</option>
+							</select>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-diff' data-i18n='running.diff'>Differential</label>
+							<select id='rg-diff' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim'>
+								<option value='open' data-i18n='running.diffOpen'>Open</option>
+								<option value='clutch_lsd' data-i18n='running.diffLsd'>Clutch LSD</option>
+								<option value='torsen' data-i18n='running.diffTorsen'>Torsen</option>
+								<option value='spool' data-i18n='running.diffSpool'>Spool</option>
+							</select>
+						</div>
+						<div class='col-span-2 sm:col-span-1' id='rg-bias-wrap'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-bias' data-i18n='running.bias'>LSD lock bias</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='5' min='0' max='100' id='rg-bias' value='25' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>%</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-weight' data-i18n='running.weight'>Front weight</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='0.5' min='40' max='70' id='rg-weight' value='60' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>%</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-cog' data-i18n='running.cog'>CoG height</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='5' min='300' max='700' id='rg-cog' value='500' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>mm</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-wheelbase' data-i18n='running.wheelbase'>Wheelbase</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='10' min='2200' max='3300' id='rg-wheelbase' value='2570' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>mm</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-track' data-i18n='running.track'>Track width</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='5' min='1300' max='1800' id='rg-track' value='1500' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>mm</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-spring-f' data-i18n='running.springF'>Front spring</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='1' min='10' max='120' id='rg-spring-f' value='40' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>N/mm</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-spring-r' data-i18n='running.springR'>Rear spring</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='1' min='10' max='120' id='rg-spring-r' value='45' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>N/mm</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-latg' data-i18n='running.latg'>Sustained lateral G</label>
+							<div class='flex items-center gap-2'>
+								<input type='range' min='0' max='1.3' step='0.05' id='rg-latg' value='0.6' class='flex-1' />
+								<span id='rg-latg-val' class='text-xs text-text-output font-mono whitespace-nowrap'>0.60 G</span>
+							</div>
+						</div>
+					</div>
+				</details>
+
 			</div>
-			<div class='card bg-tarmac border border-gray-800 rounded-xl p-4'>
+			<div class='card border border-border rounded-xl p-4'>
 				<div data-accordion='compare'>
 					<div class='section-header' data-accordion-header>
 						<div class='flex items-center gap-2 min-w-0'>
-							<label class='compare-toggle-label text-sm font-semibold text-gray-200' for='comparison-toggle'>
-								<input type='checkbox' id='comparison-toggle' class='rounded bg-gauge border-gray-700 cursor-pointer' />
+							<span class='w-2 h-2 rounded-full bg-neon-purple'></span>
+							<label class='compare-toggle-label text-sm font-semibold text-text-main' for='comparison-toggle'>
+								<input type='checkbox' id='comparison-toggle' class='rounded bg-surface-input border-surface-border cursor-pointer' />
 								<span data-i18n='compare.title'>Enable Secondary Comparison</span>
 							</label>
-							<span class='text-[10px] text-gray-400 whitespace-nowrap' data-i18n='compare.note'>Dotted Curves</span>
+							<span class='text-[10px] text-text-dim whitespace-nowrap' data-i18n='compare.note'>Dotted Curves</span>
 						</div>
 						<svg class='chevron open' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
 							<polyline points='6 9 12 15 18 9'></polyline>
 						</svg>
 					</div>
 					<div class='section-content open' data-accordion-content>
-				<div id='comparison-fields' class='grid grid-cols-2 gap-4 opacity-40 pointer-events-none transition-opacity duration-200 pt-1'>
-					<div class='col-span-2 sm:col-span-1'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-tire' data-i18n='compare.tire'>Secondary Tire</label>
-						<input type='text' id='comp-tire' value='225/45R17' inputmode='text' autocomplete='off' spellcheck='false' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono uppercase focus:border-gray-400 outline-none' />
-						<div id='comp-circ-info' class='text-[10px] text-gray-400 mt-1'>Delta: +0.0%</div>
-					</div>
-					<div class='col-span-2 sm:col-span-1'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-fd' data-i18n='compare.fd'>Secondary Final Drive</label>
-						<input type='number' inputmode='decimal' step='0.01' min='1.0' max='10.0' id='comp-fd' value='3.90' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
-					</div>
-					<div class='col-span-2'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-gears' data-i18n='compare.gears'>Secondary Gears (comma separated)</label>
-						<input type='text' id='comp-gears' value='3.58, 2.05, 1.38, 1.0, 0.81, 0.68' inputmode='decimal' autocomplete='off' spellcheck='false' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
-						<p id='comp-error' class='text-[10px] text-rose-400 mt-1 hidden' data-i18n='compare.invalid'>Check secondary gears (e.g. 3.58, 2.05, 1.38).</p>
-					</div>
-					<div class='col-span-2 sm:col-span-1'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-redline' data-i18n='compare.redline'>Secondary Redline RPM</label>
-						<input type='number' inputmode='decimal' step='100' min='3000' max='12000' id='comp-redline' value='7200' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
-					</div>
-					<div class='col-span-2 sm:col-span-1'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-mass' data-i18n='road.mass'>Secondary Mass (kg)</label>
-						<input type='number' inputmode='decimal' step='10' min='500' max='3000' id='comp-mass' value='1200' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
-					</div>
-					<div class='col-span-2 sm:col-span-1'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-cd' data-i18n='road.cd'>Secondary Drag Cd</label>
-						<input type='number' inputmode='decimal' step='0.01' min='0.15' max='0.60' id='comp-cd' value='0.30' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
-					</div>
-					<div class='col-span-2 sm:col-span-1'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-area' data-i18n='road.area'>Secondary Frontal Area (m²)</label>
-						<input type='number' inputmode='decimal' step='0.05' min='1.0' max='4.0' id='comp-area' value='2.00' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
-					</div>
-					<div class='col-span-2 sm:col-span-1'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-power' data-i18n='road.power'>Secondary Power (kW)</label>
-						<input type='number' inputmode='decimal' step='5' min='30' max='500' id='comp-power' value='110' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
-					</div>
-					<div class='col-span-2 sm:col-span-1'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-torque-rpm' data-i18n='engine.torqueRpm'>Secondary Peak Torque RPM</label>
-						<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='comp-torque-rpm' value='4500' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
-					</div>
-					<div class='col-span-2 sm:col-span-1'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-torque' data-i18n='engine.torque'>Secondary Peak Torque (Nm)</label>
-						<input type='number' inputmode='decimal' step='5' min='20' max='1500' id='comp-torque' value='180' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
-					</div>
-					<div class='col-span-2 sm:col-span-1'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-power-rpm' data-i18n='engine.powerRpm'>Secondary Peak Power RPM</label>
-						<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='comp-power-rpm' value='6500' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
-					</div>
-					<div class='col-span-2 sm:col-span-1'>
-						<label class='block text-xs font-medium text-gray-400 mb-1' for='comp-preset-selector' data-i18n='compare.preset'>Load preset into compare...</label>
-						<select id='comp-preset-selector' class='w-full bg-gauge border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-gray-400'>
-							<option value='' disabled selected data-i18n='compare.preset'>Load preset into compare...</option>
-							<option value='miata_na6'>Mazda Miata NA (5-Speed, 4.30 FD)</option>
-							<option value='s2000_ap1'>Honda S2000 AP1 (6-Speed, 4.10 FD)</option>
-							<option value='e46_m3'>BMW M3 E46 (6-Speed, 3.62 FD)</option>
-							<option value='gr86'>Toyota GR86 / BRZ (6-Speed, 4.10 FD)</option>
-							<option value='eclipse_1g_gs'>Mitsubishi Eclipse 1G GS (5-Speed, 4.322 FD)</option>
-							<option value='porsche_gt3'>Porsche 911 GT3 991 (6-Speed, 3.97 FD)</option>
-						</select>
-					</div>
-					<div class='col-span-2 mt-2 pt-3 border-t border-gray-800'>
-						<button id='btn-copy-primary' type='button' title='Start from primary setup' data-i18n-tip='compare.copy' data-tip='Start from primary setup' aria-label='Start from primary setup' class='btn-copy-truncate truncate w-full px-2.5 py-2 text-xs bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 rounded border border-amber-400/40 transition' data-i18n='compare.copy'>Start from primary setup</button>
-						<p class='compare-banner text-[10px] text-gray-500 mt-1.5 leading-snug' data-i18n='compare.copyHint'>Copies tire, final drive, gears and redline below, then change one value (e.g. 4.10 → 4.77) to see the delta.</p>
-					</div>
-				</div>
+						<div id='comparison-fields' class='grid grid-cols-2 gap-4 opacity-40 pointer-events-none transition-opacity duration-200 pt-1'>
+							<div class='col-span-2 flex flex-col gap-2'>
+								<button id='btn-copy-primary' type='button' title='Start from primary setup' data-i18n-tip='compare.copy' data-tip='Start from primary setup' aria-label='Start from primary setup' class='btn-copy-truncate truncate w-full px-2.5 py-2 text-xs bg-accent-amber-overlay hover:bg-accent-amber-overlay text-neon-yellow rounded border border-accent-amber-overlay transition' data-i18n='compare.copy'>Start from primary setup</button>
+								<select id='comp-preset-selector' aria-label='Load preset into compare' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output focus:outline-none focus:border-text-dim'>
+									<option value='' disabled selected data-i18n='compare.preset'>Load preset into compare...</option>
+									<option value='miata_na6'>Mazda Miata NA (5-Speed, 4.30 FD)</option>
+									<option value='s2000_ap1'>Honda S2000 AP1 (6-Speed, 4.10 FD)</option>
+									<option value='e46_m3'>BMW M3 E46 (6-Speed, 3.62 FD)</option>
+									<option value='gr86'>Toyota GR86 / BRZ (6-Speed, 4.10 FD)</option>
+									<option value='eclipse_1g_gs'>Mitsubishi Eclipse 1G GS (5-Speed, 4.322 FD)</option>
+									<option value='porsche_gt3'>Porsche 911 GT3 991 (6-Speed, 3.97 FD)</option>
+								</select>
+								<p class='compare-banner text-[10px] text-text-dim leading-snug' data-i18n='compare.copyHint'>Copies tire, final drive, gears and redline below, then change one value (e.g. 4.10 → 4.77) to see the delta.</p>
+							</div>
+							<div class='col-span-2 sm:col-span-1'>
+								<label class='block text-xs font-medium text-text-dim mb-1' for='comp-tire' data-i18n='compare.tire'>Secondary Tire</label>
+								<input type='text' id='comp-tire' value='225/45R17' inputmode='text' autocomplete='off' spellcheck='false' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono uppercase focus:border-text-dim outline-none' />
+								<div id='comp-circ-info' class='text-[10px] text-text-dim mt-1'>Delta: +0.0%</div>
+							</div>
+							<div class='col-span-2 sm:col-span-1'>
+								<label class='block text-xs font-medium text-text-dim mb-1' for='comp-fd' data-i18n='compare.fd'>Secondary Final Drive</label>
+								<input type='number' inputmode='decimal' step='0.01' min='1.0' max='10.0' id='comp-fd' value='3.90' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+							</div>
+							<div class='col-span-2'>
+								<label class='block text-xs font-medium text-text-dim mb-1' for='comp-gear-cell-0' data-i18n='compare.gears'>Secondary Gears (comma separated)</label>
+								<div id='comp-gear-grid' class='comp-gear-grid'></div>
+								<input type='text' id='comp-gears' value='3.58, 2.05, 1.38, 1.0, 0.81, 0.68' inputmode='decimal' autocomplete='off' spellcheck='false' aria-hidden='true' tabindex='-1' class='hidden' />
+								<p id='comp-error' class='text-[10px] text-neon-red mt-1 hidden' data-i18n='compare.invalid'>Check secondary gears (e.g. 3.58, 2.05, 1.38).</p>
+							</div>
+							<div class='col-span-2 sm:col-span-1'>
+								<label class='block text-xs font-medium text-text-dim mb-1' for='comp-redline' data-i18n='compare.redline'>Secondary Redline RPM</label>
+								<input type='number' inputmode='decimal' step='100' min='3000' max='12000' id='comp-redline' value='7200' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+							</div>
+							<div class='col-span-2' data-accordion='comp-aero'>
+								<div class='section-header' data-accordion-header>
+									<div class='flex items-center gap-2'>
+										<span class='w-2 h-2 rounded-full bg-neon-orange'></span>
+										<span class='text-sm font-semibold text-text-main' data-i18n='road.title'>Road Load (Secondary Physics)</span>
+									</div>
+									<svg class='chevron open' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+										<polyline points='6 9 12 15 18 9'></polyline>
+									</svg>
+								</div>
+								<div class='section-content open' data-accordion-content>
+									<div class='grid grid-cols-2 gap-4 pt-1'>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='comp-mass' data-i18n='road.mass'>Secondary Mass (kg)</label>
+											<input type='number' inputmode='decimal' step='10' min='500' max='3000' id='comp-mass' value='1200' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='comp-cd' data-i18n='road.cd'>Secondary Drag Cd</label>
+											<input type='number' inputmode='decimal' step='0.01' min='0.15' max='0.60' id='comp-cd' value='0.30' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='comp-area' data-i18n='road.area'>Secondary Frontal Area (m²)</label>
+											<input type='number' inputmode='decimal' step='0.05' min='1.0' max='4.0' id='comp-area' value='2.00' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='comp-power' data-i18n='road.power'>Secondary Power (kW)</label>
+											<input type='number' inputmode='decimal' step='5' min='30' max='500' id='comp-power' value='110' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class='col-span-2' data-accordion='comp-engine'>
+								<div class='section-header' data-accordion-header>
+									<div class='flex items-center gap-2'>
+										<span class='w-2 h-2 rounded-full bg-neon-yellow'></span>
+										<span class='text-sm font-semibold text-text-main' data-i18n='engine.title'>Engine Curve</span>
+									</div>
+									<svg class='chevron open' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+										<polyline points='6 9 12 15 18 9'></polyline>
+									</svg>
+								</div>
+								<div class='section-content open' data-accordion-content>
+									<div class='grid grid-cols-2 gap-4 pt-1'>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='comp-torque-rpm' data-i18n='engine.torqueRpm'>Secondary Peak Torque RPM</label>
+											<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='comp-torque-rpm' value='4500' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='comp-torque' data-i18n='engine.torque'>Secondary Peak Torque (Nm)</label>
+											<input type='number' inputmode='decimal' step='5' min='20' max='1500' id='comp-torque' value='180' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='comp-power-rpm' data-i18n='engine.powerRpm'>Secondary Peak Power RPM</label>
+											<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='comp-power-rpm' value='6500' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
-			<div class='card bg-tarmac border border-gray-800 rounded-xl p-4'>
+			<div class='card border border-border rounded-xl p-4'>
 				<div data-accordion='mycars'>
 					<div class='section-header' data-accordion-header>
 						<div class='flex items-center gap-2 min-w-0'>
-							<span class='text-sm font-semibold text-gray-200' data-i18n='custom.title'>My Cars</span>
-							<span class='text-[10px] text-gray-400 whitespace-nowrap' data-i18n='custom.note'>Saved in this browser</span>
+							<span class='w-2 h-2 rounded-full bg-text-muted'></span>
+							<span class='text-sm font-semibold text-text-main' data-i18n='custom.title'>My Cars</span>
+							<span class='text-[10px] text-text-dim whitespace-nowrap' data-i18n='custom.note'>Saved in this browser</span>
 						</div>
 						<svg class='chevron open' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
 							<polyline points='6 9 12 15 18 9'></polyline>
@@ -350,7 +595,7 @@
 					</div>
 					<div class='section-content open' data-accordion-content>
 						<div class='pt-1'>
-							<button id='btn-my-cars' type='button' class='w-full bg-gauge/50 hover:bg-gauge border border-gray-700/80 rounded-lg px-3 py-2.5 text-xs text-gray-200 text-center transition'>
+							<button id='btn-my-cars' type='button' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2.5 text-xs text-text-main text-center transition'>
 								<span data-i18n='custom.manage'>Manage my cars</span>
 							</button>
 						</div>
@@ -358,146 +603,165 @@
 				</div>
 			</div>
 		</section>
-		<section class='lg:col-span-7 flex flex-col gap-4'>
-			<div class='card graph-card bg-tarmac border border-gray-800 rounded-xl p-4 flex flex-col'>
+		<section class='xl:col-span-7 flex flex-col gap-4'>
+			<div class='card graph-card border border-border rounded-xl p-4 flex flex-col'>
 				<div class='flex items-center justify-between mb-3 gap-2'>
-					<h2 class='text-sm font-semibold text-gray-200' data-i18n='graph.title'>Engine RPM vs Vehicle Speed</h2>
+					<h2 class='text-sm font-semibold text-text-main' data-i18n='graph.title'>Engine RPM vs Vehicle Speed</h2>
 				</div>
-				<div class='graph-wrap relative w-full aspect-[16/9] bg-carbon rounded-lg border border-gray-900 overflow-hidden'>
+				<div class='graph-wrap relative w-full aspect-[16/9] bg-page rounded-lg border border-border overflow-hidden'>
 					<canvas id='graph-canvas' class='w-full h-full block cursor-crosshair'></canvas>
-					<div id='canvas-tooltip' class='absolute pointer-events-none hidden bg-black border border-gray-700 rounded px-2 py-1 text-[11px] font-mono text-gray-200 z-10'></div>
+					<div id='canvas-tooltip' class='absolute pointer-events-none hidden bg-canvas border border-border rounded px-2 py-1 text-[11px] font-mono text-text-main z-10'></div>
 				</div>
 				<div class='graph-legend mt-3 flex text-xs'>
-					<span class='inline-flex items-center gap-1.5 text-gray-300 whitespace-nowrap'>
+					<span class='inline-flex items-center gap-1.5 text-text-main whitespace-nowrap'>
 						<span class='w-3 h-0.5 bg-red-500 inline-block'></span> <span data-i18n='legend.primary'>Primary</span>
 					</span>
-					<span id='comp-legend-indicator' class='items-center gap-1.5 text-amber-400 hidden whitespace-nowrap'>
-						<span class='w-3 h-0.5 border-b border-dashed border-amber-400 inline-block'></span> <span data-i18n='legend.compare'>Compare</span>
+					<span id='comp-legend-indicator' class='items-center gap-1.5 text-neon-yellow hidden whitespace-nowrap'>
+						<span class='w-3 h-0.5 border-b border-dashed border-accent-amber-overlay inline-block'></span> <span data-i18n='legend.compare'>Compare</span>
 					</span>
-					<span class='inline-flex items-center gap-1.5 text-rose-400 whitespace-nowrap'>
+					<span class='inline-flex items-center gap-1.5 text-neon-red whitespace-nowrap'>
 						<span class='w-1.5 h-1.5 rounded-full bg-red-500'></span> <span data-i18n='legend.shift'>Redline Shift Drop</span>
 					</span>
 				</div>
 			</div>
-			<div class='card bg-tarmac border border-gray-800 rounded-xl p-4 flex-1'>
-				<div class='flex items-center justify-between pb-3 mb-3 border-b border-gray-800'>
-					<h3 class='text-sm font-semibold text-gray-200' data-i18n='table.title'>Gear Breakdown &amp; Shift Drop at Redline</h3>
-					<span class='text-[11px] text-gray-500' data-i18n='table.subtitle'>Calculated Theoretical Peak</span>
+			<div class='card border border-border rounded-xl p-4 flex-1'>
+				<div class='flex items-center justify-between pb-3 mb-3 border-b border-border'>
+					<h3 class='text-sm font-semibold text-text-main' data-i18n='table.title'>Gear Breakdown &amp; Shift Drop at Redline</h3>
+					<span class='text-[11px] text-text-dim' data-i18n='table.subtitle'>Calculated Theoretical Peak</span>
 				</div>
 				<div class='table-scroll overflow-x-auto custom-scroll'>
 					<table class='table-sticky w-full text-left text-xs font-mono'>
 						<thead>
-							<tr class='text-gray-400 border-b border-gray-800/80'>
+							<tr class='text-text-dim border-b border-border/80'>
 								<th class='pb-2 pr-2 font-medium whitespace-nowrap' data-i18n='th.gear'>Gear</th>
 								<th class='pb-2 font-medium whitespace-nowrap' data-i18n='th.ratio'>Ratio</th>
 								<th class='pb-2 font-medium whitespace-nowrap' data-i18n='th.overall'>Overall</th>
 								<th class='pb-2 font-medium text-right whitespace-nowrap'><span data-i18n='th.topSpeed'>Top Speed</span> (<span class='unit-label'>km/h</span>)</th>
-								<th class='pb-2 font-medium text-right text-rose-400 whitespace-nowrap' data-i18n='th.nextRpm'>Next Gear RPM</th>
-								<th class='pb-2 font-medium text-right text-rose-400 whitespace-nowrap' data-i18n='th.drop'>RPM Drop</th>
-								<th class='pb-2 font-medium text-right text-sky-400 whitespace-nowrap'><span data-i18n='th.power'>Pwr Req (kW / cv)</span> <span class='help-dot' tabindex='0' data-i18n-tip='th.powerTip' title='Required wheel power at this gear peak from weight, aero drag and rolling resistance.' data-tip='Required wheel power at this gear peak from weight, aero drag and rolling resistance.' aria-label='Required wheel power at this gear peak from weight, aero drag and rolling resistance.'>?</span></th>
-								<th class='pb-2 font-medium text-right text-amber-300 whitespace-nowrap' data-i18n='th.torque'>Torque (Nm)</th>
-								<th class='pb-2 font-medium text-right text-emerald-300 whitespace-nowrap' data-i18n='th.force'>Traction (N)</th>
-								<th class='pb-2 font-medium text-right text-violet-300 whitespace-nowrap'><span data-i18n='th.shift'>Opt Shift</span> <span class='help-dot' tabindex='0' data-i18n-tip='th.shiftTip' title='LIMIT = shift at redline (optimal shift point hits the rev limiter).' data-tip='LIMIT = shift at redline (optimal shift point hits the rev limiter).' aria-label='LIMIT = shift at redline.'>?</span></th>
+								<th class='pb-2 font-medium text-right text-neon-red whitespace-nowrap' data-i18n='th.nextRpm'>Next Gear RPM</th>
+								<th class='pb-2 font-medium text-right text-neon-red whitespace-nowrap' data-i18n='th.drop'>RPM Drop</th>
+								<th class='pb-2 font-medium text-right text-neon-cyan whitespace-nowrap'><span data-i18n='th.power'>Pwr Req (kW / cv)</span> <span class='help-dot' tabindex='0' data-i18n-tip='th.powerTip' title='Required wheel power at this gear peak from weight, aero drag and rolling resistance.' data-tip='Required wheel power at this gear peak from weight, aero drag and rolling resistance.' aria-label='Required wheel power at this gear peak from weight, aero drag and rolling resistance.'>?</span></th>
+								<th class='pb-2 font-medium text-right text-neon-yellow whitespace-nowrap' data-i18n='th.torque'>Torque (Nm)</th>
+								<th class='pb-2 font-medium text-right text-neon-green whitespace-nowrap' data-i18n='th.force'>Traction (N)</th>
+								<th class='pb-2 font-medium text-right text-neon-purple whitespace-nowrap'><span data-i18n='th.shift'>Opt Shift</span> <span class='help-dot' tabindex='0' data-i18n-tip='th.shiftTip' title='LIMIT = shift at redline (optimal shift point hits the rev limiter).' data-tip='LIMIT = shift at redline (optimal shift point hits the rev limiter).' aria-label='LIMIT = shift at redline.'>?</span></th>
+								<th class='pb-2 font-medium text-right text-neon-purple whitespace-nowrap spinSpeed' data-i18n='running.spinSpeed'>Spin Δ</th>
+								<th class='pb-2 font-medium text-right text-neon-cyan whitespace-nowrap' data-i18n='running.minWheel'>Min Wheel</th>
 							</tr>
 						</thead>
-						<tbody id='gear-breakdown-body' class='divide-y divide-gray-800/40 text-gray-300'></tbody>
+						<tbody id='gear-breakdown-body' class='divide-y divide-border/40 text-text-main'></tbody>
 					</table>
 				</div>
-				<div id='compare-table-wrap' class='hidden mt-5 pt-4 border-t border-dashed border-amber-400/30'>
+				<div id='compare-table-wrap' class='hidden mt-5 pt-4 border-t border-dashed border-accent-amber-overlay'>
 					<div class='flex items-center justify-between pb-2 mb-2'>
-						<h4 class='text-xs font-semibold text-amber-300' data-i18n='compare.secondary'>Secondary (dashed)</h4>
-						<span class='text-[11px] text-gray-500' data-i18n='compare.delta'>Δ vs primary</span>
+						<h4 class='text-xs font-semibold text-neon-yellow' data-i18n='compare.secondary'>Secondary (dashed)</h4>
+						<span class='text-[11px] text-text-dim' data-i18n='compare.delta'>Δ vs primary</span>
 					</div>
 					<div class='table-scroll overflow-x-auto custom-scroll'>
 						<table class='table-sticky table-compare w-full text-left text-xs font-mono'>
 							<thead>
-								<tr class='text-gray-400 border-b border-gray-800/80'>
+								<tr class='text-text-dim border-b border-border/80'>
 									<th class='pb-2 pr-2 font-medium whitespace-nowrap' data-i18n='th.gear'>Gear</th>
 									<th class='pb-2 font-medium whitespace-nowrap' data-i18n='th.ratio'>Ratio</th>
 									<th class='pb-2 font-medium text-right whitespace-nowrap'><span data-i18n='th.topSpeed'>Top Speed</span> (<span class='unit-label'>km/h</span>)</th>
 									<th class='pb-2 font-medium text-right whitespace-nowrap' data-i18n='compare.delta'>Δ vs primary</th>
-									<th class='pb-2 font-medium text-right text-sky-400 whitespace-nowrap' data-comp-power='1' data-i18n='th.power'>Pwr Req (kW / cv)</th>
+									<th class='pb-2 font-medium text-right text-neon-cyan whitespace-nowrap' data-comp-power='1' data-i18n='th.power'>Pwr Req (kW / cv)</th>
 								</tr>
 							</thead>
-							<tbody id='compare-breakdown-body' class='divide-y divide-gray-800/40 text-gray-300'></tbody>
+							<tbody id='compare-breakdown-body' class='divide-y divide-border/40 text-text-main'></tbody>
 						</table>
 					</div>
 				</div>
 			</div>
 		</section>
 	</main>
+
+	<!-- Mobile bottom nav -->
+	<nav id='mobile-tabs' class='xl:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-border flex items-center justify-around pb-safe'>
+		<button data-view='dashboard' class='flex-1 flex flex-col items-center py-2 gap-0.5 text-neon-cyan active:text-text-output transition-colors'>
+			<span class='text-[10px] font-mono' data-i18n='tab.dashboard'>RPM</span>
+		</button>
+		<button data-view='gears' class='flex-1 flex flex-col items-center py-2 gap-0.5 text-text-dim active:text-text-output transition-colors'>
+			<span class='text-[10px] font-mono' data-i18n='tab.gears'>Gears</span>
+		</button>
+		<button data-view='dynamics' class='flex-1 flex flex-col items-center py-2 gap-0.5 text-text-dim active:text-text-output transition-colors'>
+			<span class='text-[10px] font-mono' data-i18n='tab.dynamics'>Dynamics</span>
+		</button>
+		<button data-view='compare' class='flex-1 flex flex-col items-center py-2 gap-0.5 text-text-dim active:text-text-output transition-colors'>
+			<span class='text-[10px] font-mono' data-i18n='tab.compare'>Compare</span>
+		</button>
+	</nav>
+
 	<!-- My Cars bottom-sheet modal -->
 	<div id='mycars-modal-backdrop' class='hidden fixed inset-0 z-40'></div>
-	<div id='mycars-modal' role='dialog' aria-modal='true' aria-labelledby='mycars-modal-title' class='hidden fixed z-50 bg-tarmac max-h-[85vh] overflow-y-auto'>
-		<div class='sticky top-0 bg-tarmac z-10 flex items-center justify-between px-5 pt-3 pb-2 border-b border-gray-800'>
-			<h2 id='mycars-modal-title' class='text-sm font-semibold text-gray-200' data-i18n='custom.title'>My Cars</h2>
-			<button id='mycars-modal-close' type='button' class='px-3 py-2 text-xs font-semibold rounded bg-gauge border border-gray-700 text-gray-200 hover:text-white' data-i18n='drawer.close'>Close</button>
+	<div id='mycars-modal' role='dialog' aria-modal='true' aria-labelledby='mycars-modal-title' class='hidden fixed z-50 bg-surface max-h-[85vh] overflow-y-auto'>
+		<div class='sticky top-0 bg-surface z-10 flex items-center justify-between px-5 pt-3 pb-2 border-b border-border'>
+			<h2 id='mycars-modal-title' class='text-sm font-semibold text-text-main' data-i18n='custom.title'>My Cars</h2>
+			<button id='mycars-modal-close' type='button' class='px-3 py-2 text-xs font-semibold rounded bg-input border border-border text-text-main hover:text-text-output' data-i18n='drawer.close'>Close</button>
 		</div>
 		<div class='p-5'>
 			<div class='grid grid-cols-2 gap-4'>
 				<div class='col-span-2'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-name' data-i18n='custom.name'>Car name</label>
-					<input type='text' id='custom-name' maxlength='40' placeholder='Eclipse 1G GS race' autocomplete='off' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-name' data-i18n='custom.name'>Car name</label>
+					<input type='text' id='custom-name' maxlength='40' placeholder='Eclipse 1G GS race' autocomplete='off' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2 sm:col-span-1'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-tire' data-i18n='primary.tire'>Tire Spec (e.g. 205/55R16)</label>
-					<input type='text' id='custom-tire' value='195/60R15' inputmode='text' autocomplete='off' spellcheck='false' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono uppercase focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-tire' data-i18n='primary.tire'>Tire Spec (e.g. 205/55R16)</label>
+					<input type='text' id='custom-tire' value='195/60R15' inputmode='text' autocomplete='off' spellcheck='false' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono uppercase focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2 sm:col-span-1'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-fd' data-i18n='primary.fd'>Final Drive (Differential)</label>
-					<input type='number' inputmode='decimal' step='0.01' min='1.0' max='10.0' id='custom-fd' value='4.322' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-fd' data-i18n='primary.fd'>Final Drive (Differential)</label>
+					<input type='number' inputmode='decimal' step='0.01' min='1.0' max='10.0' id='custom-fd' value='4.322' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2 sm:col-span-1'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-redline' data-i18n='primary.redline'>Redline RPM</label>
-					<input type='number' inputmode='decimal' step='100' min='3000' max='12000' id='custom-redline' value='7000' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-redline' data-i18n='primary.redline'>Redline RPM</label>
+					<input type='number' inputmode='decimal' step='100' min='3000' max='12000' id='custom-redline' value='7000' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2 sm:col-span-1'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-reverse' data-i18n='custom.reverse'>Reverse (optional)</label>
-					<input type='number' inputmode='decimal' step='0.01' min='1.0' max='6.0' id='custom-reverse' value='3.083' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-reverse' data-i18n='custom.reverse'>Reverse (optional)</label>
+					<input type='number' inputmode='decimal' step='0.01' min='1.0' max='6.0' id='custom-reverse' value='3.083' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-gears' data-i18n='custom.gears'>Gears (comma separated)</label>
-					<input type='text' id='custom-gears' value='3.363, 1.947, 1.285, 0.939, 0.756' inputmode='decimal' autocomplete='off' spellcheck='false' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-gears' data-i18n='custom.gears'>Gears (comma separated)</label>
+					<input type='text' id='custom-gears' value='3.363, 1.947, 1.285, 0.939, 0.756' inputmode='decimal' autocomplete='off' spellcheck='false' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2 sm:col-span-1'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-mass' data-i18n='road.mass'>Vehicle Mass (kg)</label>
-					<input type='number' inputmode='decimal' step='10' min='500' max='3000' id='custom-mass' value='1270' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-mass' data-i18n='road.mass'>Vehicle Mass (kg)</label>
+					<input type='number' inputmode='decimal' step='10' min='500' max='3000' id='custom-mass' value='1270' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2 sm:col-span-1'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-cd' data-i18n='road.cd'>Drag Coefficient Cd</label>
-					<input type='number' inputmode='decimal' step='0.01' min='0.15' max='0.60' id='custom-cd' value='0.29' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-cd' data-i18n='road.cd'>Drag Coefficient Cd</label>
+					<input type='number' inputmode='decimal' step='0.01' min='0.15' max='0.60' id='custom-cd' value='0.29' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2 sm:col-span-1'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-area' data-i18n='road.area'>Frontal Area (m²)</label>
-					<input type='number' inputmode='decimal' step='0.05' min='1.0' max='4.0' id='custom-area' value='1.95' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-area' data-i18n='road.area'>Frontal Area (m²)</label>
+					<input type='number' inputmode='decimal' step='0.05' min='1.0' max='4.0' id='custom-area' value='1.95' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2 sm:col-span-1'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-power' data-i18n='road.power'>Engine Power (kW)</label>
-					<input type='number' inputmode='decimal' step='5' min='30' max='500' id='custom-power' value='110' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-power' data-i18n='road.power'>Engine Power (kW)</label>
+					<input type='number' inputmode='decimal' step='5' min='30' max='500' id='custom-power' value='110' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2 sm:col-span-1'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-torque-rpm' data-i18n='engine.torqueRpm'>Peak Torque RPM</label>
-					<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='custom-torque-rpm' value='3500' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-torque-rpm' data-i18n='engine.torqueRpm'>Peak Torque RPM</label>
+					<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='custom-torque-rpm' value='3500' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2 sm:col-span-1'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-torque' data-i18n='engine.torque'>Peak Torque (Nm)</label>
-					<input type='number' inputmode='decimal' step='5' min='50' max='1000' id='custom-torque' value='175' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-torque' data-i18n='engine.torque'>Peak Torque (Nm)</label>
+					<input type='number' inputmode='decimal' step='5' min='50' max='1000' id='custom-torque' value='175' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 				<div class='col-span-2 sm:col-span-1'>
-					<label class='block text-xs font-medium text-gray-400 mb-1' for='custom-power-rpm' data-i18n='engine.powerRpm'>Peak Power RPM</label>
-					<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='custom-power-rpm' value='6500' class='w-full bg-gauge border border-gray-700/80 rounded-lg px-3 py-2 text-xs text-white font-mono focus:border-gray-400 outline-none' />
+					<label class='block text-xs font-medium text-text-dim mb-1' for='custom-power-rpm' data-i18n='engine.powerRpm'>Peak Power RPM</label>
+					<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='custom-power-rpm' value='6500' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
 				</div>
 			</div>
-			<p id='custom-error' class='text-[10px] text-rose-400 mt-2 hidden' data-i18n='custom.invalid'>Check the highlighted fields.</p>
+			<p id='custom-error' class='text-[10px] text-neon-red mt-2 hidden' data-i18n='custom.invalid'>Check the highlighted fields.</p>
 			<div class='mt-3 flex gap-2'>
-				<button id='btn-save-custom' type='button' class='flex-1 px-2.5 py-2.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-200 rounded border border-gray-700' data-i18n='custom.save'>Save car</button>
-				<button id='btn-import-custom' type='button' class='px-2.5 py-2.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-200 rounded border border-gray-700' data-i18n='custom.import'>Import JSON</button>
+				<button id='btn-save-custom' type='button' class='flex-1 px-2.5 py-2.5 text-xs bg-surface-input border border-surface-border text-text-main rounded' data-i18n='custom.save'>Save car</button>
+				<button id='btn-import-custom' type='button' class='px-2.5 py-2.5 text-xs bg-surface-input border border-surface-border text-text-main rounded' data-i18n='custom.import'>Import JSON</button>
 				<input type='file' id='custom-import-input' accept='.json' class='hidden' />
 			</div>
 			<div id='custom-list' class='mt-3 space-y-1.5'></div>
 		</div>
 	</div>
-	<footer class='mt-auto border-t border-gray-800/80 py-4 px-6 text-center text-xs text-gray-500 font-mono'>
+	<footer class='mt-auto border-t border-border/80 py-4 px-6 text-center text-xs text-text-dim font-mono'>
 		<span>haguruma &bull; Heuristic Application for Gear-ratio, Up-shift, &amp; Redline Unit Mapping Architecture</span>
 	</footer>
 	<button id='share-fab' type='button' class='hidden' tabindex='-1' aria-hidden='true'>Share</button>

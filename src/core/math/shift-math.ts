@@ -2,7 +2,7 @@
  * @file shift-math.ts
  * @brief Upshift analysis: landing RPM, drops, ratios and torque-band checks.
  */
-import { calculateRpm, calculateSpeed } from './speed-math';
+import { calculateSpeed } from './speed-math';
 import type { SpeedUnit } from '../models';
 
 const MIN_RATIO = 0.4;
@@ -82,7 +82,7 @@ export const describeUpshift = (
 		return null;
 	}
 	const topSpeed = calculateSpeed(redline, current, finalDrive, circM, unit);
-	const landingRpm = calculateRpm(topSpeed, next, finalDrive, circM, unit);
+	const landingRpm = redline * (next / current);
 	if (!Number.isFinite(topSpeed) || !Number.isFinite(landingRpm)) {
 		return null;
 	}

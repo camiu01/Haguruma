@@ -10,6 +10,7 @@ import type { ElementRefs } from '../dom/element-refs';
 import { renderGearsList } from '../../components/gear-list';
 import { syncEngineInputs } from './engine-events';
 import { syncRoadLoadInputs } from './road-load-events';
+import { syncRunningGearInputs } from './running-gear-events';
 
 /**
  * @brief Apply a preset to state and refresh every dependent control.
@@ -45,11 +46,15 @@ export const applyPreset = (refs: ElementRefs, preset: GearPreset, render: () =>
 	if (preset.peakPowerRpm !== undefined) {
 		state.peakPowerRpm = preset.peakPowerRpm;
 	}
+	if (preset.runningGear !== undefined) {
+		state.runningGear = { ...preset.runningGear };
+	}
 	refs.primaryTire.value = preset.tire;
 	refs.primaryFd.value = String(preset.fd);
 	refs.primaryRedline.value = String(preset.redline);
 	syncRoadLoadInputs(refs);
 	syncEngineInputs(refs);
+	syncRunningGearInputs(refs);
 	renderGearsList(refs, () => render());
 	render();
 };

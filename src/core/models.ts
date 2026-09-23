@@ -25,6 +25,47 @@ export interface TireSpec {
 	circumferenceM: number;
 }
 
+/** Driven axle layout. */
+export type DrivetrainLayout = 'FWD' | 'RWD' | 'AWD';
+
+/** Differential behaviour model. */
+export type DifferentialType = 'open' | 'clutch_lsd' | 'torsen' | 'spool';
+
+/**
+ * Chassis and running-gear parameters for load-transfer physics.
+ * @brief Weight distribution, geometry, grip and suspension inputs.
+ */
+export interface RunningGear {
+	/** Front static weight share, range [0.3, 0.7]. */
+	frontWeightDistribution: number;
+	/** Center-of-gravity height in mm, range [200, 800]. */
+	centerOfGravityHeightMm: number;
+	/** Wheelbase in mm, range [2000, 3500]. */
+	wheelbaseMm: number;
+	/** Track width in mm, range [1200, 1800]. */
+	trackWidthMm: number;
+	/** Road friction coefficient, range [0.5, 1.6]. */
+	roadFrictionCoefficient: number;
+	/** Driven axle layout. */
+	drivetrainLayout: DrivetrainLayout;
+	/** Differential behaviour model. */
+	differentialType: DifferentialType;
+	/** Clutch LSD lock bias, range [0, 1] (0 open-like, 1 spool-like). */
+	differentialBias: number;
+	/** Front spring rate per corner in N/mm, range [10, 120]. */
+	springRateFrontNmm: number;
+	/** Rear spring rate per corner in N/mm, range [10, 120]. */
+	springRateRearNmm: number;
+	/** Sustained lateral acceleration in g, range [0, 2]. */
+	lateralG: number;
+	/** Downforce lift coefficient (dimensionless, e.g. 0.15 road, 1.2 aero). */
+	liftCoefficient?: number;
+	/** Reference area for downforce in square metres (defaults to drag area). */
+	liftReferenceAreaM2?: number;
+	/** Downforce front share, range [0, 1] (defaults to front weight share). */
+	downforceFrontShare?: number;
+}
+
 /**
  * Vehicle preset selectable from the header dropdown.
  * @brief Realistic starting point for tire, final drive and gears.
@@ -54,6 +95,8 @@ export interface GearPreset {
 	peakTorqueNm?: number;
 	/** RPM of peak engine power. */
 	peakPowerRpm?: number;
+	/** Chassis and running-gear parameters for load-transfer physics. */
+	runningGear?: RunningGear;
 }
 
 /**
@@ -123,6 +166,10 @@ export interface AppState {
 	peakTorqueNm: number;
 	/** RPM of peak engine power (power-curve anchor). */
 	peakPowerRpm: number;
+	/** Primary chassis and running-gear parameters. */
+	runningGear: RunningGear;
+	/** Secondary chassis and running-gear parameters. */
+	compRunningGear: RunningGear;
 }
 
 /**

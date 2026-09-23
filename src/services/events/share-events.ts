@@ -9,8 +9,10 @@ import { t } from '../../core/i18n/language';
 import type { ElementRefs } from '../dom/element-refs';
 import { renderGearsList } from '../../components/gear-list';
 import { syncComparisonInputs, applyComparisonVisibility } from './comparison-events';
+import { syncCompGearCells } from './comp-gear-grid';
 import { syncEngineInputs } from './engine-events';
 import { syncRoadLoadInputs } from './road-load-events';
+import { syncRunningGearInputs } from './running-gear-events';
 import { applyUnitLabels, syncUnitToggle } from './unit-events';
 
 /**
@@ -113,6 +115,7 @@ export const restoreFromUrl = (refs: ElementRefs, render: () => void): void => {
 	syncRestoredCompInputs(refs);
 	syncRoadLoadInputs(refs);
 	syncEngineInputs(refs);
+	syncRunningGearInputs(refs);
 	syncUnitToggle(refs);
 	applyUnitLabels(refs);
 	renderGearsList(refs, () => render());
@@ -141,4 +144,5 @@ const syncPrimaryInputs = (refs: ElementRefs): void => {
 	refs.primaryRedline.value = String(state.primaryRedline);
 	refs.graphMaxSpeed.value = String(state.maxGraphSpeed);
 	refs.compGears.value = formatCompGears(state.compGears);
+	syncCompGearCells(refs);
 };

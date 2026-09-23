@@ -4,7 +4,7 @@
  */
 import { state } from '../core/state/app-state';
 import { effectiveCircumferenceM, parseTire } from '../core/math/tire-math';
-import { calculateSpeed } from '../core/math/speed-math';
+import { calculateSpeed, fromDisplaySpeed } from '../core/math/speed-math';
 import { describeUpshift } from '../core/math/shift-math';
 import {
 	dynamicRadiusM,
@@ -13,6 +13,8 @@ import {
 	tractiveForceAt,
 	validateCurve,
 } from '../core/math/traction-math';
+import { criticalWheelspinSpeed, maxDriveForceAtSpeed, wheelLoads } from '../core/math/dynamics-math';
+import { defaultRunningGear } from '../core/state/app-state';
 import { availableWheelKw, kwToHp, roadLoadPowerKw } from '../core/math/aero-math';
 import { topsForSetup } from '../core/compare/compare-utils';
 import { getGearColor } from '../config/gear-colors';
@@ -37,6 +39,7 @@ export const renderTable = (refs: ElementRefs): void => {
 	if (state.reverseRatio !== null && state.reverseRatio > 0) {
 		refs.breakdownBody.appendChild(buildReverseRow(circM));
 	}
+	updateGripKpi();
 	updateComparisonInfo(refs);
 	renderCompareTable(refs, circM);
 };
@@ -52,12 +55,14 @@ export const renderTable = (refs: ElementRefs): void => {
 const buildTableRow = (circM: number, gearRatio: number, idx: number): HTMLElement => {
 	const overallRatio = (gearRatio * state.primaryFd).toFixed(2);
 	const topSpeed = calculateSpeed(state.primaryRedline, gearRatio, state.primaryFd, circM, state.unit);
-	const { nextRpmDisplay, dropDisplay } = describeShift(circM, topSpeed, idx);
+	const { nextRpmDisplay, dropDisplay } = describeShift(circM, idx);
 	const powerDisplay = describeRoadLoad(topSpeed);
 	const { torqueDisplay, forceDisplay, shiftDisplay } = describeTraction(circM, gearRatio, idx);
+	const spinDisplay = describeSpinSpeed(circM, idx);
+	const wheelDisplay = describeMinWheel();
 	const tr = document.createElement('tr');
-	tr.className = 'hover:bg-gauge/80 transition-colors';
-	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full shrink-0' style='background-color: ${getGearColor(idx)}'></span><span>${t('gear.prefix')} ${idx + 1}</span></span></td><td class='py-2.5 whitespace-nowrap'>${gearRatio.toFixed(2)}:1</td><td class='py-2.5 text-gray-400 whitespace-nowrap'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-white whitespace-nowrap'>${topSpeed.toFixed(1)}</td><td class='py-2.5 text-right text-rose-300 whitespace-nowrap'>${nextRpmDisplay}</td><td class='py-2.5 text-right text-rose-400 font-semibold whitespace-nowrap'>${dropDisplay}</td><td class='py-2.5 text-right text-sky-300 whitespace-nowrap'>${powerDisplay}</td><td class='py-2.5 text-right text-amber-300 whitespace-nowrap'>${torqueDisplay}</td><td class='py-2.5 text-right text-emerald-300 whitespace-nowrap'>${forceDisplay}</td><td class='py-2.5 text-right text-violet-300 whitespace-nowrap'>${shiftDisplay}</td>`;
+	tr.className = 'hover:bg-input/80 transition-colors';
+	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full shrink-0' style='background-color: ${getGearColor(idx)}'></span><span>${t('gear.prefix')} ${idx + 1}</span></span></td><td class='py-2.5 whitespace-nowrap'>${gearRatio.toFixed(2)}:1</td><td class='py-2.5 text-gray-400 whitespace-nowrap'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-white whitespace-nowrap'>${topSpeed.toFixed(1)}</td><td class='py-2.5 text-right text-rose-300 whitespace-nowrap'>${nextRpmDisplay}</td><td class='py-2.5 text-right text-rose-400 font-semibold whitespace-nowrap'>${dropDisplay}</td><td class='py-2.5 text-right text-sky-300 whitespace-nowrap'>${powerDisplay}</td><td class='py-2.5 text-right text-amber-300 whitespace-nowrap'>${torqueDisplay}</td><td class='py-2.5 text-right text-emerald-300 whitespace-nowrap'>${forceDisplay}</td><td class='py-2.5 text-right text-violet-300 whitespace-nowrap'>${shiftDisplay}</td><td class='py-2.5 text-right text-orange-300 whitespace-nowrap'>${spinDisplay}</td><td class='py-2.5 text-right text-lime-300 whitespace-nowrap'>${wheelDisplay}</td>`;
 	return tr;
 };
 
@@ -71,7 +76,7 @@ const describeRoadLoad = (topSpeed: number): string => {
 	if (!state.roadLoadEnabled) {
 		return '-';
 	}
-	const speedKmh = state.unit === 'mph' ? topSpeed / 0.621371 : topSpeed;
+	const speedKmh = fromDisplaySpeed(topSpeed, state.unit);
 	const kw = roadLoadPowerKw(
 		speedKmh,
 		state.vehicleMassKg,
@@ -97,21 +102,19 @@ const buildReverseRow = (circM: number): HTMLElement => {
 	const topSpeed = calculateSpeed(state.primaryRedline, ratio, state.primaryFd, circM, state.unit);
 	const powerDisplay = describeRoadLoad(topSpeed);
 	const tr = document.createElement('tr');
-	tr.className = 'hover:bg-gauge/80 transition-colors';
-	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full bg-gray-400 shrink-0'></span><span>${t('gear.reverse')}</span></span></td><td class='py-2.5 whitespace-nowrap'>${ratio.toFixed(2)}:1</td><td class='py-2.5 text-gray-400 whitespace-nowrap'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-white whitespace-nowrap'>${topSpeed.toFixed(1)}</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-sky-300 whitespace-nowrap'>${powerDisplay}</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td>`;
+	tr.className = 'hover:bg-input/80 transition-colors';
+	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full bg-gray-400 shrink-0'></span><span>${t('gear.reverse')}</span></span></td><td class='py-2.5 whitespace-nowrap'>${ratio.toFixed(2)}:1</td><td class='py-2.5 text-gray-400 whitespace-nowrap'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-white whitespace-nowrap'>${topSpeed.toFixed(1)}</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-sky-300 whitespace-nowrap'>${powerDisplay}</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td>`;
 	return tr;
 };
 /**
  * Describe the RPM landing in the next gear.
  * @brief Compute display strings for the shift columns.
  * @param circM Tire circumference in metres.
- * @param topSpeed Redline top speed of the current gear.
  * @param idx Zero-based gear index.
  * @return Next-RPM and drop display strings.
  */
 const describeShift = (
 	circM: number,
-	topSpeed: number,
 	idx: number,
 ): { nextRpmDisplay: string; dropDisplay: string } => {
 	if (idx >= state.gears.length - 1) {
@@ -121,7 +124,6 @@ const describeShift = (
 	if (!step) {
 		return { nextRpmDisplay: '-', dropDisplay: '-' };
 	}
-	void topSpeed;
 	return {
 		nextRpmDisplay: `${Math.round(step.landingRpm)} rpm`,
 		dropDisplay: `-${Math.round(step.rpmDrop)} rpm`,
@@ -172,6 +174,61 @@ const describeTraction = (
  */
 const formatShiftAdvice = (shiftRpm: number, atRedline: boolean): string => {
 	return atRedline ? `${Math.round(shiftRpm)} LIMIT` : `${Math.round(shiftRpm)} rpm`;
+};
+
+/**
+ * Describe the critical wheelspin recovery speed for one gear.
+ * @brief Null-safe wrapper around criticalWheelspinSpeed.
+ * @param circM Effective rolling circumference in metres.
+ * @param idx Zero-based gear index.
+ * @return Display string with unit or '-' when the gear never spins.
+ */
+const describeSpinSpeed = (circM: number, idx: number): string => {
+	const curve = validateCurve({
+		redline: state.primaryRedline,
+		peakTorqueRpm: state.peakTorqueRpm,
+		peakTorqueNm: state.peakTorqueNm,
+		peakPowerRpm: state.peakPowerRpm,
+		peakPowerKw: state.enginePowerKw,
+	});
+	if (!curve) {
+		return '-';
+	}
+	const rg = state.runningGear ?? defaultRunningGear;
+	const speeds = criticalWheelspinSpeed(state.gears, state.primaryFd, circM, curve, state.drivetrainEff, rg, state.vehicleMassKg, state.unit);
+	const v = speeds[idx];
+	return v === null || v === undefined ? '-' : `${v.toFixed(0)} ${state.unit}`;
+};
+
+/**
+ * Describe the lightest inner wheel load at peak torque.
+ * @brief Minimum of the four wheelLoads values at standstill transfer.
+ * @return Display string in newtons.
+ */
+const describeMinWheel = (): string => {
+	const rg = state.runningGear ?? defaultRunningGear;
+	try {
+		const loads = wheelLoads(rg, state.vehicleMassKg, 0);
+		const min = Math.min(loads.fl, loads.fr, loads.rl, loads.rr);
+		return `${Math.round(min)} N`;
+	} catch {
+		return '-';
+	}
+};
+
+/**
+ * Update the standstill grip-limit KPI cell.
+ * @brief Null-guarded write to #kpi-0-100 with engine force 0.
+ * @return void
+ */
+const updateGripKpi = (): void => {
+	const el = document.getElementById('kpi-0-100');
+	if (!el) {
+		return;
+	}
+	const rg = state.runningGear ?? defaultRunningGear;
+	const grip = maxDriveForceAtSpeed(rg, state.vehicleMassKg, 0, 0, 0);
+	el.textContent = `${Math.round(grip.limitN).toLocaleString('en-US')}`;
 };
 
 /**
@@ -244,7 +301,7 @@ const syncCompareHeadLabel = (refs: ElementRefs): void => {
  */
 const buildCompareRow = (idx: number, ratio: number, top: number, primaryTop: number | undefined): HTMLElement => {
 	const tr = document.createElement('tr');
-	tr.className = 'hover:bg-gauge/80 transition-colors';
+	tr.className = 'hover:bg-input/80 transition-colors';
 	const delta = primaryTop === undefined ? '-' : formatDelta(top - primaryTop);
 	const deltaCls = describeDeltaClass(top, primaryTop);
 	const power = describeCompRoadLoad(top);
@@ -274,7 +331,7 @@ const describeCompRoadLoad = (top: number): string => {
 	if (!state.roadLoadEnabled) {
 		return '-';
 	}
-	const speedKmh = state.unit === 'mph' ? top / 0.621371 : top;
+	const speedKmh = fromDisplaySpeed(top, state.unit);
 	const kw = roadLoadPowerKw(
 		speedKmh,
 		state.compMassKg,

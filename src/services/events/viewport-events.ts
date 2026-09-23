@@ -1,43 +1,91 @@
 /**
  * @file viewport-events.ts
- * @brief Mobile viewport resize handling and keyboard avoidance.
+ * @brief Canvas container ResizeObserver + debounced redraw and mobile keyboard avoidance.
  */
 import type { ElementRefs } from '../dom/element-refs';
-import { resizeCanvas } from '../graph/canvas-setup';
-import { drawGraph } from '../graph/graph-renderer';
-
-/** Pending debounced redraw timer for visual viewport resizes. */
-let resizeTimer = 0;
+import { debounce } from '../../core/debounce';
 
 /**
- * Wire mobile viewport and keyboard-avoidance listeners.
- * @brief Keeps the graph crisp when the URL bar or keyboard moves.
+ * Wire canvas container resize detection, visualViewport and keyboard-avoidance listeners.
+ * @brief Keeps the graph crisp across layout changes, URL bar toggles and keyboard scroll.
  * @param refs Cached DOM handles.
+ * @param render Full refresh callback (normally bound to renderAll).
+ * @return Cleanup function to disconnect the observer and cancel pending timers.
+ */
+export const bindViewportEvents = (refs: ElementRefs, render: () => void): (() => void) => {
+	const cleanups: (() => void)[] = [];
+
+	const debouncedRender = debounce(render, 150);
+
+	bindContainerResize(refs, debouncedRender, cleanups);
+	bindVisualViewport(debouncedRender, cleanups);
+	bindKeyboardAvoidance();
+
+	return () => {
+		debouncedRender.cancel();
+		for (let i = cleanups.length - 1; i >= 0; i--) {
+			cleanups[i]();
+		}
+	};
+};
+
+/**
+ * Observe the canvas container element with a ResizeObserver.
+ * @brief Primary layout-change detection — fires only when graph-wrap actually resizes.
+ * @param refs Cached DOM handles.
+ * @param onResize Debounced redraw trigger.
+ * @param cleanups Collector for teardown callbacks.
  * @return void
  */
-export const bindViewportEvents = (refs: ElementRefs): void => {
-	bindVisualViewport(refs);
-	bindKeyboardAvoidance();
+const bindContainerResize = (
+	refs: ElementRefs,
+	onResize: () => void,
+	cleanups: (() => void)[],
+): void => {
+	const container = refs.canvas.parentElement;
+
+	if (container && typeof ResizeObserver !== 'undefined') {
+		const observer = new ResizeObserver(() => {
+			onResize();
+		});
+		observer.observe(container);
+		cleanups.push(() => {
+			observer.disconnect();
+		});
+		return;
+	}
+
+	// Fallback: debounced window.resize when ResizeObserver is unavailable.
+	const onFallbackResize = (): void => {
+		onResize();
+	};
+	window.addEventListener('resize', onFallbackResize);
+	cleanups.push(() => {
+		window.removeEventListener('resize', onFallbackResize);
+	});
 };
 
 /**
  * Redraw on visual viewport resizes with debounce.
  * @brief Fires when mobile chrome shows or hides without a window resize.
- * @param refs Cached DOM handles.
+ * @param onResize Debounced redraw trigger.
+ * @param cleanups Collector for teardown callbacks.
  * @return void
  */
-const bindVisualViewport = (refs: ElementRefs): void => {
+const bindVisualViewport = (
+	onResize: () => void,
+	cleanups: (() => void)[],
+): void => {
 	const viewport = window.visualViewport;
 	if (!viewport) {
 		return;
 	}
-	viewport.addEventListener('resize', () => {
-		window.clearTimeout(resizeTimer);
-		resizeTimer = window.setTimeout(() => {
-			if (resizeCanvas(refs.canvas, refs.ctx)) {
-				drawGraph(refs);
-			}
-		}, 150);
+	const onVpResize = (): void => {
+		onResize();
+	};
+	viewport.addEventListener('resize', onVpResize);
+	cleanups.push(() => {
+		viewport.removeEventListener('resize', onVpResize);
 	});
 };
 

@@ -4,6 +4,7 @@
  */
 import { GRAPH_LIMITS } from '../../config/graph-constants';
 import { getGraphStyle } from './graph-theme';
+import { toDisplaySpeed } from '../../core/math/speed-math';
 import { getSpeedStep } from '../../core/units/unit-utils';
 import type { PlotFrame, SpeedUnit } from '../../core/models';
 import { toX, toY } from './canvas-setup';
@@ -131,7 +132,7 @@ export const drawAeroLimit = (
 	limitKmh: number,
 	unit: SpeedUnit,
 ): void => {
-	const limitDisplay = unit === 'mph' ? limitKmh * 0.621371 : limitKmh;
+	const limitDisplay = toDisplaySpeed(limitKmh, unit);
 	if (limitDisplay <= 0 || limitDisplay >= frame.maxSpeed) {
 		return;
 	}

@@ -4,6 +4,7 @@
  */
 import { getTheme, setTheme, type Theme } from '../../core/theme/theme';
 import type { ElementRefs } from '../dom/element-refs';
+import { syncThemeSegment } from './drawer-utils-events';
 
 /**
  * @brief Theme labels shown inside the single toggle button.
@@ -56,4 +57,5 @@ export const syncThemeToggle = (refs: ElementRefs): void => {
 	refs.themeToggle.setAttribute('aria-label', `Theme: ${active}`);
 	refs.themeToggle.setAttribute('aria-checked', String(active !== 'light'));
 	refs.themeToggle.title = `Theme: ${active} (click to switch)`;
+	syncThemeSegment();
 };

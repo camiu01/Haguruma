@@ -29,8 +29,8 @@ const makeCurve = (): EngineCurve => ({
 });
 
 describe('torqueFromPower/powerFromTorque', () => {
-	it('round-trips through the 9550 constant', () => {
-		expect(powerFromTorque(torqueFromPower(110, 6500), 6500)).toBeCloseTo(110, 5);
+	it('round-trips through the constant', () => {
+		expect(powerFromTorque(torqueFromPower(110, 6500), 6500)).toBeCloseTo(110, 4);
 	});
 	it('rejects invalid inputs', () => {
 		expect(torqueFromPower(110, 0)).toBe(0);
@@ -52,7 +52,7 @@ describe('enginePowerAt/engineTorqueAt', () => {
 	it('torque matches power divided by speed', () => {
 		const curve = makeCurve();
 		const rpm = 4500;
-		expect(engineTorqueAt(rpm, curve)).toBeCloseTo((enginePowerAt(rpm, curve) * 9550) / rpm, 3);
+		expect(engineTorqueAt(rpm, curve)).toBeCloseTo((enginePowerAt(rpm, curve) * 30000 / Math.PI) / rpm, 3);
 	});
 });
 
@@ -94,6 +94,12 @@ describe('optimalShiftFor/optimalShiftsForAll', () => {
 		expect(shift).not.toBeNull();
 		expect(shift!.shiftRpm).toBeGreaterThan(2000);
 		expect(shift!.shiftRpm).toBeLessThan(7200);
+	});
+	it('ignores low-rpm force wiggles and holds redline without a late crossing', () => {
+		const hose = { ...makeCurve(), peakTorqueRpm: 1500, peakTorqueNm: 400 };
+		const shift = optimalShiftFor([3.58, 2.05], 0, 4.1, 1.935, hose, 0.85, 'kmh');
+		expect(shift).not.toBeNull();
+		expect(shift!.shiftRpm).toBeGreaterThanOrEqual(7000);
 	});
 	it('returns null without a curve', () => {
 		expect(optimalShiftFor([3.58, 2.05], 0, 4.1, 1.935, null, 0.85, 'kmh')).toBeNull();

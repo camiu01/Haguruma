@@ -83,6 +83,15 @@ describe('dragLimitedSpeedKmh', () => {
 		expect(limit).toBeGreaterThan(400);
 		expect(limit).toBeLessThanOrEqual(600);
 	});
+	it('handles steep descents without NaN and stays bounded', () => {
+		const limit = dragLimitedSpeedKmh(60, 1270, 0.29, 1.95, 0.012, -30);
+		expect(Number.isFinite(limit)).toBe(true);
+		expect(limit).toBeGreaterThanOrEqual(0);
+		expect(limit).toBeLessThanOrEqual(600);
+	});
+	it('returns a crawl speed when power barely beats standstill load', () => {
+		expect(dragLimitedSpeedKmh(1, 3000, 0.6, 4.0, 0.03, 30)).toBeLessThan(5);
+	});
 });
 
 describe('gradeForce/clampGrade', () => {
