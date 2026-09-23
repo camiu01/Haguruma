@@ -23,7 +23,10 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 - **Optimal shift advisor** — per-gear-pair shift RPM based on force-curve crossing with anti-false-positive scanning (immune to turbo-lag oscillations at low RPM); appends `LIMIT` when the rev limiter is the optimal point.
 - **Load transfer & grip model** — lateral load transfer per axle (full inner→outer transfer), Kamm friction circle, differential torque bias (open/clutch LSD/Torsen/spool), wheelspin detection, and proportional lateral force distribution based on instantaneous wheel load.
 - **Downforce integration** — aerodynamic downforce from lift coefficient and reference area, split front/rear, adds to vertical load for friction-limited grip.
-- **Translation** — English and Italian, persisted. Uses `data-i18n` (text), `data-i18n-tip` (tooltip), `data-i18n-ph` (placeholder).
+- **Translation** — English and Italian, persisted. Uses `data-i18n` (text), `data-i18n-tip` (tooltip), `data-i18n-ph` (placeholder). All English copy lives in `dictionary.en.ts`, all Italian in `dictionary.it.ts`.
+- **Setup troubleshooting wizard** — entry/mid/exit × understeer/oversteer/transfer/bottoming decision tree with ranked adjustments, severity badges and trade-off warnings.
+- **Setup handbook** — offline feel-the-car cues (braking, mid-corner, exit, pyrometer reading) plus the 8-step systematic setup procedure, rendered from reusable `Card` components.
+- **Android APK** — Capacitor wrapper; manual **Build APK** workflow assembles a debug APK artifact on demand.
 - **Custom cars** — save/load complete setups (tire, FD, redline, gears, reverse, mass, Cd, area, power, torque curve anchors) to localStorage. Export/import JSON files.
 - **Share via URL** — encodes all setup parameters into the URL hash. One-click copy, paste to share.
 - **PWA** — `manifest.webmanifest` with standalone display, maskable icons; service worker for offline asset caching.
@@ -89,22 +92,30 @@ src/
     math/                        # tire, speed, aero, traction, shift, dynamics
     state/app-state.ts           # mutable singleton store
     units/unit-utils.ts          # kmh/mph helpers
-    i18n/                        # en/it dictionaries + language state
+    i18n/                        # dictionary.en.ts + dictionary.it.ts + language state
+    setup/                       # wizard matrix + handbook copy (DictKey refs only)
     theme/theme.ts               # dark/oled/light toggle
     presets/custom-store.ts      # localStorage custom cars
     share/share-utils.ts         # URL hash encode/decode
-  config/                        # presets, gear colors, graph constants
+  config/                        # presets, glob catalog loader, cars/, gear colors, graph constants
   services/
     dom/element-refs.ts          # typed DOM handles
     graph/                       # canvas setup, axes, curves, drops, renderer, tooltip, theme
     events/                      # one binder per control group
   components/                    # gear list editor, breakdown table, custom car manager
+  components/card/               # base Card + one file per specialized card + barrel
   views/render-all.ts            # single refresh entry
-  styles/main.css                # theme overrides, cards, drawer, scrollbars, help-dot
+  styles/                        # main.css hub + tokens/base/drawer/components/shell/overrides/setup-guide
+capacitor.config.ts              # native wrapper (webDir dist)
+android/                         # committed Capacitor scaffold
 tests/                           # vitest suites mirroring src/
 ```
 
-Conventions: tabs, single quotes, semicolons, TSDoc on every function, files <400 lines, functions <50 lines.
+Conventions: tabs, single quotes, semicolons, TSDoc on every function, feature files <400 lines (shell/hub/dictionary exempt), functions <50 lines.
+
+## Android APK
+
+Actions tab → **Build APK** → Run workflow. The workflow typechecks, tests, builds the web app, syncs Capacitor and assembles `app-debug.apk` (JDK 17), uploaded as the `haguruma-debug-apk` artifact. Debug-signed for sideload testing only.
 
 ## License
 

@@ -4,6 +4,12 @@ Development task management for the Haguruma vehicle dynamics simulator.
 
 ## Done
 
+- [x] Setup troubleshooting wizard + handbook view (Entry/Mid/Exit/Pyrometer/Procedure cards)
+- [x] Card component system (`components/card/`: base `Card`, one file per card, barrel)
+- [x] Per-vehicle catalog (`config/cars/<id>.json` + `import.meta.glob` loader, `CarCatalogEntry`)
+- [x] Per-language dictionaries (`dictionary.en.ts` / `dictionary.it.ts`, compile-time parity)
+- [x] Capacitor Android scaffold + manual Build APK workflow (debug artifact)
+
 - [x] Mobile hamburger menu + left slide-over drawer (lang/unit/theme/presets)
 - [x] Slide-over drawer: focus trap, Escape/backdrop close, scroll lock, focus restore
 - [x] Share trigger as icon-only in header on mobile + FAB

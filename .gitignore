@@ -5,6 +5,13 @@ node_modules/
 dist/
 dist-ssr/
 
+# Capacitor Android generated outputs (scaffold in android/ is committed)
+android/app/build/
+android/.gradle/
+android/app/src/main/assets/
+android/capacitor-cordova-android-plugins/
+android/local.properties
+
 # Test and coverage artifacts
 coverage/
 *.lcov
