@@ -1,9 +1,11 @@
+/**
+ * @file vite.config.ts
+ * @brief Vite configuration for GitHub Pages deployment.
+ *
+ * Defines the relative build base and dev server options.
+ */
 import { defineConfig } from 'vite';
 
-/**
- * Vite configuration for GitHub Pages deployment.
- * @purpose Define build base and server options.
- */
 export default defineConfig({
 	base: './',
 	publicDir: 'public',

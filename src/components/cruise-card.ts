@@ -5,7 +5,7 @@
 import { state } from '../core/state/app-state';
 import { t } from '../core/i18n/language';
 import { effectiveCircumferenceM, parseTire } from '../core/math/tire-math';
-import { validateCurve } from '../core/math/traction-math';
+import { activeEngineCurve } from '../core/state/engine-curve';
 import { cruiseCheck, type CruiseResult } from '../core/math/cruise-math';
 import { fromDisplaySpeed } from '../core/math/speed-math';
 import { formatPower, getUnitLabel } from '../core/units/unit-utils';
@@ -111,13 +111,7 @@ const buildControls = (): DocumentFragment => {
  */
 export const renderCruise = (refs: ElementRefs): void => {
 	const tire = parseTire(state.primaryTire);
-	const curve = validateCurve({
-		redline: state.primaryRedline,
-		peakTorqueRpm: state.peakTorqueRpm,
-		peakTorqueNm: state.peakTorqueNm,
-		peakPowerRpm: state.peakPowerRpm,
-		peakPowerKw: state.enginePowerKw,
-	});
+	const curve = activeEngineCurve();
 	const raw = parseFloat(refs.cruiseSpeed.value);
 	const displaySpeed = Number.isFinite(raw) && raw > 0 ? raw : 130;
 	if (!tire || !curve) {

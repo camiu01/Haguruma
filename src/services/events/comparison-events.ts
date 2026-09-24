@@ -10,11 +10,12 @@ import type { GearPreset } from '../../core/models';
 import type { ElementRefs } from '../dom/element-refs';
 import { addGear } from '../../components/gear-list';
 import { bindCompGearGrid, syncCompGearCells } from './comp-gear-grid';
+import { syncCompRunningGearInputs } from './comp-running-gear-events';
 import { formatPowerInput, fromDisplayPower } from '../../core/units/unit-utils';
 
 /**
  * Bind comparison toggle and secondary inputs.
- * @purpose Control the dotted overlay dual setup.
+ * @brief Control the dotted overlay dual setup.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback.
  */
@@ -106,7 +107,7 @@ export const bindComparisonEvents = (refs: ElementRefs, render: () => void): voi
 
 /**
  * Toggle dimmed state and legend visibility.
- * @purpose Keep disabled inputs non-interactive.
+ * @brief Keep disabled inputs non-interactive.
  */
 export const applyComparisonVisibility = (refs: ElementRefs): void => {
 	if (state.compareEnabled) {
@@ -138,11 +139,12 @@ export const syncComparisonInputs = (refs: ElementRefs): void => {
 	refs.compTorqueRpm.value = String(state.compPeakTorqueRpm);
 	refs.compTorque.value = String(state.compPeakTorqueNm);
 	refs.compPowerRpm.value = String(state.compPeakPowerRpm);
+	syncCompRunningGearInputs();
 };
 
 /**
  * Bind the Add Gear button.
- * @purpose Append one shorter ratio up to the palette limit.
+ * @brief Append one shorter ratio up to the palette limit.
  */
 export const bindGearActions = (refs: ElementRefs, render: () => void): void => {
 	refs.btnAddGear.addEventListener('click', () => {
@@ -200,6 +202,7 @@ const copyPrimaryToCompare = (refs: ElementRefs, render: () => void): void => {
 	refs.compTorque.value = String(state.compPeakTorqueNm);
 	refs.compPowerRpm.value = String(state.compPeakPowerRpm);
 	refs.compError.classList.add('hidden');
+	syncCompRunningGearInputs();
 	enableComparison(refs);
 	flashCopyButton(refs);
 	render();
@@ -269,6 +272,7 @@ export const applyCompPresetData = (refs: ElementRefs, preset: GearPreset, rende
 	refs.compTorque.value = preset.peakTorqueNm !== undefined ? String(preset.peakTorqueNm) : String(state.compPeakTorqueNm);
 	refs.compPowerRpm.value = preset.peakPowerRpm !== undefined ? String(preset.peakPowerRpm) : String(state.compPeakPowerRpm);
 	refs.compError.classList.add('hidden');
+	syncCompRunningGearInputs();
 	enableComparison(refs);
 	render();
 };

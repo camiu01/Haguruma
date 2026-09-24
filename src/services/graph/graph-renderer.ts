@@ -5,7 +5,8 @@
 import { state, defaultRunningGear } from '../../core/state/app-state';
 import { effectiveCircumferenceM, parseTire } from '../../core/math/tire-math';
 import { rpmFromKmh, toDisplaySpeed } from '../../core/math/speed-math';
-import { dynamicRadiusM, tractiveForceAt, validateCurve } from '../../core/math/traction-math';
+import { dynamicRadiusM, tractiveForceAt } from '../../core/math/traction-math';
+import { activeEngineCurve } from '../../core/state/engine-curve';
 import { maxDriveForceAtSpeed } from '../../core/math/dynamics-math';
 import { availableWheelKw, dragLimitedSpeedKmh } from '../../core/math/aero-math';
 import { getMaxRpm } from '../../core/units/unit-utils';
@@ -153,13 +154,7 @@ const shadePrimarySpin = (ctx: CanvasRenderingContext2D, frame: PlotFrame, gripF
 		return;
 	}
 	const circM = effectiveCircumferenceM(primaryTire, state.rollingFactor);
-	const curve = validateCurve({
-		redline: state.primaryRedline,
-		peakTorqueRpm: state.peakTorqueRpm,
-		peakTorqueNm: state.peakTorqueNm,
-		peakPowerRpm: state.peakPowerRpm,
-		peakPowerKw: state.enginePowerKw,
-	});
+	const curve = activeEngineCurve();
 	if (!curve) {
 		return;
 	}

@@ -10,7 +10,7 @@ import { toX, toY } from './canvas-setup';
 
 /**
  * Draw dashed secondary comparison curves.
- * @purpose Overlay an independent tire, final drive, gearset and redline.
+ * @brief Overlay an independent tire, final drive, gearset and redline.
  */
 export const drawComparisonCurves = (
 	ctx: CanvasRenderingContext2D,
@@ -37,7 +37,7 @@ export const drawComparisonCurves = (
 
 /**
  * Draw solid primary gear curves with labels.
- * @purpose Show RPM vs speed for the main setup.
+ * @brief Show RPM vs speed for the main setup.
  * @returns Peak redline points reused for shift-drop markers.
  */
 export const drawPrimaryCurves = (

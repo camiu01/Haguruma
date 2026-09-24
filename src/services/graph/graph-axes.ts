@@ -10,7 +10,7 @@ import type { PlotFrame, SpeedUnit } from '../../core/models';
 import { toX, toY } from './canvas-setup';
 /**
  * Draw the dark plot background.
- * @purpose Reset the frame before every render.
+ * @brief Reset the frame before every render.
  */
 export const drawBackground = (
 	ctx: CanvasRenderingContext2D,
@@ -23,7 +23,7 @@ export const drawBackground = (
 
 /**
  * Draw vertical speed grid lines.
- * @purpose Show kmh/mph reference ticks.
+ * @brief Show kmh/mph reference ticks.
  */
 export const drawSpeedGrid = (
 	ctx: CanvasRenderingContext2D,
@@ -49,7 +49,7 @@ export const drawSpeedGrid = (
 
 /**
  * Draw horizontal RPM grid lines.
- * @purpose Show 1k RPM reference ticks.
+ * @brief Show 1k RPM reference ticks.
  */
 export const drawRpmGrid = (
 	ctx: CanvasRenderingContext2D,
@@ -73,7 +73,7 @@ export const drawRpmGrid = (
 
 /**
  * Draw the redline limit band.
- * @purpose Highlight the over-rev region.
+ * @brief Highlight the over-rev region.
  */
 export const drawRedlineBand = (
 	ctx: CanvasRenderingContext2D,
@@ -99,7 +99,7 @@ export const drawRedlineBand = (
 
 /**
  * Draw axis titles.
- * @purpose Label both physical dimensions.
+ * @brief Label both physical dimensions.
  */
 export const drawAxisTitles = (
 	ctx: CanvasRenderingContext2D,

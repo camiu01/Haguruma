@@ -1,3 +1,7 @@
+/**
+ * @file primary-events.ts
+ * @brief Primary setup inputs: tire, final drive, redline and graph max.
+ */
 import { state } from '../../core/state/app-state';
 import { effectiveCircumferenceM, parseTire } from '../../core/math/tire-math';
 import type { ElementRefs } from '../dom/element-refs';
@@ -5,7 +9,7 @@ import { drawGraph } from '../graph/graph-renderer';
 
 /**
  * Bind primary setup inputs.
- * @purpose Validate tire text and forward numeric changes to state.
+ * @brief Validate tire text and forward numeric changes to state.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback.
  */
@@ -40,7 +44,7 @@ export const bindPrimaryEvents = (refs: ElementRefs, render: () => void): void =
 
 /**
  * Validate tire text and update the status dot.
- * @purpose Give immediate feedback without blocking typing.
+ * @brief Give immediate feedback without blocking typing.
  */
 const applyTireValidation = (refs: ElementRefs, value: string, render: () => void): void => {
 	const parsed = parseTire(value);

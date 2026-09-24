@@ -22,17 +22,20 @@ src/
   main.ts                         # bootstrap only
   core/
     models.ts                     # SpeedUnit, TireSpec, GearPreset, AppState, etc.
-    math/                         # tire-math, speed-math, aero-math, traction-math, shift-math, accel-math, inertia-math, cruise-math, dynamics-math
+    math/                         # tire-math, speed-math, aero-math, traction-math, shift-math, accel-math, inertia-math, cruise-math, dynamics-math, dyno-csv (CSV parser + resampling), engine-curve-core (anchor/dyno engine curve)
     setup/                        # setup-matrix.ts (wizard data) + setup-guide-content.ts (handbook copy)
     state/app-state.ts            # defaultState + singleton
+    state/engine-curve.ts         # active engine curve (anchors vs sanitized dyno points)
     units/unit-utils.ts           # getSpeedStep(), getUnitLabel(), getPowerUnitLabel(), formatPower(), getMaxRpm()
     i18n/                         # dictionary.en.ts + dictionary.it.ts + language.ts (applyI18n)
-    share/share-utils.ts          # URL hash encode/decode (incl. rg_dm / rg_dc diff keys)
+    share/share-utils.ts          # URL hash encode/decode (incl. rg_, crg_, curve, rg_dm / rg_dc diff keys)
+    share/running-gear-share.ts   # rg_/crg_ encode/decode block + numeric param helper
   config/
     presets.ts                    # preset maps built from the catalog loader
     car-catalog.ts                # CarCatalogEntry model + import.meta.glob loader
     cars/                         # one <id>.json per vehicle, drop-in to add
     diff-presets.ts               # Extensible LSD catalog (open, 1/1.5/2-way, custom, Torsen, spool)
+    drivetrain-eff.ts             # Default drivetrain efficiency lookup by FWD/RWD/AWD layout
     gear-colors.ts                # 8-color palette
     graph-constants.ts            # GRAPH_PADDING, GRAPH_STYLE_*, GRAPH_LIMITS
   services/
@@ -41,10 +44,12 @@ src/
     events/                       # One binder per control group
   components/
     gear-list.ts                  # Editable gear rows + add/remove
-    gear-table.ts                 # Top-speed + shift-drop + torque/traction/opt-shift table + KPI strip
+    gear-table.ts                 # Primary breakdown table + KPI strip + accel memo
+    compare-table.ts              # Secondary comparison rows + tire-delta caption
     custom-car.ts                 # Save/load/export/import custom presets
     setup-guide.ts                # Setup shell injection + card assembly
     cruise-card.ts                # Highway cruising shell + render
+    running-gear-readouts.ts      # Downforce + coast lock-up/downforce readouts
     card/                         # base Card + one file per specialized card + index.ts barrel
   views/render-all.ts             # resizeCanvas + drawGraph + renderTable + renderCruise
   styles/
@@ -116,11 +121,15 @@ android/                          # Committed Capacitor scaffold (generated outp
 - `vitest` framework, tests in `tests/` mirroring `src/`.
 - Run single file: `npx vitest run tests/tire-math.test.ts`.
 - Always run `npx tsc --noEmit` + `npm test` before committing.
+- Coverage for the chassis/aero pass: `tests/dynamics-math.test.ts` (load transfer, friction circle, dyno taper, coast lock), `tests/drivetrain-eff.test.ts`, `tests/dyno-csv.test.ts`, `tests/setup-matrix.test.ts`.
 
 ## Share/URL
 - Full setup encoded in URL hash, restored on page load via `restoreFromUrl()`.
 - Uses `navigator.clipboard.writeText()` with textarea fallback.
 - Running gear keys: geometry + `rg_df` (type) + `rg_db` (accel lock) + `rg_dc` (coast lock) + `rg_dm` (catalog model id). Unknown model ids are ignored (legacy-safe).
+- Comparison keys are the `crg_` mirror of `rg_` (same ranges and enums).
+- Custom dyno curve encoded as `curve=rpm:torque;rpm:torque;...` (decimal dot, capped at `MAX_CURVE_POINTS = 64`).
+- `running-gear-share.ts` owns the `rg_`/`crg_` block, the numeric range table, and a `numParam` helper reused by the other decode groups.
 
 ## Differential catalog
 - `src/config/diff-presets.ts` — append a row to `DIFF_PRESETS` to add models (id, i18n `labelKey`, physics `type`, `accLock`, `coastLock`).
@@ -130,6 +139,18 @@ android/                          # Committed Capacitor scaffold (generated outp
 ## Simulation KPIs
 - `renderTable()` → `updateSummaryKpis()` keeps `#kpi-redline`, `#kpi-top-speed`, `#kpi-aero-wall` in sync with state (never rely on static HTML defaults).
 - Accel KPIs memoize on a JSON key of physical inputs (`buildAccelKey`).
+
+## Engine curve (anchors vs dyno CSV)
+- `core/state/engine-curve.ts` returns the active curve: anchors by default, sanitized dyno points once a CSV is imported.
+- `core/math/dyno-csv.ts` parses header / header-less torque or power rows. Supports `,`, `;`, `\t` delimiters and decimal commas; converts kgm → Nm and cv / hp → kW.
+- `core/math/engine-curve-core.ts` is the single source of truth for `engineTorqueAt`, `tractiveForceAt`, `optimalShift*`, and the dyno-tail taper past the last measured RPM.
+
+## Powertrain efficiency
+- `config/drivetrain-eff.ts` maps FWD → 0.90, RWD → 0.85, AWD → 0.80. The layout selector and preset apply both write `state.drivetrainEff`.
+
+## Chassis downforce & coast lockup
+- `running-gear.readout` shows the live downforce at 200 km/h (`lift × area × ½·ρ·v²`) and the coast lock-up speed in the active gear.
+- `core/math/dynamics-math.ts` exposes `engineBrakeForceAt`, `maxCoastForceAtSpeed`, and `criticalCoastLockupSpeed`, all using `differentialCoastBias`.
 
 ## v3
 - `vite.config.ts` uses `base: './'` for GitHub Pages deployment.

@@ -1,6 +1,8 @@
 /**
- * Distinct color per gear curve and table row.
- * @purpose Keep gear identity consistent across graph and table.
+ * @file gear-colors.ts
+ * @brief Distinct color per gear curve and table row.
+ *
+ * Keeps gear identity consistent across graph and table.
  */
 export const GEAR_COLORS: string[] = [
 	'#ef4444',
@@ -15,7 +17,7 @@ export const GEAR_COLORS: string[] = [
 
 /**
  * Resolve the display color for a gear index.
- * @purpose Wrap around the palette when more than 8 gears exist.
+ * @brief Wrap around the palette when more than 8 gears exist.
  * @param index Zero-based gear index.
  * @returns Hex color string.
  */

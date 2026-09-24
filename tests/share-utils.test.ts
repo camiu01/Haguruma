@@ -95,6 +95,34 @@ describe('encodeState/decodeState', () => {
 		const patch = decodeState('#rg_dm=not_a_model');
 		expect(patch.runningGear).toBeUndefined();
 	});
+	it('roundtrips downforce and dyno-curve keys', () => {
+		const hash = encodeState({
+			...defaultState,
+			torqueCurvePoints: [
+				{ rpm: 1000, torqueNm: 120 },
+				{ rpm: 3000, torqueNm: 200 },
+				{ rpm: 6000, torqueNm: 150 },
+			],
+			runningGear: { ...defaultRunningGear, liftCoefficient: 1.2, liftReferenceAreaM2: 1.6, downforceFrontShare: 0.45 },
+		});
+		const patch = decodeState(`#${hash}`);
+		expect(patch.torqueCurvePoints).not.toBeNull();
+		expect(patch.torqueCurvePoints?.map((p) => p.rpm)).toEqual([1000, 3000, 6000]);
+		expect(patch.torqueCurvePoints?.[1].torqueNm).toBeCloseTo(200, 1);
+		expect(patch.runningGear?.liftCoefficient).toBeCloseTo(1.2, 2);
+		expect(patch.runningGear?.liftReferenceAreaM2).toBeCloseTo(1.6, 2);
+		expect(patch.runningGear?.downforceFrontShare).toBeCloseTo(0.45, 2);
+		expect(patch.compRunningGear?.liftCoefficient).toBeCloseTo(0.15, 2);
+	});
+	it('decodes old hashes without curve or downforce keys', () => {
+		const patch = decodeState('#fd=4.1&rl=7200');
+		expect(patch.torqueCurvePoints).toBeUndefined();
+		expect(patch.runningGear).toBeUndefined();
+	});
+	it('rejects a curve with a single valid point', () => {
+		const patch = decodeState('#curve=3000:200');
+		expect(patch.torqueCurvePoints).toBeUndefined();
+	});
 });
 
 describe('applySharedState', () => {
@@ -106,6 +134,17 @@ describe('applySharedState', () => {
 		expect(state.gears).toEqual([3.0, 2.0]);
 		state.primaryFd = before.length > 0 ? defaultState.primaryFd : defaultState.primaryFd;
 		state.gears = [...defaultState.gears];
+	});
+	it('applies dyno curve patches with cloned points', () => {
+		const ok = applySharedState({ torqueCurvePoints: [{ rpm: 1000, torqueNm: 100 }, { rpm: 2000, torqueNm: 120 }] });
+		expect(ok).toBe(true);
+		expect(state.torqueCurvePoints).toHaveLength(2);
+		state.torqueCurvePoints = null;
+	});
+	it('clears the dyno curve when the patch value is null', () => {
+		state.torqueCurvePoints = [{ rpm: 1000, torqueNm: 100 }, { rpm: 2000, torqueNm: 120 }];
+		applySharedState({ torqueCurvePoints: null });
+		expect(state.torqueCurvePoints).toBeNull();
 	});
 	it('returns false for empty patch', () => {
 		expect(applySharedState({})).toBe(false);

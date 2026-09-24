@@ -3,12 +3,13 @@
  * @brief Encode and decode the full setup into a shareable URL hash.
  */
 import { state } from '../state/app-state';
-import type { AppState } from '../models';
+import type { AppState, TorqueCurvePoint } from '../models';
 import { parseCompGears } from '../compare/compare-utils';
 import { parseTire } from '../math/tire-math';
 import { defaultRunningGear } from '../state/app-state';
-import type { DifferentialType, DrivetrainLayout, RunningGear } from '../models';
-import { findDiffPreset } from '../../config/diff-presets';
+import { sanitizeTorquePoints } from '../math/engine-curve-core';
+import { MAX_CURVE_POINTS, resampleTorquePoints } from '../math/dyno-csv';
+import { decodeGripParams, encodeRunningGear, numParam } from './running-gear-share';
 
 /**
  * @brief Serialize current state into a compact hash string.
@@ -32,29 +33,21 @@ export const encodeState = (s: AppState): string => {
 	p.set('rle', s.roadLoadEnabled ? '1' : '0'); p.set('grade', String(s.roadGradePercent)); p.set('rf', String(s.rollingFactor));
 	p.set('tq', String(s.peakTorqueRpm)); p.set('tqn', String(s.peakTorqueNm)); p.set('pwr', String(s.peakPowerRpm));
 	p.set('rot', String(s.rotatingMassKg)); p.set('sft', String(s.shiftTimeS));
+	if (s.torqueCurvePoints && s.torqueCurvePoints.length >= 2) {
+		p.set('curve', encodeCurvePoints(s.torqueCurvePoints));
+	}
 	encodeRunningGear(p, s.runningGear ?? defaultRunningGear, 'rg_');
 	encodeRunningGear(p, s.compRunningGear ?? s.runningGear ?? defaultRunningGear, 'crg_');
 	return p.toString();
 };
 
 /**
- * @brief Serialize a running-gear setup with a key prefix.
- * @param p Params receiving the keys.
- * @param rg Running-gear setup to encode.
- * @param prefix Key prefix (rg_ or crg_).
- * @return void
+ * @brief Serialize dyno points as rpm:torque pairs joined by semicolons.
+ * @param points Dyno torque points (already sanitized).
+ * @return Compact string such as 1500:190.0;2500:210.0.
  */
-const encodeRunningGear = (p: URLSearchParams, rg: RunningGear, prefix: string): void => {
-	const n2 = (v: number): string => v.toFixed(2);
-	p.set(`${prefix}wd`, n2(rg.frontWeightDistribution)); p.set(`${prefix}cg`, String(Math.round(rg.centerOfGravityHeightMm)));
-	p.set(`${prefix}wb`, String(Math.round(rg.wheelbaseMm))); p.set(`${prefix}tw`, String(Math.round(rg.trackWidthMm)));
-	p.set(`${prefix}mu`, n2(rg.roadFrictionCoefficient)); p.set(`${prefix}lay`, rg.drivetrainLayout); p.set(`${prefix}df`, rg.differentialType);
-	p.set(`${prefix}db`, n2(rg.differentialBias)); p.set(`${prefix}dc`, n2(rg.differentialCoastBias ?? 0));
-	if (rg.differentialModelId) {
-		p.set(`${prefix}dm`, rg.differentialModelId);
-	}
-	p.set(`${prefix}sf`, String(Math.round(rg.springRateFrontNmm)));
-	p.set(`${prefix}sr`, String(Math.round(rg.springRateRearNmm))); p.set(`${prefix}lat`, n2(rg.lateralG));
+const encodeCurvePoints = (points: TorqueCurvePoint[]): string => {
+	return points.map((p) => `${Math.round(p.rpm)}:${p.torqueNm.toFixed(1)}`).join(';');
 };
 
 /**
@@ -196,7 +189,7 @@ const decodeCompareParams = (params: URLSearchParams): Partial<AppState> => {
 	if (carea !== null) {
 		out.compFrontalAreaM2 = carea;
 	}
-	const cpw = get('cpw', 30, 500);
+	const cpw = get('cpw', 30, 700);
 	if (cpw !== null) {
 		out.compPowerKw = cpw;
 	}
@@ -239,7 +232,7 @@ const decodeRoadParams = (params: URLSearchParams): Partial<AppState> => {
 	if (crr !== null) {
 		out.rollingCrr = crr;
 	}
-	const pw = get('pw', 30, 500);
+	const pw = get('pw', 30, 700);
 	if (pw !== null) {
 		out.enginePowerKw = pw;
 	}
@@ -289,71 +282,37 @@ const decodeEngineParams = (params: URLSearchParams): Partial<AppState> => {
 	if (sft !== null) {
 		out.shiftTimeS = sft;
 	}
-	return out;
-};
-
-/**
- * @brief Decode primary and secondary running-gear params.
- * @param params Parsed query params.
- * @return Partial grip fields, empty when no rg keys are present.
- */
-const decodeGripParams = (params: URLSearchParams): Partial<AppState> => {
-	const out: Partial<AppState> = {};
-	const rg = decodeRunningGearParams(params, 'rg_');
-	if (Object.keys(rg).length > 0) {
-		out.runningGear = { ...defaultRunningGear, ...rg };
-	}
-	const crg = decodeRunningGearParams(params, 'crg_');
-	if (Object.keys(crg).length > 0) {
-		out.compRunningGear = { ...defaultRunningGear, ...crg };
-	}
-	return out;
-};
-
-/** Numeric grip fields with ranges: key, prop, min, max, round. */
-type GripSpec = [string, keyof RunningGear, number, number, boolean];
-
-/** Shared numeric spec table for both rg_ and crg_ prefixes. */
-const GRIP_SPECS: GripSpec[] = [
-	['wd', 'frontWeightDistribution', 0.4, 0.7, false],
-	['cg', 'centerOfGravityHeightMm', 200, 800, true],
-	['wb', 'wheelbaseMm', 2000, 3200, true],
-	['tw', 'trackWidthMm', 1200, 1800, true],
-	['mu', 'roadFrictionCoefficient', 1.0, 1.3, false],
-	['db', 'differentialBias', 0, 0.6, false],
-	['dc', 'differentialCoastBias', 0, 1, false],
-	['sf', 'springRateFrontNmm', 10, 120, true],
-	['sr', 'springRateRearNmm', 10, 120, true],
-	['lat', 'lateralG', 0, 2, false],
-];
-
-/**
- * @brief Decode one running-gear block with range and enum guards.
- * @param params Parsed query params.
- * @param prefix Key prefix (rg_ or crg_).
- * @return Partial running gear, empty when no keys are present.
- */
-export const decodeRunningGearParams = (params: URLSearchParams, prefix: string): Partial<RunningGear> => {
-	const out: Partial<RunningGear> = {};
-	for (const [key, prop, min, max, round] of GRIP_SPECS) {
-		const v = numParam(params, `${prefix}${key}`, min, max);
-		if (v !== null) {
-			(out[prop] as number) = round ? Math.round(v) : v;
+	const curve = params.get('curve');
+	if (curve) {
+		const points = decodeCurvePoints(curve);
+		if (points) {
+			out.torqueCurvePoints = points;
 		}
 	}
-	const lay = params.get(`${prefix}lay`);
-	if (lay === 'FWD' || lay === 'RWD' || lay === 'AWD') {
-		out.drivetrainLayout = lay as DrivetrainLayout;
-	}
-	const df = params.get(`${prefix}df`);
-	if (df === 'open' || df === 'torsen' || df === 'clutch_lsd' || df === 'spool') {
-		out.differentialType = df as DifferentialType;
-	}
-	const dm = params.get(`${prefix}dm`);
-	if (dm && findDiffPreset(dm)) {
-		out.differentialModelId = dm;
-	}
 	return out;
+};
+
+/**
+ * @brief Parse the curve param back into sanitized dyno points.
+ * @param raw Raw rpm:torque;rpm:torque string from the hash.
+ * @return Sanitized points capped at MAX_CURVE_POINTS, or null when unusable.
+ */
+const decodeCurvePoints = (raw: string): TorqueCurvePoint[] | null => {
+	const points: TorqueCurvePoint[] = [];
+	for (const pair of raw.split(';')) {
+		const cells = pair.split(':');
+		if (cells.length !== 2) {
+			continue;
+		}
+		const rpm = Number(cells[0]);
+		const nm = Number(cells[1]);
+		if (!Number.isFinite(rpm) || !Number.isFinite(nm)) {
+			continue;
+		}
+		points.push({ rpm, torqueNm: nm });
+	}
+	const sanitized = sanitizeTorquePoints(points);
+	return sanitized ? resampleTorquePoints(sanitized, MAX_CURVE_POINTS) : null;
 };
 
 /**
@@ -386,29 +345,14 @@ const applySharedKey = (key: keyof AppState, value: Partial<AppState>[keyof AppS
 		(state[key] as number[]) = [...(value as number[])];
 		return;
 	}
+	if (key === 'torqueCurvePoints') {
+		const pts = value as TorqueCurvePoint[] | null;
+		state.torqueCurvePoints = pts ? pts.map((p) => ({ rpm: p.rpm, torqueNm: p.torqueNm })) : null;
+		return;
+	}
 	if (key === 'runningGear' || key === 'compRunningGear') {
 		(state[key] as unknown) = { ...(value as object) };
 		return;
 	}
 	(state[key] as unknown) = value;
-};
-
-/**
- * @brief Read a numeric query param within range.
- * @param params Parsed query params.
- * @param key Param name.
- * @param min Minimum accepted value.
- * @param max Maximum accepted value.
- * @return Number or null when missing or invalid.
- */
-const numParam = (params: URLSearchParams, key: string, min: number, max: number): number | null => {
-	const raw = params.get(key);
-	if (raw === null || raw.trim() === '') {
-		return null;
-	}
-	const v = Number(raw);
-	if (!Number.isFinite(v) || v < min || v > max) {
-		return null;
-	}
-	return v;
 };

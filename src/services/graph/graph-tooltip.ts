@@ -1,9 +1,14 @@
+/**
+ * @file graph-tooltip.ts
+ * @brief Hover and touch tooltip for the RPM-vs-speed graph.
+ */
 import { state } from '../../core/state/app-state';
 import { effectiveCircumferenceM, parseTire } from '../../core/math/tire-math';
 import { calculateRpm, fromDisplaySpeed } from '../../core/math/speed-math';
-import { dynamicRadiusM, tractiveForceAt, validateCurve } from '../../core/math/traction-math';
+import { dynamicRadiusM, tractiveForceAt } from '../../core/math/traction-math';
 import { maxDriveForceAtSpeed } from '../../core/math/dynamics-math';
 import { defaultRunningGear } from '../../core/state/app-state';
+import { activeEngineCurve } from '../../core/state/engine-curve';
 import { getMaxRpm } from '../../core/units/unit-utils';
 import { getGearColor } from '../../config/gear-colors';
 import { t } from '../../core/i18n/language';
@@ -52,7 +57,7 @@ export const handleCanvasHover = (event: MouseEvent, refs: ElementRefs): void =>
 
 /**
  * Check whether the pointer left the plot area.
- * @purpose Hide the tooltip outside valid coordinates.
+ * @brief Hide the tooltip outside valid coordinates.
  */
 const isOutsidePlot = (
 	frame: { paddingLeft: number; paddingTop: number; plotWidth: number; plotHeight: number },
@@ -69,7 +74,7 @@ const isOutsidePlot = (
 
 /**
  * Build tooltip HTML for every reachable gear.
- * @purpose Centralize string templating for hover readout.
+ * @brief Centralize string templating for hover readout.
  */
 const renderTooltip = (
 	refs: ElementRefs,
@@ -102,7 +107,7 @@ const renderTooltip = (
 
 /**
  * Build one tooltip row for a single gear.
- * @purpose Highlight over-rev values in rose.
+ * @brief Highlight over-rev values in rose.
  */
 const buildRow = (idx: number, rpmAtSpeed: number, isCompare: boolean): string => {
 	const limit = isCompare ? state.compRedline : state.primaryRedline;
@@ -123,13 +128,7 @@ const buildRow = (idx: number, rpmAtSpeed: number, isCompare: boolean): string =
  */
 const buildGripSection = (speed: number, circM: number): string => {
 	const rg = state.runningGear ?? defaultRunningGear;
-	const curve = validateCurve({
-		redline: state.primaryRedline,
-		peakTorqueRpm: state.peakTorqueRpm,
-		peakTorqueNm: state.peakTorqueNm,
-		peakPowerRpm: state.peakPowerRpm,
-		peakPowerKw: state.enginePowerKw,
-	});
+	const curve = activeEngineCurve();
 	if (!curve || state.gears.length === 0) {
 		return '';
 	}

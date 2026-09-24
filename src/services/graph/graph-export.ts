@@ -9,7 +9,7 @@
 
 import { state } from '../../core/state/app-state';
 import { effectiveCircumferenceM, parseTire } from '../../core/math/tire-math';
-import { calculateSpeed, rpmFromKmh } from '../../core/math/speed-math';
+import { calculateRpm, calculateSpeed } from '../../core/math/speed-math';
 import { getGearColor } from '../../config/gear-colors';
 import { getSpeedStep, getMaxRpm, getUnitLabel } from '../../core/units/unit-utils';
 import { GRAPH_PADDING, GRAPH_LIMITS } from '../../config/graph-constants';
@@ -171,7 +171,7 @@ const svgShiftDrops = (frame: PlotFrame, circM: number, redline: number, style: 
 	const parts: string[] = [];
 	for (let i = 0; i < state.gears.length - 1; i += 1) {
 		const top = calculateSpeed(redline, state.gears[i], state.primaryFd, circM, state.unit);
-		const landing = rpmFromKmh(top, state.gears[i + 1], state.primaryFd, circM);
+		const landing = calculateRpm(top, state.gears[i + 1], state.primaryFd, circM, state.unit);
 		const x = toX(frame, top).toFixed(1);
 		parts.push(
 			`<line x1='${x}' y1='${toY(frame, redline).toFixed(1)}' x2='${x}' y2='${toY(frame, landing).toFixed(1)}' stroke='${style.shiftDrop}' stroke-width='1.5' stroke-dasharray='4 3' />`,

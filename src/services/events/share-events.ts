@@ -17,7 +17,7 @@ import { applyUnitLabels, syncUnitToggle } from './unit-events';
 
 /**
  * Bind the header share button.
- * @purpose Copy the current setup URL to the clipboard.
+ * @brief Copy the current setup URL to the clipboard.
  * @param refs Cached DOM handles.
  * @return void
  */

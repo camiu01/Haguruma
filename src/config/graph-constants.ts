@@ -1,6 +1,8 @@
 /**
- * Canvas layout and style constants.
- * @purpose Centralize magic numbers for the RPM graph.
+ * @file graph-constants.ts
+ * @brief Canvas layout and style constants for the RPM graph.
+ *
+ * Centralizes the magic numbers behind plotting geometry and gear limits.
  */
 export const GRAPH_PADDING = {
 	top: 25,

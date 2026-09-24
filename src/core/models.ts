@@ -29,6 +29,17 @@ export interface TireSpec {
 	circumferenceM: number;
 }
 
+/**
+ * One measured point of a custom dyno torque curve.
+ * @brief Overrides the anchor model when at least two valid points exist.
+ */
+export interface TorqueCurvePoint {
+	/** Engine speed in RPM. */
+	rpm: number;
+	/** Crank torque in Nm. */
+	torqueNm: number;
+}
+
 /** Driven axle layout. */
 export type DrivetrainLayout = 'FWD' | 'RWD' | 'AWD';
 
@@ -191,6 +202,8 @@ export interface AppState {
 	peakTorqueNm: number;
 	/** RPM of peak engine power (power-curve anchor). */
 	peakPowerRpm: number;
+	/** Custom dyno torque points overriding the anchor model (null = anchors). */
+	torqueCurvePoints: TorqueCurvePoint[] | null;
 	/** Equivalent rotating driveline mass in kilograms (accel solver). */
 	rotatingMassKg: number;
 	/** Torque-interruption duration per upshift in seconds (accel solver). */

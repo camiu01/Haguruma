@@ -407,6 +407,12 @@
 							</div>
 						</div>
 						<p class='text-[10px] text-text-dim mt-3 font-mono'><span data-i18n='engine.caption'>Anchors for tractive force and optimal shift: T = P × 9549.3 / n.</span> <span class='help-dot' tabindex='0' data-i18n-tip='engine.caption' title='Anchors for tractive force and optimal shift: T = P × 9549.3 / n.' data-tip='Anchors for tractive force and optimal shift: T = P × 9549.3 / n.' aria-label='Anchors for tractive force and optimal shift: T = P × 9549.3 / n.'>?</span></p>
+						<div class='flex items-center gap-2 pt-2 flex-wrap'>
+							<button id='btn-import-csv' type='button' class='px-2.5 py-1.5 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='engine.importCsv' data-i18n-tip='engine.csvTip' title='Import a dyno CSV: rpm + torque Nm columns, or rpm + power kW/cv (power-only files need a header row). Semicolon and decimal comma are supported.' data-tip='Import a dyno CSV: rpm + torque Nm columns, or rpm + power kW/cv (power-only files need a header row). Semicolon and decimal comma are supported.' aria-label='Import a dyno CSV: rpm + torque Nm columns, or rpm + power kW/cv (power-only files need a header row). Semicolon and decimal comma are supported.'>Import dyno CSV</button>
+							<button id='btn-clear-csv' type='button' class='px-2.5 py-1.5 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition hidden' data-i18n='engine.clearCsv' title='Back to the anchor curve model' data-tip='Back to the anchor curve model' aria-label='Back to the anchor curve model'>Back to anchors</button>
+							<input type='file' id='engine-csv-input' accept='.csv,text/csv' class='hidden' />
+							<span id='engine-csv-status' class='text-[10px] text-text-dim font-mono' data-i18n='engine.csvIdle'>Anchor curve (torque + power peak)</span>
+						</div>
 					</div>
 				</div>
 
@@ -424,7 +430,7 @@
 					</summary>
 					<div class='grid grid-cols-2 gap-4 pt-1 pb-2'>
 						<div class='col-span-2 sm:col-span-1'>
-							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-layout' data-i18n='running.layout'>Drivetrain layout</label>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-layout' data-i18n='running.layout' data-i18n-tip='running.layoutTip' title='Selecting a layout also sets the default drivetrain efficiency: FWD 0.90, RWD 0.85, AWD 0.80.' data-tip='Selecting a layout also sets the default drivetrain efficiency: FWD 0.90, RWD 0.85, AWD 0.80.' aria-label='Selecting a layout also sets the default drivetrain efficiency: FWD 0.90, RWD 0.85, AWD 0.80.'>Drivetrain layout</label>
 							<select id='rg-layout' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim'>
 								<option value='FWD'>FWD</option>
 								<option value='RWD' selected>RWD</option>
@@ -505,6 +511,31 @@
 								<input type='range' min='0' max='1.3' step='0.05' id='rg-latg' value='0.6' class='flex-1' />
 								<span id='rg-latg-val' class='text-xs text-text-output font-mono whitespace-nowrap'>0.60 G</span>
 							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-lift' data-i18n='running.lift'>Downforce CL</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='0.05' min='0' max='4' id='rg-lift' value='0.15' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim' />
+								<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>CL</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-lift-area' data-i18n='running.liftArea'>Downforce area (m²)</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='0.05' min='0.5' max='5' id='rg-lift-area' value='2.00' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim' />
+								<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>m²</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-lift-share' data-i18n='running.liftShare'>Downforce front share</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='1' min='20' max='80' id='rg-lift-share' value='52' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim' />
+								<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>%</span>
+							</div>
+						</div>
+						<div class='col-span-2 flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-border/60 text-[10px] text-text-dim font-mono'>
+							<span class='whitespace-nowrap'><span data-i18n='running.downforceAt'>Downforce @ 200 km/h</span>: <span id='rg-downforce-val' class='text-text-output'>—</span></span>
+							<span class='whitespace-nowrap' data-i18n-tip='running.coastLockupTip' title='First speed where closed-throttle engine braking exceeds the coast-lock grip of the driven axle (Kamm circle).' data-tip='First speed where closed-throttle engine braking exceeds the coast-lock grip of the driven axle (Kamm circle).' aria-label='First speed where closed-throttle engine braking exceeds the coast-lock grip of the driven axle (Kamm circle).'><span data-i18n='running.coastLockup'>Coast lock-up</span>: <span id='rg-coast-val' class='text-text-output'>—</span></span>
 						</div>
 					</div>
 				</details>
@@ -607,6 +638,126 @@
 										<div class='col-span-2 sm:col-span-1'>
 											<label class='block text-xs font-medium text-text-dim mb-1' for='comp-power-rpm' data-i18n='engine.powerRpm'>Secondary Peak Power RPM</label>
 											<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='comp-power-rpm' value='6500' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class='col-span-2' data-accordion='comp-running'>
+								<div class='section-header' data-accordion-header>
+									<div class='flex items-center gap-2 min-w-0'>
+										<span class='w-2 h-2 rounded-full bg-neon-purple'></span>
+										<span class='text-sm font-semibold text-text-main' data-i18n='compare.rgTitle'>Running Gear (Secondary)</span>
+										<span class='text-[10px] text-text-dim whitespace-nowrap' data-i18n='compare.rgNote'>Comp grip curve</span>
+									</div>
+									<svg class='chevron open' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+										<polyline points='6 9 12 15 18 9'></polyline>
+									</svg>
+								</div>
+								<div class='section-content open' data-accordion-content>
+									<div class='grid grid-cols-2 gap-4 pt-1 pb-2'>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-layout' data-i18n='running.layout'>Drivetrain layout</label>
+											<select id='crg-layout' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim'>
+												<option value='FWD'>FWD</option>
+												<option value='RWD' selected>RWD</option>
+												<option value='AWD'>AWD</option>
+											</select>
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-diff' data-i18n='running.diff'>Differential</label>
+											<select id='crg-diff' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim'>
+												<option value='open' data-i18n='running.diffOpen'>Open</option>
+												<option value='lsd_1way' data-i18n='running.diff1Way'>LSD 1-Way</option>
+												<option value='lsd_1_5way' data-i18n='running.diff15Way'>LSD 1.5-Way</option>
+												<option value='lsd_2way' data-i18n='running.diff2Way'>LSD 2-Way</option>
+												<option value='lsd_custom' data-i18n='running.diffCustom'>LSD Custom</option>
+												<option value='torsen' data-i18n='running.diffTorsen'>Torsen</option>
+												<option value='spool' data-i18n='running.diffSpool'>Spool</option>
+											</select>
+										</div>
+										<div class='col-span-2 sm:col-span-1' id='crg-bias-wrap'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-bias' data-i18n='running.bias'>Accel lock</label>
+											<div class='relative'>
+												<input type='number' inputmode='decimal' step='5' min='0' max='100' id='crg-bias' value='25' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono' />
+												<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>%</span>
+											</div>
+										</div>
+										<div class='col-span-2 sm:col-span-1' id='crg-coast-wrap'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-coast' data-i18n='running.coast'>Coast lock</label>
+											<div class='relative'>
+												<input type='number' inputmode='decimal' step='5' min='0' max='100' id='crg-coast' value='0' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono' />
+												<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>%</span>
+											</div>
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-weight' data-i18n='running.weight'>Front weight</label>
+											<div class='relative'>
+												<input type='number' inputmode='decimal' step='0.5' min='40' max='70' id='crg-weight' value='60' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono' />
+												<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>%</span>
+											</div>
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-cog' data-i18n='running.cog'>CoG height</label>
+											<div class='relative'>
+												<input type='number' inputmode='decimal' step='5' min='300' max='700' id='crg-cog' value='500' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono' />
+												<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>mm</span>
+											</div>
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-wheelbase' data-i18n='running.wheelbase'>Wheelbase</label>
+											<div class='relative'>
+												<input type='number' inputmode='decimal' step='10' min='2200' max='3300' id='crg-wheelbase' value='2570' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono' />
+												<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>mm</span>
+											</div>
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-track' data-i18n='running.track'>Track width</label>
+											<div class='relative'>
+												<input type='number' inputmode='decimal' step='5' min='1300' max='1800' id='crg-track' value='1500' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono' />
+												<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>mm</span>
+											</div>
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-spring-f' data-i18n='running.springF'>Front spring</label>
+											<div class='relative'>
+												<input type='number' inputmode='decimal' step='1' min='10' max='120' id='crg-spring-f' value='40' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono' />
+												<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>N/mm</span>
+											</div>
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-spring-r' data-i18n='running.springR'>Rear spring</label>
+											<div class='relative'>
+												<input type='number' inputmode='decimal' step='1' min='10' max='120' id='crg-spring-r' value='45' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono' />
+												<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>N/mm</span>
+											</div>
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-lift' data-i18n='running.lift'>Downforce CL</label>
+											<div class='relative'>
+												<input type='number' inputmode='decimal' step='0.05' min='0' max='4' id='crg-lift' value='0.15' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono' />
+												<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>CL</span>
+											</div>
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-lift-area' data-i18n='running.liftArea'>Downforce area (m²)</label>
+											<div class='relative'>
+												<input type='number' inputmode='decimal' step='0.05' min='0.5' max='5' id='crg-lift-area' value='2.00' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono' />
+												<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>m²</span>
+											</div>
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-lift-share' data-i18n='running.liftShare'>Downforce front share</label>
+											<div class='relative'>
+												<input type='number' inputmode='decimal' step='1' min='20' max='80' id='crg-lift-share' value='52' class='w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono' />
+												<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>%</span>
+											</div>
+										</div>
+										<div class='col-span-2 sm:col-span-1'>
+											<label class='block text-xs font-medium text-text-dim mb-1' for='crg-latg' data-i18n='running.latg'>Sustained lateral G</label>
+											<div class='flex items-center gap-2'>
+												<input type='range' min='0' max='1.3' step='0.05' id='crg-latg' value='0.6' class='flex-1' />
+												<span id='crg-latg-val' class='text-xs text-text-output font-mono whitespace-nowrap'>0.60 G</span>
+											</div>
 										</div>
 									</div>
 								</div>

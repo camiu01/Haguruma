@@ -1,3 +1,7 @@
+/**
+ * @file canvas-events.ts
+ * @brief Canvas hover, touch and resize bindings.
+ */
 import type { ElementRefs } from '../dom/element-refs';
 import { handleCanvasHover, handleCanvasPointer } from '../graph/graph-tooltip';
 import { drawGraph } from '../graph/graph-renderer';
@@ -5,7 +9,7 @@ import { observeCanvasResize } from '../graph/canvas-setup';
 
 /**
  * Bind canvas hover and window resize.
- * @purpose Keep tooltips live and rendering crisp.
+ * @brief Keep tooltips live and rendering crisp.
  * @param refs Cached DOM handles.
  */
 export const bindCanvasEvents = (refs: ElementRefs): void => {
