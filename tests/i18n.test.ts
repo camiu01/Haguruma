@@ -27,6 +27,6 @@ describe('t', () => {
 		setLang('en');
 	});
 	it('supports an explicit language override', () => {
-		expect(t('th.power', 'it')).toBe('Pot. rich. (kW / cv)');
+		expect(t('th.power', 'it')).toBe('Pot. rich.');
 	});
 });

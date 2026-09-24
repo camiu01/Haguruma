@@ -1,0 +1,38 @@
+{
+  "id": "volvo_240",
+  "label": "Volvo 240 Turbo (5-Speed, 4.10 FD)",
+  "group": "factory",
+  "preset": {
+    "tire": "195/65R15",
+    "fd": 4.1,
+    "redline": 6000,
+    "gears": [
+      3.67,
+      2.17,
+      1.37,
+      1.0,
+      0.79
+    ],
+    "reverseRatio": 3.55,
+    "massKg": 1350,
+    "dragCd": 0.36,
+    "frontalAreaM2": 2.05,
+    "powerKw": 114,
+    "peakTorqueRpm": 3600,
+    "peakTorqueNm": 240,
+    "peakPowerRpm": 5100,
+    "runningGear": {
+      "frontWeightDistribution": 0.53,
+      "centerOfGravityHeightMm": 520,
+      "wheelbaseMm": 2640,
+      "trackWidthMm": 1465,
+      "roadFrictionCoefficient": 0.95,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.3,
+      "springRateFrontNmm": 28,
+      "springRateRearNmm": 26,
+      "lateralG": 0
+    }
+  }
+}

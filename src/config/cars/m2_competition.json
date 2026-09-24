@@ -1,0 +1,32 @@
+{
+  "id": "m2_competition",
+  "label": "BMW M2 Competition (7-Speed DCT)",
+  "group": "factory",
+  "preset": {
+    "tire": "245/35R19",
+    "fd": 3.154,
+    "redline": 7000,
+    "gears": [4.808, 2.592, 1.701, 1.278, 1.0, 0.844, 0.671],
+    "reverseRatio": 3.2,
+    "massKg": 1650,
+    "dragCd": 0.36,
+    "frontalAreaM2": 2.19,
+    "powerKw": 302,
+    "peakTorqueRpm": 4000,
+    "peakTorqueNm": 550,
+    "peakPowerRpm": 5500,
+    "runningGear": {
+      "frontWeightDistribution": 0.52,
+      "centerOfGravityHeightMm": 470,
+      "wheelbaseMm": 2700,
+      "trackWidthMm": 1570,
+      "roadFrictionCoefficient": 1.15,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.4,
+      "springRateFrontNmm": 70,
+      "springRateRearNmm": 80,
+      "lateralG": 0
+    }
+  }
+}

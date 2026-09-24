@@ -137,7 +137,8 @@
 }
 /* Compact lang/unit segmented controls in the drawer — dark tech dashboard style. */
 .drawer-host > #lang-group,
-.drawer-host > #unit-group {
+.drawer-host > #unit-group,
+.drawer-host > #power-unit-group {
 	display: inline-flex;
 	align-items: center;
 	height: 32px;
@@ -149,7 +150,8 @@
 	box-sizing: border-box;
 }
 .drawer-host > #lang-group button,
-.drawer-host > #unit-group button {
+.drawer-host > #unit-group button,
+.drawer-host > #power-unit-group button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -168,7 +170,8 @@
 }
 /* Active indicator: solid cyan accent rectangle. */
 .drawer-host > #lang-group button.bg-gray-200,
-.drawer-host > #unit-group button.bg-gray-200 {
+.drawer-host > #unit-group button.bg-gray-200,
+.drawer-host > #power-unit-group button.bg-gray-200 {
 	background-color: #e2e8f0 !important;
 	color: #002233 !important;
 	border-radius: 4px !important;
@@ -176,28 +179,33 @@
 }
 /* Idle buttons inside drawer. */
 .drawer-host > #lang-group button.text-gray-400,
-.drawer-host > #unit-group button.text-gray-400 {
+.drawer-host > #unit-group button.text-gray-400,
+.drawer-host > #power-unit-group button.text-gray-400 {
 	color: #717d96;
 	background: transparent;
 }
 .drawer-host > #lang-group button.hover\:text-white:hover,
-.drawer-host > #unit-group button.hover\:text-white:hover {
+.drawer-host > #unit-group button.hover\:text-white:hover,
+.drawer-host > #power-unit-group button.hover\:text-white:hover {
 	color: #e2e8f0;
 }
 /* Light theme track + active override. */
 [data-theme='light'] .drawer-host > #lang-group,
-[data-theme='light'] .drawer-host > #unit-group {
+[data-theme='light'] .drawer-host > #unit-group,
+[data-theme='light'] .drawer-host > #power-unit-group {
 	background: #e2e8f0;
 	border-color: #cbd5e1;
 }
 [data-theme='light'] .drawer-host > #lang-group button.bg-gray-200,
-[data-theme='light'] .drawer-host > #unit-group button.bg-gray-200 {
+[data-theme='light'] .drawer-host > #unit-group button.bg-gray-200,
+[data-theme='light'] .drawer-host > #power-unit-group button.bg-gray-200 {
 	background-color: #0f172a !important;
 	color: #ffffff !important;
 	box-shadow: none;
 }
 [data-theme='light'] .drawer-host > #lang-group button.text-gray-400,
-[data-theme='light'] .drawer-host > #unit-group button.text-gray-400 {
+[data-theme='light'] .drawer-host > #unit-group button.text-gray-400,
+[data-theme='light'] .drawer-host > #power-unit-group button.text-gray-400 {
 	color: #64748b;
 }
 .drawer-label {

@@ -6,6 +6,7 @@ import type { ElementRefs } from '../services/dom/element-refs';
 import { resizeCanvas } from '../services/graph/canvas-setup';
 import { drawGraph } from '../services/graph/graph-renderer';
 import { renderTable } from '../components/gear-table';
+import { renderCruise } from '../components/cruise-card';
 
 /**
  * Refresh canvas and table from current state.
@@ -17,4 +18,5 @@ export const renderAll = (refs: ElementRefs): void => {
 	resizeCanvas(refs.canvas, refs.ctx);
 	drawGraph(refs);
 	renderTable(refs);
+	renderCruise(refs);
 };

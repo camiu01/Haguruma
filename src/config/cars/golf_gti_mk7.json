@@ -1,0 +1,32 @@
+{
+  "id": "golf_gti_mk7",
+  "label": "Volkswagen Golf GTI Mk7 (6-Speed)",
+  "group": "factory",
+  "preset": {
+    "tire": "225/45R17",
+    "fd": 3.87,
+    "redline": 6800,
+    "gears": [3.5, 2.1, 1.5, 1.14, 0.94, 0.79],
+    "reverseRatio": 3.4,
+    "massKg": 1350,
+    "dragCd": 0.32,
+    "frontalAreaM2": 2.22,
+    "powerKw": 169,
+    "peakTorqueRpm": 4400,
+    "peakTorqueNm": 350,
+    "peakPowerRpm": 6200,
+    "runningGear": {
+      "frontWeightDistribution": 0.61,
+      "centerOfGravityHeightMm": 470,
+      "wheelbaseMm": 2637,
+      "trackWidthMm": 1538,
+      "roadFrictionCoefficient": 1.1,
+      "drivetrainLayout": "FWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.3,
+      "springRateFrontNmm": 45,
+      "springRateRearNmm": 40,
+      "lateralG": 0
+    }
+  }
+}

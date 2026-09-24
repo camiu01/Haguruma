@@ -54,6 +54,47 @@ describe('encodeState/decodeState', () => {
 		expect(patch.runningGear).toBeUndefined();
 		expect(patch.compRunningGear).toBeUndefined();
 	});
+	it('roundtrips rotating mass and shift time', () => {
+		const hash = encodeState({ ...defaultState, rotatingMassKg: 120, shiftTimeS: 0.15 });
+		const patch = decodeState(`#${hash}`);
+		expect(patch.rotatingMassKg).toBe(120);
+		expect(patch.shiftTimeS).toBeCloseTo(0.15, 5);
+	});
+	it('decodes old hashes without simulation keys', () => {
+		const patch = decodeState('#fd=4.1&rl=7200');
+		expect(patch.rotatingMassKg).toBeUndefined();
+		expect(patch.shiftTimeS).toBeUndefined();
+	});
+	it('rejects out-of-range simulation keys', () => {
+		const patch = decodeState('#rot=9999&sft=50');
+		expect(patch.rotatingMassKg).toBeUndefined();
+		expect(patch.shiftTimeS).toBeUndefined();
+	});
+	it('roundtrips advanced differential lock keys', () => {
+		const hash = encodeState({
+			...defaultState,
+			runningGear: {
+				...defaultRunningGear,
+				differentialType: 'clutch_lsd',
+				differentialModelId: 'lsd_1_5way',
+				differentialBias: 0.5,
+				differentialCoastBias: 0.25,
+			},
+		});
+		const patch = decodeState(`#${hash}`);
+		expect(patch.runningGear?.differentialModelId).toBe('lsd_1_5way');
+		expect(patch.runningGear?.differentialBias).toBeCloseTo(0.5, 5);
+		expect(patch.runningGear?.differentialCoastBias).toBeCloseTo(0.25, 5);
+	});
+	it('ignores unknown differential model ids in old or foreign hashes', () => {
+		const patch = decodeState('#rg_dm=not_a_model&rg_df=clutch_lsd');
+		expect(patch.runningGear?.differentialModelId).not.toBe('not_a_model');
+		expect(patch.runningGear?.differentialType).toBe('clutch_lsd');
+	});
+	it('omits running-gear block when only an unknown model id is present', () => {
+		const patch = decodeState('#rg_dm=not_a_model');
+		expect(patch.runningGear).toBeUndefined();
+	});
 });
 
 describe('applySharedState', () => {

@@ -2,7 +2,7 @@
  * @file preset-events.ts
  * @brief Primary preset apply plus dropdown wiring (never touches comp slots).
  */
-import { state } from '../../core/state/app-state';
+import { state, defaultRunningGear } from '../../core/state/app-state';
 import { presetGroups, presetMeta, presets } from '../../config/presets';
 import { CUSTOM_PREFIX, loadCustomPresets } from '../../core/presets/custom-store';
 import type { GearPreset } from '../../core/models';
@@ -54,8 +54,10 @@ export const applyPreset = (refs: ElementRefs, preset: GearPreset, render: () =>
 	if (preset.peakPowerRpm !== undefined) {
 		state.peakPowerRpm = preset.peakPowerRpm;
 	}
+	state.rotatingMassKg = preset.rotatingMassKg ?? 0;
+	state.shiftTimeS = preset.shiftTimeS ?? 0;
 	if (preset.runningGear !== undefined) {
-		state.runningGear = { ...preset.runningGear };
+		state.runningGear = { ...defaultRunningGear, ...preset.runningGear };
 	}
 	refs.primaryTire.value = preset.tire;
 	refs.primaryFd.value = String(preset.fd);

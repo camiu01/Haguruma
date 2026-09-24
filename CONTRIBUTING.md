@@ -33,20 +33,22 @@ src/
     presets.ts                     # preset maps built from the catalog loader
     car-catalog.ts                 # CarCatalogEntry model + import.meta.glob loader
     cars/                          # one <id>.json per vehicle, drop-in to add
+    diff-presets.ts                # Extensible differential catalog (acc/coast lock models)
     gear-colors.ts                 # 8-color palette
     graph-constants.ts             # GRAPH_PADDING, GRAPH_STYLE per theme, GRAPH_LIMITS
   services/
     dom/element-refs.ts            # Typed DOM handles (ElementRefs)
-    graph/                         # canvas-setup, graph-axes, curves, drops, renderer, tooltip, theme
+    graph/                         # canvas-setup, axes, curves, drops, renderer, tooltip, theme, export
     events/                        # One binder per control group
   components/
     gear-list.ts                   # Editable gear rows + add/remove
-    gear-table.ts                  # Top-speed + shift-drop + torque/traction/opt-shift table
+    gear-table.ts                  # Top-speed + shift-drop + torque/traction/opt-shift table + KPI strip
     custom-car.ts                  # Save/load/export/import custom presets
     setup-guide.ts                 # Setup shell injection + card assembly
+    cruise-card.ts                 # Highway cruising check shell
     card/                          # base Card + one file per specialized card + index.ts barrel
-  views/render-all.ts              # resizeCanvas + drawGraph + renderTable
-  styles/                          # main.css hub + tokens/base/drawer/components/shell/overrides/setup-guide modules
+  views/render-all.ts              # resizeCanvas + drawGraph + renderTable + renderCruise
+  styles/                          # main.css hub + tokens/base/drawer/components/shell/overrides/setup-guide/print modules
 capacitor.config.ts                # native wrapper (webDir dist)
 android/                           # committed Capacitor scaffold (generated outputs ignored)
 ```
@@ -63,7 +65,20 @@ android/                           # committed Capacitor scaffold (generated out
 
 2. **Option building is runtime** — `buildPresetOptions()` in `src/services/events/preset-events.ts` renders factory/community optgroups into both selectors; never add hardcoded `<option>` elements to `index.html`.
 
-3. **Cover with Tests** — `tests/presets.test.ts` already validates tire format, `fd > 1`, redline range, and descending gears.
+3. **Cover with Tests** — `tests/presets.test.ts` already validates tire format, `fd > 1`, redline range, and descending gears. Bump the catalog count when you add a vehicle.
+
+---
+
+## Adding a Differential Model
+
+1. Append one row to `DIFF_PRESETS` in `src/config/diff-presets.ts`:
+   ```ts
+   { id: 'lsd_2_5way', labelKey: 'running.diff25Way', type: 'clutch_lsd', accLock: 0.55, coastLock: 0.35 }
+   ```
+2. Add EN + IT dictionary keys for `labelKey` (parity is compile-time checked).
+3. Keep `id` stable — it is stored in `RunningGear.differentialModelId` and share hash `rg_dm`.
+4. Add the id to `LSD_MODEL_IDS` only if it uses clutch-LSD physics and shows the accel/coast lock inputs.
+5. Cover with `tests/diff-presets.test.ts` (catalog order, lock range, i18n labels).
 
 ---
 

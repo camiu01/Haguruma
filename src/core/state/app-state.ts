@@ -18,6 +18,7 @@ export const defaultRunningGear: RunningGear = {
 	drivetrainLayout: 'FWD',
 	differentialType: 'open',
 	differentialBias: 0.25,
+	differentialCoastBias: 0,
 	springRateFrontNmm: 35,
 	springRateRearNmm: 32,
 	lateralG: 0,
@@ -33,6 +34,7 @@ export const defaultRunningGear: RunningGear = {
  */
 export const defaultState: AppState = {
 	unit: 'kmh',
+	powerUnit: 'kw',
 	primaryTire: '205/55R16',
 	primaryFd: 4.10,
 	primaryRedline: 7200,
@@ -63,6 +65,8 @@ export const defaultState: AppState = {
 	peakTorqueRpm: 4500,
 	peakTorqueNm: 180,
 	peakPowerRpm: 6500,
+	rotatingMassKg: 0,
+	shiftTimeS: 0,
 	runningGear: { ...defaultRunningGear },
 	compRunningGear: { ...defaultRunningGear },
 	setupGuide: { phase: 'mid', issue: 'understeer' },

@@ -117,6 +117,15 @@ export const kwToHp = (kw: number): number => {
 };
 
 /**
+ * @brief Convert metric horsepower to kilowatts.
+ * @param hp Power in metric hp (cv).
+ * @return Power in kilowatts.
+ */
+export const hpToKw = (hp: number): number => {
+	return hp / KW_TO_HP;
+};
+
+/**
  * @brief Compute available wheel power from engine output.
  * @param engineKw Engine crank power in kilowatts.
  * @param drivetrainEff Drivetrain efficiency between 0 and 1.

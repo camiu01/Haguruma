@@ -1,0 +1,32 @@
+{
+  "id": "gr_supra_a90",
+  "label": "Toyota GR Supra A90 (8-Speed Auto)",
+  "group": "factory",
+  "preset": {
+    "tire": "255/35R19",
+    "fd": 3.15,
+    "redline": 6500,
+    "gears": [5.25, 3.36, 2.17, 1.72, 1.32, 1.0, 0.82, 0.64],
+    "reverseRatio": 3.32,
+    "massKg": 1570,
+    "dragCd": 0.35,
+    "frontalAreaM2": 2.0,
+    "powerKw": 250,
+    "peakTorqueRpm": 4000,
+    "peakTorqueNm": 500,
+    "peakPowerRpm": 6500,
+    "runningGear": {
+      "frontWeightDistribution": 0.51,
+      "centerOfGravityHeightMm": 460,
+      "wheelbaseMm": 2470,
+      "trackWidthMm": 1594,
+      "roadFrictionCoefficient": 1.15,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.4,
+      "springRateFrontNmm": 65,
+      "springRateRearNmm": 75,
+      "lateralG": 0
+    }
+  }
+}

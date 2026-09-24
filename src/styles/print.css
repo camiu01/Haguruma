@@ -1,0 +1,91 @@
+/**
+ * @file print.css
+ * @brief Print stylesheet: one-page-friendly layout for PDF export.
+ *
+ * Strips navigation chrome, forces light colors, opens every accordion and
+ * keeps cards and the KPI strip together so window.print() produces a clean
+ * summary without interactive controls.
+ */
+
+@media print {
+	.app-header,
+	#mobile-drawer,
+	#mobile-drawer-backdrop,
+	#mobile-tabs,
+	#share-fab,
+	#mycars-modal,
+	#mycars-modal-backdrop,
+	#btn-menu,
+	.hamburger,
+	#btn-export-png,
+	#btn-export-svg,
+	#btn-print,
+	footer,
+	.graph-legend .chevron,
+	.chevron {
+		display: none !important;
+	}
+
+	body {
+		background: #ffffff !important;
+		color: #0f172a !important;
+	}
+
+	main {
+		display: block !important;
+		max-width: none !important;
+		padding: 0 !important;
+	}
+
+	section {
+		position: static !important;
+		max-height: none !important;
+		overflow: visible !important;
+		order: unset !important;
+		width: 100% !important;
+	}
+
+	.card,
+	.kpi-cell,
+	table {
+		break-inside: avoid;
+		page-break-inside: avoid;
+		border-color: #cbd5e1 !important;
+		background: #ffffff !important;
+		color: #0f172a !important;
+	}
+
+	#kpi-strip {
+		grid-template-columns: repeat(3, 1fr) !important;
+	}
+
+	.section-content {
+		display: block !important;
+		max-height: none !important;
+		height: auto !important;
+		overflow: visible !important;
+		opacity: 1 !important;
+		pointer-events: auto !important;
+	}
+
+	.graph-wrap {
+		aspect-ratio: auto !important;
+		height: 380px !important;
+	}
+
+	.table-scroll {
+		overflow: visible !important;
+	}
+
+	.text-text-main,
+	.text-text-output,
+	th,
+	td {
+		color: #0f172a !important;
+	}
+
+	.text-text-dim,
+	.text-text-muted {
+		color: #475569 !important;
+	}
+}

@@ -14,8 +14,11 @@ import {
 	validateCurve,
 } from '../core/math/traction-math';
 import { criticalWheelspinSpeed, maxDriveForceAtSpeed, wheelLoads } from '../core/math/dynamics-math';
+import { simulateAcceleration, type SimResult } from '../core/math/accel-math';
 import { defaultRunningGear } from '../core/state/app-state';
-import { availableWheelKw, kwToHp, roadLoadPowerKw } from '../core/math/aero-math';
+import { availableWheelKw, dragLimitedSpeedKmh, roadLoadPowerKw } from '../core/math/aero-math';
+import { toDisplaySpeed } from '../core/math/speed-math';
+import { formatPower } from '../core/units/unit-utils';
 import { topsForSetup } from '../core/compare/compare-utils';
 import { getGearColor } from '../config/gear-colors';
 import { t } from '../core/i18n/language';
@@ -40,6 +43,8 @@ export const renderTable = (refs: ElementRefs): void => {
 		refs.breakdownBody.appendChild(buildReverseRow(circM));
 	}
 	updateGripKpi();
+	updateSummaryKpis();
+	updateAccelKpis();
 	updateComparisonInfo(refs);
 	renderCompareTable(refs, circM);
 };
@@ -68,9 +73,9 @@ const buildTableRow = (circM: number, gearRatio: number, idx: number): HTMLEleme
 
 /**
  * Describe the secondary road-load power at a gear peak.
- * @brief Show required wheel power in kW and metric hp (cv).
+ * @brief Show required wheel power in the active power unit (kW or cv).
  * @param topSpeed Theoretical top speed in the active display unit.
- * @return Display string such as 45.2 kW (61.5 cv), flagged when drag-limited.
+ * @return Display string such as 45.2 kW, flagged when drag-limited.
  */
 const describeRoadLoad = (topSpeed: number): string => {
 	if (!state.roadLoadEnabled) {
@@ -85,7 +90,7 @@ const describeRoadLoad = (topSpeed: number): string => {
 		state.rollingCrr,
 		state.roadGradePercent,
 	);
-	const base = `${kw.toFixed(1)} kW (${kwToHp(kw).toFixed(1)} cv)`;
+	const base = formatPower(kw, state.powerUnit);
 	const available = availableWheelKw(state.enginePowerKw, state.drivetrainEff);
 	return kw > available ? `${base} ${t('table.dragLimited')}` : base;
 };
@@ -218,17 +223,138 @@ const describeMinWheel = (): string => {
 
 /**
  * Update the standstill grip-limit KPI cell.
- * @brief Null-guarded write to #kpi-0-100 with engine force 0.
+ * @brief Null-guarded write to #kpi-grip with engine force 0.
  * @return void
  */
 const updateGripKpi = (): void => {
-	const el = document.getElementById('kpi-0-100');
+	const el = document.getElementById('kpi-grip');
 	if (!el) {
 		return;
 	}
 	const rg = state.runningGear ?? defaultRunningGear;
 	const grip = maxDriveForceAtSpeed(rg, state.vehicleMassKg, 0, 0, 0);
 	el.textContent = `${Math.round(grip.limitN).toLocaleString('en-US')}`;
+};
+
+/**
+ * Update redline, top-speed and aero-wall KPI cells.
+ * @brief Mirrors graph inputs so the strip never shows stale HTML defaults.
+ * @return void
+ */
+const updateSummaryKpis = (): void => {
+	const redlineEl = document.getElementById('kpi-redline');
+	const topEl = document.getElementById('kpi-top-speed');
+	const aeroEl = document.getElementById('kpi-aero-wall');
+	if (redlineEl) {
+		redlineEl.textContent = Math.round(state.primaryRedline).toLocaleString('en-US');
+	}
+	const tire = parseTire(state.primaryTire);
+	if (topEl) {
+		if (!tire || state.gears.length === 0) {
+			topEl.textContent = '—';
+		} else {
+			const circM = effectiveCircumferenceM(tire, state.rollingFactor);
+			const topGear = state.gears[state.gears.length - 1];
+			const top = calculateSpeed(state.primaryRedline, topGear, state.primaryFd, circM, state.unit);
+			topEl.textContent = top.toFixed(1);
+		}
+	}
+	if (aeroEl) {
+		if (!state.roadLoadEnabled) {
+			aeroEl.textContent = '—';
+		} else {
+			const wheelKw = availableWheelKw(state.enginePowerKw, state.drivetrainEff);
+			const wallKmh = dragLimitedSpeedKmh(
+				wheelKw,
+				state.vehicleMassKg,
+				state.dragCd,
+				state.frontalAreaM2,
+				state.rollingCrr,
+				state.roadGradePercent,
+			);
+			aeroEl.textContent = toDisplaySpeed(wallKmh, state.unit).toFixed(1);
+		}
+	}
+};
+
+/** Memo key for the acceleration KPI simulation. */
+let accelCacheKey = '';
+
+/** Memoized acceleration result matching accelCacheKey. */
+let accelCache: SimResult | null = null;
+
+/**
+ * Build a stable memo key from every SimInput field.
+ * @brief Re-runs the solver only when a physical input actually changed.
+ * @return Cache key string.
+ */
+const buildAccelKey = (): string => {
+	return JSON.stringify([
+		state.vehicleMassKg,
+		state.gears,
+		state.primaryFd,
+		state.primaryTire,
+		state.rollingFactor,
+		state.enginePowerKw,
+		state.peakTorqueRpm,
+		state.peakTorqueNm,
+		state.peakPowerRpm,
+		state.primaryRedline,
+		state.drivetrainEff,
+		state.rotatingMassKg,
+		state.shiftTimeS,
+		state.dragCd,
+		state.frontalAreaM2,
+		state.rollingCrr,
+		state.roadGradePercent,
+		state.runningGear,
+	]);
+};
+
+/**
+ * Update the 0-100 km/h and 1/4 mile KPI cells from the time-step solver.
+ * @brief Memoized so renderTable does not re-simulate unchanged inputs.
+ * @return void
+ */
+export const updateAccelKpis = (): void => {
+	const el100 = document.getElementById('kpi-0-100-time');
+	const elQ = document.getElementById('kpi-quarter');
+	if (!el100 || !elQ) {
+		return;
+	}
+	const tire = parseTire(state.primaryTire);
+	if (!tire) {
+		el100.textContent = '—';
+		elQ.textContent = '—';
+		return;
+	}
+	const key = buildAccelKey();
+	if (key !== accelCacheKey) {
+		accelCacheKey = key;
+		accelCache = simulateAcceleration({
+			massKg: state.vehicleMassKg,
+			gears: state.gears,
+			fd: state.primaryFd,
+			circM: effectiveCircumferenceM(tire, state.rollingFactor),
+			curve: validateCurve({
+				redline: state.primaryRedline,
+				peakTorqueRpm: state.peakTorqueRpm,
+				peakTorqueNm: state.peakTorqueNm,
+				peakPowerRpm: state.peakPowerRpm,
+				peakPowerKw: state.enginePowerKw,
+			}),
+			drivetrainEff: state.drivetrainEff,
+			rotatingMassKg: state.rotatingMassKg,
+			shiftTimeS: state.shiftTimeS,
+			runningGear: state.runningGear ?? defaultRunningGear,
+			dragCd: state.dragCd,
+			frontalAreaM2: state.frontalAreaM2,
+			rollingCrr: state.rollingCrr,
+			roadGradePercent: state.roadGradePercent,
+		});
+	}
+	el100.textContent = accelCache && accelCache.time0To100S !== null ? `${accelCache.time0To100S.toFixed(2)} s` : '—';
+	elQ.textContent = accelCache && accelCache.quarterMileS !== null ? `${accelCache.quarterMileS.toFixed(2)} s` : '—';
 };
 
 /**
@@ -285,8 +411,12 @@ const renderCompareTable = (refs: ElementRefs, primaryCircM: number): void => {
  */
 const syncCompareHeadLabel = (refs: ElementRefs): void => {
 	const th = refs.compareWrap.querySelector('[data-comp-power]');
-	if (th) {
-		th.textContent = t('th.power');
+	if (!th) {
+		return;
+	}
+	const label = th.querySelector('[data-i18n]');
+	if (label) {
+		label.textContent = t('th.power');
 	}
 };
 
@@ -340,7 +470,7 @@ const describeCompRoadLoad = (top: number): string => {
 		state.rollingCrr,
 		state.roadGradePercent,
 	);
-	const base = `${kw.toFixed(1)} kW (${kwToHp(kw).toFixed(1)} cv)`;
+	const base = formatPower(kw, state.powerUnit);
 	const available = availableWheelKw(state.compPowerKw, state.drivetrainEff);
 	return kw > available ? `${base} ${t('table.dragLimited')}` : base;
 };

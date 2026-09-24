@@ -22,28 +22,31 @@ src/
   main.ts                         # bootstrap only
   core/
     models.ts                     # SpeedUnit, TireSpec, GearPreset, AppState, etc.
-    math/                         # tire-math, speed-math, aero-math, traction-math, shift-math
+    math/                         # tire-math, speed-math, aero-math, traction-math, shift-math, accel-math, inertia-math, cruise-math, dynamics-math
     setup/                        # setup-matrix.ts (wizard data) + setup-guide-content.ts (handbook copy)
     state/app-state.ts            # defaultState + singleton
-    units/unit-utils.ts          # getSpeedStep(), getUnitLabel(), getMaxRpm()
+    units/unit-utils.ts           # getSpeedStep(), getUnitLabel(), getPowerUnitLabel(), formatPower(), getMaxRpm()
     i18n/                         # dictionary.en.ts + dictionary.it.ts + language.ts (applyI18n)
+    share/share-utils.ts          # URL hash encode/decode (incl. rg_dm / rg_dc diff keys)
   config/
     presets.ts                    # preset maps built from the catalog loader
     car-catalog.ts                # CarCatalogEntry model + import.meta.glob loader
     cars/                         # one <id>.json per vehicle, drop-in to add
+    diff-presets.ts               # Extensible LSD catalog (open, 1/1.5/2-way, custom, Torsen, spool)
     gear-colors.ts                # 8-color palette
-    graph-constants.ts            # GRAPH_PADDING, GRAPH_STYLE_DARK/OLED/LIGHT, GRAPH_LIMITS
+    graph-constants.ts            # GRAPH_PADDING, GRAPH_STYLE_*, GRAPH_LIMITS
   services/
     dom/element-refs.ts           # Typed DOM handles (ElementRefs)
-    graph/                        # canvas-setup, graph-axes, graph-curves, graph-shift-drops, graph-renderer, graph-tooltip, graph-theme
+    graph/                        # canvas-setup, graph-axes, graph-curves, graph-shift-drops, graph-renderer, graph-tooltip, graph-theme, graph-export
     events/                       # One binder per control group
   components/
     gear-list.ts                  # Editable gear rows + add/remove
-    gear-table.ts                 # Top-speed + shift-drop + torque/traction/opt-shift table
+    gear-table.ts                 # Top-speed + shift-drop + torque/traction/opt-shift table + KPI strip
     custom-car.ts                 # Save/load/export/import custom presets
     setup-guide.ts                # Setup shell injection + card assembly
+    cruise-card.ts                # Highway cruising shell + render
     card/                         # base Card + one file per specialized card + index.ts barrel
-  views/render-all.ts             # resizeCanvas + drawGraph + renderTable
+  views/render-all.ts             # resizeCanvas + drawGraph + renderTable + renderCruise
   styles/
     main.css                      # Hub only: @imports below, no rules
     tokens.css                    # Theme variables (dark/oled/light)
@@ -53,6 +56,7 @@ src/
     shell.css                     # Header controls, modal, preset combobox
     overrides.css                 # OLED + light Tailwind overrides
     setup-guide.css               # Wizard badges, feel cues, procedure steps
+    print.css                     # Print/PDF summary (window.print)
 index.html                        # Shell layout; feature shells inject into mount points
 capacitor.config.ts               # Native wrapper (webDir dist)
 android/                          # Committed Capacitor scaffold (generated outputs ignored)
@@ -116,6 +120,16 @@ android/                          # Committed Capacitor scaffold (generated outp
 ## Share/URL
 - Full setup encoded in URL hash, restored on page load via `restoreFromUrl()`.
 - Uses `navigator.clipboard.writeText()` with textarea fallback.
+- Running gear keys: geometry + `rg_df` (type) + `rg_db` (accel lock) + `rg_dc` (coast lock) + `rg_dm` (catalog model id). Unknown model ids are ignored (legacy-safe).
+
+## Differential catalog
+- `src/config/diff-presets.ts` — append a row to `DIFF_PRESETS` to add models (id, i18n `labelKey`, physics `type`, `accLock`, `coastLock`).
+- UI select values must stay in the catalog; `LSD_MODEL_IDS` gates the accel/coast lock inputs.
+- Tests: `tests/diff-presets.test.ts` (order, range, i18n labels).
+
+## Simulation KPIs
+- `renderTable()` → `updateSummaryKpis()` keeps `#kpi-redline`, `#kpi-top-speed`, `#kpi-aero-wall` in sync with state (never rely on static HTML defaults).
+- Accel KPIs memoize on a JSON key of physical inputs (`buildAccelKey`).
 
 ## v3
 - `vite.config.ts` uses `base: './'` for GitHub Pages deployment.

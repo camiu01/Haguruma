@@ -8,6 +8,7 @@ import { parseCompGears } from '../compare/compare-utils';
 import { parseTire } from '../math/tire-math';
 import { defaultRunningGear } from '../state/app-state';
 import type { DifferentialType, DrivetrainLayout, RunningGear } from '../models';
+import { findDiffPreset } from '../../config/diff-presets';
 
 /**
  * @brief Serialize current state into a compact hash string.
@@ -30,6 +31,7 @@ export const encodeState = (s: AppState): string => {
 	p.set('crr', String(s.rollingCrr)); p.set('pw', String(s.enginePowerKw)); p.set('eff', String(s.drivetrainEff));
 	p.set('rle', s.roadLoadEnabled ? '1' : '0'); p.set('grade', String(s.roadGradePercent)); p.set('rf', String(s.rollingFactor));
 	p.set('tq', String(s.peakTorqueRpm)); p.set('tqn', String(s.peakTorqueNm)); p.set('pwr', String(s.peakPowerRpm));
+	p.set('rot', String(s.rotatingMassKg)); p.set('sft', String(s.shiftTimeS));
 	encodeRunningGear(p, s.runningGear ?? defaultRunningGear, 'rg_');
 	encodeRunningGear(p, s.compRunningGear ?? s.runningGear ?? defaultRunningGear, 'crg_');
 	return p.toString();
@@ -47,7 +49,11 @@ const encodeRunningGear = (p: URLSearchParams, rg: RunningGear, prefix: string):
 	p.set(`${prefix}wd`, n2(rg.frontWeightDistribution)); p.set(`${prefix}cg`, String(Math.round(rg.centerOfGravityHeightMm)));
 	p.set(`${prefix}wb`, String(Math.round(rg.wheelbaseMm))); p.set(`${prefix}tw`, String(Math.round(rg.trackWidthMm)));
 	p.set(`${prefix}mu`, n2(rg.roadFrictionCoefficient)); p.set(`${prefix}lay`, rg.drivetrainLayout); p.set(`${prefix}df`, rg.differentialType);
-	p.set(`${prefix}db`, n2(rg.differentialBias)); p.set(`${prefix}sf`, String(Math.round(rg.springRateFrontNmm)));
+	p.set(`${prefix}db`, n2(rg.differentialBias)); p.set(`${prefix}dc`, n2(rg.differentialCoastBias ?? 0));
+	if (rg.differentialModelId) {
+		p.set(`${prefix}dm`, rg.differentialModelId);
+	}
+	p.set(`${prefix}sf`, String(Math.round(rg.springRateFrontNmm)));
 	p.set(`${prefix}sr`, String(Math.round(rg.springRateRearNmm))); p.set(`${prefix}lat`, n2(rg.lateralG));
 };
 
@@ -275,6 +281,14 @@ const decodeEngineParams = (params: URLSearchParams): Partial<AppState> => {
 	if (pwr !== null) {
 		out.peakPowerRpm = Math.round(pwr);
 	}
+	const rot = numParam(params, 'rot', 0, 500);
+	if (rot !== null) {
+		out.rotatingMassKg = rot;
+	}
+	const sft = numParam(params, 'sft', 0, 3);
+	if (sft !== null) {
+		out.shiftTimeS = sft;
+	}
 	return out;
 };
 
@@ -307,6 +321,7 @@ const GRIP_SPECS: GripSpec[] = [
 	['tw', 'trackWidthMm', 1200, 1800, true],
 	['mu', 'roadFrictionCoefficient', 1.0, 1.3, false],
 	['db', 'differentialBias', 0, 0.6, false],
+	['dc', 'differentialCoastBias', 0, 1, false],
 	['sf', 'springRateFrontNmm', 10, 120, true],
 	['sr', 'springRateRearNmm', 10, 120, true],
 	['lat', 'lateralG', 0, 2, false],
@@ -333,6 +348,10 @@ export const decodeRunningGearParams = (params: URLSearchParams, prefix: string)
 	const df = params.get(`${prefix}df`);
 	if (df === 'open' || df === 'torsen' || df === 'clutch_lsd' || df === 'spool') {
 		out.differentialType = df as DifferentialType;
+	}
+	const dm = params.get(`${prefix}dm`);
+	if (dm && findDiffPreset(dm)) {
+		out.differentialModelId = dm;
 	}
 	return out;
 };

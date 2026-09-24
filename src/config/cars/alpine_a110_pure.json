@@ -1,0 +1,32 @@
+{
+  "id": "alpine_a110_pure",
+  "label": "Alpine A110 Pure (7-Speed DCT)",
+  "group": "factory",
+  "preset": {
+    "tire": "205/40R18",
+    "fd": 3.6,
+    "redline": 6500,
+    "gears": [3.72, 2.32, 1.61, 1.18, 0.92, 0.76, 0.62],
+    "reverseRatio": 3.3,
+    "massKg": 1100,
+    "dragCd": 0.32,
+    "frontalAreaM2": 1.9,
+    "powerKw": 185,
+    "peakTorqueRpm": 3000,
+    "peakTorqueNm": 320,
+    "peakPowerRpm": 6400,
+    "runningGear": {
+      "frontWeightDistribution": 0.44,
+      "centerOfGravityHeightMm": 400,
+      "wheelbaseMm": 2419,
+      "trackWidthMm": 1550,
+      "roadFrictionCoefficient": 1.15,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.35,
+      "springRateFrontNmm": 40,
+      "springRateRearNmm": 45,
+      "lateralG": 0
+    }
+  }
+}

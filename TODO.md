@@ -53,13 +53,32 @@ Development task management for the Haguruma vehicle dynamics simulator.
 - [x] JSON car catalog with factory + community presets (`car-catalog.json`)
 - [x] Searchable preset combobox with grouped dropdown (`preset-search.ts`)
 
-## Pending
-
 ### Simulation Engine
 
-- [ ] Implement time-step numerical solver for 0-100 km/h and quarter mile #physics #simulation
-- [ ] Add rotational inertia equivalent mass calculation based on gear reduction #physics
-- [ ] Add shift time delay parameter with torque cut during gear changes #physics #simulation
+- [x] Time-step numerical solver for 0-100 km/h and quarter mile (`accel-math.ts`, forward Euler dt=0.01s) #physics #simulation
+- [x] Rotational inertia equivalent mass per engaged gear (`inertia-math.ts`, optional engine/wheel `I` with static fallback) #physics
+- [x] Shift-time delay parameter with torque cut during gear changes (`shiftTimeS`) #physics #simulation
+- [x] Optional `launchRpm` clutch-slip hold so launch torque does not collapse to idle #physics
+- [x] KPI strip: 0-100 s and 1/4 mile cells with memoized solver; grip/redline/top-speed/aero-wall refreshed every render #ux
+
+### Utility and Presets
+
+- [x] Highway cruising speed RPM and load checker (`cruise-math.ts` + `cruise-card.ts`) #utility
+- [x] Expand presets database: +6 factory vehicles (Civic FK8, Golf GTI Mk7, M2 Competition, GR Supra A90, 350Z, Alpine A110) #presets
+- [x] Chart export to PNG and SVG (`graph-export.ts`) #export
+- [x] Printable PDF summary via `window.print()` + `styles/print.css` #export
+- [x] KPI strip live updates: redline, top speed, aero wall no longer stuck on HTML defaults #ux
+- [x] Power display unit toggle kW / cv (header + drawer, localStorage, labels + inputs convert; physics stays kW) #units
+
+### Presets & Differential (this pass)
+
+- [x] BMW M3 E36 3.2 preset (`e36_m3`) #presets
+- [x] Volvo 240 Turbo preset (`volvo_240`) #presets
+- [x] Extensible differential catalog `config/diff-presets.ts` (open, 1-way, 1.5-way, 2-way, custom, Torsen, spool) #dynamics
+- [x] Accel + coast lock percentage inputs for advanced LSD models; share keys `rg_dm`/`rg_dc` #share
+- [x] `diff-presets.test.ts` catalog + i18n label coverage #tests
+
+## Pending
 
 ### Powertrain
 
@@ -70,13 +89,7 @@ Development task management for the Haguruma vehicle dynamics simulator.
 
 - [ ] Expose downforce inputs in running-gear UI: lift coefficient, reference area, front share (model fields already exist) #aero #physics
 - [ ] Secondary comparison running-gear parameters (state + URL keys exist, no UI yet) #comparison
-
-### Utility and Presets
-
-- [ ] Implement highway cruising speed RPM and load checker #utility
-- [ ] Expand presets database with verified factory vehicles #presets
-- [ ] Implement chart export to PNG and SVG #export
-- [ ] Add printable PDF summary generator #export
+- [ ] Use coast-lock fraction in a coast/engine-braking model (field stored and shared; physics still accel-only) #dynamics
 
 ### Setup Troubleshooting Matrix / Wizard (interactive diagnostic tool)
 

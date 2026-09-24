@@ -44,9 +44,9 @@
 [data-theme='light'] .bg-gray-800:hover, [data-theme='light'] .hover\:bg-gray-700:hover { background-color: #334155 !important; color: #f8fafc !important; }
 [data-theme='light'] .bg-gray-200 { background-color: #0f172a !important; color: #f8fafc !important; }
 [data-theme='light'] .bg-gray-200.text-black { color: #f8fafc !important; }
-[data-theme='light'] #lang-group, [data-theme='light'] #unit-group { background-color: #f1f5f9 !important; }
-[data-theme='light'] #lang-group .text-gray-400, [data-theme='light'] #unit-group .text-gray-400 { color: #475569 !important; }
-[data-theme='light'] #lang-group .hover\:text-white:hover, [data-theme='light'] #unit-group .hover\:text-white:hover { color: #0f172a !important; }
+[data-theme='light'] #lang-group, [data-theme='light'] #unit-group, [data-theme='light'] #power-unit-group { background-color: #f1f5f9 !important; }
+[data-theme='light'] #lang-group .text-gray-400, [data-theme='light'] #unit-group .text-gray-400, [data-theme='light'] #power-unit-group .text-gray-400 { color: #475569 !important; }
+[data-theme='light'] #lang-group .hover\:text-white:hover, [data-theme='light'] #unit-group .hover\:text-white:hover, [data-theme='light'] #power-unit-group .hover\:text-white:hover { color: #0f172a !important; }
 [data-theme='light'] .bg-black { background-color: #0f172a !important; }
 [data-theme='light'] .text-white { color: #0f172a !important; }
 [data-theme='light'] .text-gray-200 { color: #1e293b !important; }

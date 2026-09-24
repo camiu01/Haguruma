@@ -7,6 +7,8 @@ import type { Lang } from '../../core/i18n/dictionaries';
 import type { ElementRefs } from '../dom/element-refs';
 import { renderGearsList } from '../../components/gear-list';
 import { renderSetupGuide } from '../../components/setup-guide';
+import { renderCruise } from '../../components/cruise-card';
+import { applyPowerLabels } from './unit-events';
 
 const ACTIVE_BTN = 'px-3 py-1 text-xs font-semibold rounded bg-gray-200 text-black';
 const IDLE_BTN = 'px-3 py-1 text-xs font-semibold rounded text-gray-400 hover:text-white';
@@ -35,9 +37,11 @@ export const bindLanguageEvents = (refs: ElementRefs, render: () => void): void 
 		}
 		setLang(lang);
 		applyI18n();
+		applyPowerLabels(refs);
 		syncLangToggle(refs);
 		renderGearsList(refs, () => render());
 		renderSetupGuide(refs);
+		renderCruise(refs);
 		render();
 	};
 	refs.langEn.addEventListener('click', () => switchTo('en'));

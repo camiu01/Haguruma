@@ -21,6 +21,8 @@ import { bindAccordionEvents } from './accordion-events';
 import { bindMyCarsModalEvents } from './mycars-modal-events';
 import { bindDrawerUtilsEvents } from './drawer-utils-events';
 import { bindSetupGuideEvents } from './setup-guide-events';
+import { bindCruiseEvents } from './cruise-events';
+import { bindExportEvents } from './export-events';
 
 /**
  * Wire every UI interaction exactly once.
@@ -48,4 +50,6 @@ export const bindAllEvents = (refs: ElementRefs, render: () => void): void => {
 	bindMyCarsModalEvents(refs);
 	bindDrawerUtilsEvents(refs, render);
 	bindSetupGuideEvents(refs);
+	bindCruiseEvents(refs);
+	bindExportEvents(refs);
 };

@@ -40,10 +40,12 @@ input[type='range'] {
 	height: 22px;
 	cursor: pointer;
 }
-#rg-bias-wrap.opacity-40 {
+#rg-bias-wrap.opacity-40,
+#rg-coast-wrap.opacity-40 {
 	opacity: 0.4;
 }
-#rg-bias-wrap.pointer-events-none {
+#rg-bias-wrap.pointer-events-none,
+#rg-coast-wrap.pointer-events-none {
 	pointer-events: none;
 }
 

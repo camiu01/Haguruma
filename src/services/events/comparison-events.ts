@@ -10,6 +10,7 @@ import type { GearPreset } from '../../core/models';
 import type { ElementRefs } from '../dom/element-refs';
 import { addGear } from '../../components/gear-list';
 import { bindCompGearGrid, syncCompGearCells } from './comp-gear-grid';
+import { formatPowerInput, fromDisplayPower } from '../../core/units/unit-utils';
 
 /**
  * Bind comparison toggle and secondary inputs.
@@ -69,7 +70,7 @@ export const bindComparisonEvents = (refs: ElementRefs, render: () => void): voi
 	refs.compPower.addEventListener('input', (e) => {
 		const v = parseFloat((e.target as HTMLInputElement).value);
 		if (v > 0) {
-			state.compPowerKw = v;
+			state.compPowerKw = fromDisplayPower(v, state.powerUnit);
 			render();
 		}
 	});
@@ -133,7 +134,7 @@ export const syncComparisonInputs = (refs: ElementRefs): void => {
 	refs.compMass.value = String(state.compMassKg);
 	refs.compCd.value = String(state.compCd);
 	refs.compArea.value = String(state.compFrontalAreaM2);
-	refs.compPower.value = String(state.compPowerKw);
+	refs.compPower.value = formatPowerInput(state.compPowerKw, state.powerUnit);
 	refs.compTorqueRpm.value = String(state.compPeakTorqueRpm);
 	refs.compTorque.value = String(state.compPeakTorqueNm);
 	refs.compPowerRpm.value = String(state.compPeakPowerRpm);
@@ -194,7 +195,7 @@ const copyPrimaryToCompare = (refs: ElementRefs, render: () => void): void => {
 	refs.compMass.value = String(state.compMassKg);
 	refs.compCd.value = String(state.compCd);
 	refs.compArea.value = String(state.compFrontalAreaM2);
-	refs.compPower.value = String(state.compPowerKw);
+	refs.compPower.value = formatPowerInput(state.compPowerKw, state.powerUnit);
 	refs.compTorqueRpm.value = String(state.compPeakTorqueRpm);
 	refs.compTorque.value = String(state.compPeakTorqueNm);
 	refs.compPowerRpm.value = String(state.compPeakPowerRpm);
@@ -263,7 +264,7 @@ export const applyCompPresetData = (refs: ElementRefs, preset: GearPreset, rende
 	refs.compMass.value = preset.massKg !== undefined ? String(preset.massKg) : String(state.compMassKg);
 	refs.compCd.value = preset.dragCd !== undefined ? String(preset.dragCd) : String(state.compCd);
 	refs.compArea.value = preset.frontalAreaM2 !== undefined ? String(preset.frontalAreaM2) : String(state.compFrontalAreaM2);
-	refs.compPower.value = preset.powerKw !== undefined ? String(preset.powerKw) : String(state.compPowerKw);
+	refs.compPower.value = formatPowerInput(preset.powerKw !== undefined ? preset.powerKw : state.compPowerKw, state.powerUnit);
 	refs.compTorqueRpm.value = preset.peakTorqueRpm !== undefined ? String(preset.peakTorqueRpm) : String(state.compPeakTorqueRpm);
 	refs.compTorque.value = preset.peakTorqueNm !== undefined ? String(preset.peakTorqueNm) : String(state.compPeakTorqueNm);
 	refs.compPowerRpm.value = preset.peakPowerRpm !== undefined ? String(preset.peakPowerRpm) : String(state.compPeakPowerRpm);

@@ -102,10 +102,12 @@ const moveInto = (el: HTMLElement, host: HTMLElement): void => {
 const relocateIntoDrawer = (refs: ElementRefs): void => {
 	showInDrawer(refs.langGroup);
 	showInDrawer(refs.unitGroup);
+	showInDrawer(refs.powerUnitGroup);
 	const node = presetNode(refs);
 	togglePresetVisibility(node, true);
 	moveInto(refs.langGroup, refs.drawerLangHost);
 	moveInto(refs.unitGroup, refs.drawerUnitHost);
+	moveInto(refs.powerUnitGroup, refs.drawerUnitHost);
 	moveInto(node, refs.drawerPresetHost);
 };
 
@@ -163,6 +165,7 @@ const restoreHomes = (refs: ElementRefs): void => {
 	homes = [];
 	hideInHeader(refs.langGroup);
 	hideInHeader(refs.unitGroup);
+	hideInHeader(refs.powerUnitGroup);
 	togglePresetVisibility(presetNode(refs), false);
 };
 
@@ -207,6 +210,7 @@ const bindNavViewButtons = (refs: ElementRefs): void => {
 		compare: '[data-accordion="compare"]',
 		dynamics: '#running-gear-accordion',
 		setup: '[data-accordion="setup"]',
+		cruise: '[data-accordion="cruise"]',
 	};
 	document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((btn) => {
 		btn.addEventListener('click', () => {

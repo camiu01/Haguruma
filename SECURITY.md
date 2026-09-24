@@ -11,12 +11,18 @@ Only the latest commit on the `main` branch is actively maintained.
 
 ## Reporting Issues
 
-HAGURUMA is a client-side TypeScript visualizer with no backend, no authentication, and no data collection. While not safety-critical hardware, incorrect ratio math or misleading top-speed figures could lead to poor tuning decisions if used beyond its educational scope.
+HAGURUMA is a client-side TypeScript visualizer with no backend, no authentication, and no data collection. While not safety-critical hardware, incorrect ratio math or misleading top-speed figures could lead to poor tuning decisions if used beyond its educational scope. Simulation results (0–100, quarter mile, grip limits) are estimates for comparison only — never use them for road or track decisions without independent verification.
 
 If you find a calculation error, rendering bug, broken preset, or dependency vulnerability:
 
 1. Open a [standard GitHub issue](https://github.com/camiu01/haguruma/issues) with exact reproduction steps.
-2. For security-related flaws (supply-chain, XSS vectors), open a [Private Vulnerability Report](https://github.com/camiu01/haguruma/security/advisories/new).
+2. For security-related flaws (supply-chain, XSS vectors via share links / custom JSON import), open a [Private Vulnerability Report](https://github.com/camiu01/haguruma/security/advisories/new).
+
+### Input surfaces to keep hardened
+
+- **Share URL hash** — decoded with range checks and unknown-key ignore; never `eval` or inject raw hash content.
+- **Custom car JSON import** — validated field-by-field before `localStorage`; reject non-finite numbers and oversized gear arrays.
+- **Service worker** — caches only the same-origin app shell; report any cross-origin cache poisoning.
 
 ## Android builds
 

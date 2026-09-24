@@ -1,0 +1,32 @@
+{
+  "id": "civic_type_r_fk8",
+  "label": "Honda Civic Type R FK8 (6-Speed)",
+  "group": "factory",
+  "preset": {
+    "tire": "245/30R20",
+    "fd": 4.111,
+    "redline": 7000,
+    "gears": [3.625, 2.115, 1.529, 1.13, 0.912, 0.735],
+    "reverseRatio": 3.583,
+    "massKg": 1380,
+    "dragCd": 0.37,
+    "frontalAreaM2": 2.19,
+    "powerKw": 228,
+    "peakTorqueRpm": 4500,
+    "peakTorqueNm": 420,
+    "peakPowerRpm": 6500,
+    "runningGear": {
+      "frontWeightDistribution": 0.62,
+      "centerOfGravityHeightMm": 480,
+      "wheelbaseMm": 2697,
+      "trackWidthMm": 1597,
+      "roadFrictionCoefficient": 1.15,
+      "drivetrainLayout": "FWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.35,
+      "springRateFrontNmm": 60,
+      "springRateRearNmm": 55,
+      "lateralG": 0
+    }
+  }
+}

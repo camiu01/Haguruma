@@ -11,6 +11,9 @@ export interface ElementRefs {
 	btnAddGear: HTMLButtonElement;
 	unitKmh: HTMLButtonElement;
 	unitMph: HTMLButtonElement;
+	powerUnitGroup: HTMLElement;
+	powerUnitKw: HTMLButtonElement;
+	powerUnitCv: HTMLButtonElement;
 	themeToggle: HTMLButtonElement;
 	btnMenu: HTMLButtonElement;
 	mobileDrawer: HTMLElement;
@@ -55,6 +58,8 @@ export interface ElementRefs {
 	effInput: HTMLInputElement;
 	gradeInput: HTMLInputElement;
 	rollFactorInput: HTMLInputElement;
+	rotMassInput: HTMLInputElement;
+	shiftTimeInput: HTMLInputElement;
 	torqueRpmInput: HTMLInputElement;
 	torqueInput: HTMLInputElement;
 	powerRpmInput: HTMLInputElement;
@@ -72,6 +77,8 @@ export interface ElementRefs {
 	customTorqueRpm: HTMLInputElement;
 	customTorque: HTMLInputElement;
 	customPowerRpm: HTMLInputElement;
+	customRotMass: HTMLInputElement;
+	customShiftTime: HTMLInputElement;
 	btnSaveCustom: HTMLButtonElement;
 	btnImportCustom: HTMLButtonElement;
 	customImportInput: HTMLInputElement;
@@ -87,6 +94,7 @@ export interface ElementRefs {
 	shareFab: HTMLButtonElement;
 	shareFeedback: HTMLElement;
 	unitLabels: NodeListOf<HTMLElement>;
+	powerUnitLabels: NodeListOf<HTMLElement>;
 	btnMyCars: HTMLButtonElement;
 	myCarsModal: HTMLElement;
 	myCarsModalBackdrop: HTMLElement;
@@ -94,6 +102,7 @@ export interface ElementRefs {
 	rgLayout: HTMLSelectElement;
 	rgDiff: HTMLSelectElement;
 	rgBias: HTMLInputElement;
+	rgCoast: HTMLInputElement;
 	rgWeight: HTMLInputElement;
 	rgCog: HTMLInputElement;
 	rgWheelbase: HTMLInputElement;
@@ -108,6 +117,11 @@ export interface ElementRefs {
 	setupResult: HTMLElement;
 	setupFeel: HTMLElement;
 	setupProcedure: HTMLElement;
+	btnExportPng: HTMLButtonElement;
+	btnExportSvg: HTMLButtonElement;
+	btnPrint: HTMLButtonElement;
+	cruiseSpeed: HTMLInputElement;
+	cruiseResult: HTMLElement;
 }
 
 /**
@@ -138,6 +152,9 @@ export const getElementRefs = (): ElementRefs => {
 		btnAddGear: get<HTMLButtonElement>('btn-add-gear'),
 		unitKmh: get<HTMLButtonElement>('unit-kmh'),
 		unitMph: get<HTMLButtonElement>('unit-mph'),
+		powerUnitGroup: get<HTMLElement>('power-unit-group'),
+		powerUnitKw: get<HTMLButtonElement>('power-unit-kw'),
+		powerUnitCv: get<HTMLButtonElement>('power-unit-cv'),
 		themeToggle: get<HTMLButtonElement>('theme-toggle'),
 		btnMenu: get<HTMLButtonElement>('btn-menu'),
 		mobileDrawer: get<HTMLElement>('mobile-drawer'),
@@ -182,6 +199,8 @@ export const getElementRefs = (): ElementRefs => {
 		effInput: get<HTMLInputElement>('roadload-eff'),
 		gradeInput: get<HTMLInputElement>('roadload-grade'),
 		rollFactorInput: get<HTMLInputElement>('roadload-rollfactor'),
+		rotMassInput: get<HTMLInputElement>('roadload-rot-mass'),
+		shiftTimeInput: get<HTMLInputElement>('roadload-shift-time'),
 		torqueRpmInput: get<HTMLInputElement>('engine-torque-rpm'),
 		torqueInput: get<HTMLInputElement>('engine-torque'),
 		powerRpmInput: get<HTMLInputElement>('engine-power-rpm'),
@@ -199,6 +218,8 @@ export const getElementRefs = (): ElementRefs => {
 		customTorqueRpm: get<HTMLInputElement>('custom-torque-rpm'),
 		customTorque: get<HTMLInputElement>('custom-torque'),
 		customPowerRpm: get<HTMLInputElement>('custom-power-rpm'),
+		customRotMass: get<HTMLInputElement>('custom-rot-mass'),
+		customShiftTime: get<HTMLInputElement>('custom-shift-time'),
 		btnSaveCustom: get<HTMLButtonElement>('btn-save-custom'),
 		btnImportCustom: get<HTMLButtonElement>('btn-import-custom'),
 		customImportInput: get<HTMLInputElement>('custom-import-input'),
@@ -214,6 +235,7 @@ export const getElementRefs = (): ElementRefs => {
 		shareFab: get<HTMLButtonElement>('share-fab'),
 		shareFeedback: get<HTMLElement>('share-feedback'),
 		unitLabels: document.querySelectorAll('.unit-label'),
+		powerUnitLabels: document.querySelectorAll('.power-unit-label'),
 		btnMyCars: get<HTMLButtonElement>('btn-my-cars'),
 		myCarsModal: get<HTMLElement>('mycars-modal'),
 		myCarsModalBackdrop: get<HTMLElement>('mycars-modal-backdrop'),
@@ -221,6 +243,7 @@ export const getElementRefs = (): ElementRefs => {
 		rgLayout: get<HTMLSelectElement>('rg-layout'),
 		rgDiff: get<HTMLSelectElement>('rg-diff'),
 		rgBias: get<HTMLInputElement>('rg-bias'),
+		rgCoast: get<HTMLInputElement>('rg-coast'),
 		rgWeight: get<HTMLInputElement>('rg-weight'),
 		rgCog: get<HTMLInputElement>('rg-cog'),
 		rgWheelbase: get<HTMLInputElement>('rg-wheelbase'),
@@ -235,5 +258,10 @@ export const getElementRefs = (): ElementRefs => {
 		setupResult: get<HTMLElement>('setup-result'),
 		setupFeel: get<HTMLElement>('setup-feel'),
 		setupProcedure: get<HTMLElement>('setup-procedure'),
+		btnExportPng: get<HTMLButtonElement>('btn-export-png'),
+		btnExportSvg: get<HTMLButtonElement>('btn-export-svg'),
+		btnPrint: get<HTMLButtonElement>('btn-print'),
+		cruiseSpeed: get<HTMLInputElement>('cruise-speed'),
+		cruiseResult: get<HTMLElement>('cruise-result'),
 	};
 };

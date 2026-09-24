@@ -5,6 +5,7 @@
 import { state } from '../../core/state/app-state';
 import { clampGrade } from '../../core/math/aero-math';
 import { clampRollingFactor } from '../../core/math/tire-math';
+import { formatPowerInput, fromDisplayPower } from '../../core/units/unit-utils';
 import type { ElementRefs } from '../dom/element-refs';
 
 /**
@@ -50,7 +51,7 @@ export const bindRoadLoadEvents = (refs: ElementRefs, render: () => void): void 
 	refs.powerInput.addEventListener('input', (e) => {
 		const v = parseFloat((e.target as HTMLInputElement).value);
 		if (v > 0) {
-			state.enginePowerKw = v;
+			state.enginePowerKw = fromDisplayPower(v, state.powerUnit);
 			render();
 		}
 	});
@@ -72,6 +73,20 @@ export const bindRoadLoadEvents = (refs: ElementRefs, render: () => void): void 
 		const v = parseFloat((e.target as HTMLInputElement).value);
 		if (Number.isFinite(v)) {
 			state.rollingFactor = clampRollingFactor(v);
+			render();
+		}
+	});
+	refs.rotMassInput.addEventListener('input', (e) => {
+		const v = parseFloat((e.target as HTMLInputElement).value);
+		if (Number.isFinite(v) && v >= 0) {
+			state.rotatingMassKg = Math.min(500, v);
+			render();
+		}
+	});
+	refs.shiftTimeInput.addEventListener('input', (e) => {
+		const v = parseFloat((e.target as HTMLInputElement).value);
+		if (Number.isFinite(v) && v >= 0) {
+			state.shiftTimeS = Math.min(3, v);
 			render();
 		}
 	});
@@ -101,9 +116,11 @@ export const syncRoadLoadInputs = (refs: ElementRefs): void => {
 	refs.cdInput.value = String(state.dragCd);
 	refs.areaInput.value = String(state.frontalAreaM2);
 	refs.crrInput.value = String(state.rollingCrr);
-	refs.powerInput.value = String(state.enginePowerKw);
+	refs.powerInput.value = formatPowerInput(state.enginePowerKw, state.powerUnit);
 	refs.effInput.value = String(state.drivetrainEff);
 	refs.gradeInput.value = String(state.roadGradePercent);
 	refs.rollFactorInput.value = String(state.rollingFactor);
+	refs.rotMassInput.value = String(state.rotatingMassKg);
+	refs.shiftTimeInput.value = String(state.shiftTimeS);
 	applyRoadLoadVisibility(refs);
 };

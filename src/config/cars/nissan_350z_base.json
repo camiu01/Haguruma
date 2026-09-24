@@ -1,0 +1,32 @@
+{
+  "id": "nissan_350z_base",
+  "label": "Nissan 350Z Base (6-Speed)",
+  "group": "factory",
+  "preset": {
+    "tire": "225/45R18",
+    "fd": 3.789,
+    "redline": 7000,
+    "gears": [3.792, 2.301, 1.599, 1.248, 1.001, 0.796],
+    "reverseRatio": 3.546,
+    "massKg": 1560,
+    "dragCd": 0.27,
+    "frontalAreaM2": 1.89,
+    "powerKw": 206,
+    "peakTorqueRpm": 4800,
+    "peakTorqueNm": 363,
+    "peakPowerRpm": 6400,
+    "runningGear": {
+      "frontWeightDistribution": 0.53,
+      "centerOfGravityHeightMm": 460,
+      "wheelbaseMm": 2650,
+      "trackWidthMm": 1480,
+      "roadFrictionCoefficient": 1.1,
+      "drivetrainLayout": "RWD",
+      "differentialType": "clutch_lsd",
+      "differentialBias": 0.3,
+      "springRateFrontNmm": 55,
+      "springRateRearNmm": 60,
+      "lateralG": 0
+    }
+  }
+}

@@ -7,6 +7,9 @@ import type { CornerPhase, HandlingIssue } from './setup/setup-matrix';
 /** Supported speed display units. */
 export type SpeedUnit = 'kmh' | 'mph';
 
+/** Supported power display units (metric horsepower vs kilowatts). */
+export type PowerUnit = 'kw' | 'cv';
+
 /**
  * Parsed tire dimensions and derived circumference.
  * @brief Physical tire geometry used by speed formulas.
@@ -51,8 +54,12 @@ export interface RunningGear {
 	drivetrainLayout: DrivetrainLayout;
 	/** Differential behaviour model. */
 	differentialType: DifferentialType;
-	/** Clutch LSD lock bias, range [0, 1] (0 open-like, 1 spool-like). */
+	/** Clutch LSD lock bias (accel side), range [0, 1] (0 open-like, 1 spool-like). */
 	differentialBias: number;
+	/** Coast/release-side lock strength for advanced LSD models, range [0, 1]. */
+	differentialCoastBias?: number;
+	/** Catalog id from diff-presets (open, lsd_1way, lsd_1_5way, lsd_2way, …). */
+	differentialModelId?: string;
 	/** Front spring rate per corner in N/mm, range [10, 120]. */
 	springRateFrontNmm: number;
 	/** Rear spring rate per corner in N/mm, range [10, 120]. */
@@ -96,6 +103,10 @@ export interface GearPreset {
 	peakTorqueNm?: number;
 	/** RPM of peak engine power. */
 	peakPowerRpm?: number;
+	/** Equivalent rotating driveline mass in kilograms (accel solver). */
+	rotatingMassKg?: number;
+	/** Torque-interruption duration per upshift in seconds (accel solver). */
+	shiftTimeS?: number;
 	/** Chassis and running-gear parameters for load-transfer physics. */
 	runningGear?: RunningGear;
 }
@@ -118,6 +129,8 @@ export interface SetupGuideSelection {
 export interface AppState {
 	/** Active display unit. */
 	unit: SpeedUnit;
+	/** Active power display unit (state stores kW). */
+	powerUnit: PowerUnit;
 	/** Primary tire spec string. */
 	primaryTire: string;
 	/** Primary differential ratio. */
@@ -178,6 +191,10 @@ export interface AppState {
 	peakTorqueNm: number;
 	/** RPM of peak engine power (power-curve anchor). */
 	peakPowerRpm: number;
+	/** Equivalent rotating driveline mass in kilograms (accel solver). */
+	rotatingMassKg: number;
+	/** Torque-interruption duration per upshift in seconds (accel solver). */
+	shiftTimeS: number;
 	/** Primary chassis and running-gear parameters. */
 	runningGear: RunningGear;
 	/** Secondary chassis and running-gear parameters. */

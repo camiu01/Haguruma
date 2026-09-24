@@ -4,6 +4,8 @@
  */
 import { parseTire } from '../core/math/tire-math';
 import { deleteCustomPreset, loadCustomPresets, parseGearsInput, saveCustomPreset, CUSTOM_PREFIX } from '../core/presets/custom-store';
+import { fromDisplayPower } from '../core/units/unit-utils';
+import { state } from '../core/state/app-state';
 import { t } from '../core/i18n/language';
 import type { ElementRefs } from '../services/dom/element-refs';
 import type { GearPreset } from '../core/models';
@@ -37,6 +39,16 @@ const positive = (input: HTMLInputElement): number | null => {
 };
 
 /**
+ * @brief Parse a non-negative number from an input.
+ * @param input Input holding the raw value.
+ * @return Non-negative number or null when invalid.
+ */
+const nonNeg = (input: HTMLInputElement): number | null => {
+	const v = parseFloat(input.value);
+	return Number.isFinite(v) && v >= 0 ? v : null;
+};
+
+/**
  * @brief Read and strictly validate the custom car form.
  * @param refs Cached DOM handles.
  * @return Car name plus preset data, or null with fields marked.
@@ -56,6 +68,10 @@ const readCustomForm = (refs: ElementRefs): { name: string; preset: GearPreset }
 	const powerRpm = positive(refs.customPowerRpm);
 	const reverseRaw = refs.customReverse.value.trim();
 	const reverse = reverseRaw === '' ? null : positive(refs.customReverse);
+	const rotRaw = refs.customRotMass.value.trim();
+	const rotMass = rotRaw === '' ? null : nonNeg(refs.customRotMass);
+	const shiftRaw = refs.customShiftTime.value.trim();
+	const shiftTime = shiftRaw === '' ? null : nonNeg(refs.customShiftTime);
 	const ok =
 		mark(refs.customName, name.length > 0) &&
 		mark(refs.customTire, tire !== null) &&
@@ -63,6 +79,8 @@ const readCustomForm = (refs: ElementRefs): { name: string; preset: GearPreset }
 		mark(refs.customRedline, redline !== null && redline >= 1000) &&
 		mark(refs.customGears, gears !== null) &&
 		mark(refs.customReverse, reverseRaw === '' || reverse !== null) &&
+		mark(refs.customRotMass, rotRaw === '' || rotMass !== null) &&
+		mark(refs.customShiftTime, shiftRaw === '' || (shiftTime !== null && shiftTime <= 3)) &&
 		mark(refs.customMass, mass !== null) &&
 		mark(refs.customCd, cd !== null) &&
 		mark(refs.customArea, area !== null) &&
@@ -84,10 +102,12 @@ const readCustomForm = (refs: ElementRefs): { name: string; preset: GearPreset }
 			massKg: mass,
 			dragCd: cd,
 			frontalAreaM2: area,
-			powerKw: power,
+			powerKw: fromDisplayPower(power, state.powerUnit),
 			peakTorqueRpm: Math.round(torqueRpm),
 			peakTorqueNm: torque,
 			peakPowerRpm: Math.round(powerRpm),
+			rotatingMassKg: rotMass ?? undefined,
+			shiftTimeS: shiftTime ?? undefined,
 		},
 	};
 };

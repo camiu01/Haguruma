@@ -3,7 +3,7 @@
  * @brief Unit tests for secondary road-load physics.
  */
 import { describe, expect, it } from 'vitest';
-import { availableWheelKw, clampGrade, dragForce, dragLimitedSpeedKmh, gradeForce, kmhToMs, kwToHp, roadLoadPowerKw, rollingForce } from '../src/core/math/aero-math';
+import { availableWheelKw, clampGrade, dragForce, dragLimitedSpeedKmh, gradeForce, hpToKw, kmhToMs, kwToHp, roadLoadPowerKw, rollingForce } from '../src/core/math/aero-math';
 
 describe('kmhToMs', () => {
 	it('converts 36 kmh to 10 m/s', () => {
@@ -50,6 +50,15 @@ describe('roadLoadPowerKw', () => {
 describe('kwToHp', () => {
 	it('converts 100 kW to about 136 cv', () => {
 		expect(kwToHp(100)).toBeCloseTo(135.96, 1);
+	});
+});
+
+describe('hpToKw', () => {
+	it('converts about 136 cv back to 100 kW', () => {
+		expect(hpToKw(kwToHp(100))).toBeCloseTo(100, 6);
+	});
+	it('converts 150 cv to about 110 kW', () => {
+		expect(hpToKw(150)).toBeCloseTo(110.32, 1);
 	});
 });
 

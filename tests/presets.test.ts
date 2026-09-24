@@ -8,8 +8,8 @@ import { parseTire } from '../src/core/math/tire-math';
 import { catalogEntries as catalog } from '../src/config/car-catalog';
 
 describe('presets', () => {
-	it('exposes eighteen catalog vehicles', () => {
-		expect(Object.keys(presets)).toHaveLength(18);
+	it('exposes twenty-six catalog vehicles', () => {
+		expect(Object.keys(presets)).toHaveLength(26);
 	});
 	it('holds valid tires, ratios and redlines', () => {
 		for (const key of Object.keys(presets)) {
@@ -57,6 +57,14 @@ describe('presets', () => {
 			focus_rs_mk1: 3.56,
 			ae86_trueno: 3.56,
 			viper_rt10: 2.9,
+			civic_type_r_fk8: 3.583,
+			golf_gti_mk7: 3.4,
+			m2_competition: 3.2,
+			gr_supra_a90: 3.32,
+			nissan_350z_base: 3.546,
+			alpine_a110_pure: 3.3,
+			e36_m3: 3.68,
+			volvo_240: 3.55,
 		};
 		for (const key of Object.keys(expected)) {
 			expect(presets[key].reverseRatio).toBeCloseTo(expected[key], 3);

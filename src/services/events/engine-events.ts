@@ -4,6 +4,7 @@
  */
 import { state } from '../../core/state/app-state';
 import { powerFromTorque } from '../../core/math/traction-math';
+import { formatPower } from '../../core/units/unit-utils';
 import type { ElementRefs } from '../dom/element-refs';
 
 /**
@@ -57,5 +58,5 @@ export const syncEngineInputs = (refs: ElementRefs): void => {
  * @return void
  */
 const syncEngineDerived = (refs: ElementRefs): void => {
-	refs.powerAtDisplay.value = `${powerFromTorque(state.peakTorqueNm, state.peakTorqueRpm).toFixed(1)} kW`;
+	refs.powerAtDisplay.value = formatPower(powerFromTorque(state.peakTorqueNm, state.peakTorqueRpm), state.powerUnit);
 };
