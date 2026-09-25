@@ -3,8 +3,9 @@
  * @brief Bind running-gear chassis inputs to primary state.
  */
 import { state } from '../../core/state/app-state';
-import type { DrivetrainLayout } from '../../core/models';
+import type { DrivetrainLayout, RunningGear } from '../../core/models';
 import { DIFF_PRESETS, LSD_MODEL_IDS, findDiffPreset, modelIdFromType } from '../../config/diff-presets';
+import { efficiencyForLayout } from '../../config/drivetrain-eff';
 import type { ElementRefs } from '../dom/element-refs';
 
 /**
@@ -37,6 +38,7 @@ export const applyRunningGearVisibility = (refs: ElementRefs): void => {
 
 /**
  * @brief Bind a numeric input with clamping.
+ * @brief Shared with the comparison running-gear binder.
  * @param el Input element.
  * @param min Lower bound.
  * @param max Upper bound.
@@ -44,7 +46,7 @@ export const applyRunningGearVisibility = (refs: ElementRefs): void => {
  * @param render Full refresh callback.
  * @return void
  */
-const bindNum = (el: HTMLInputElement, min: number, max: number, apply: (v: number) => void, render: () => void): void => {
+export const bindNum = (el: HTMLInputElement, min: number, max: number, apply: (v: number) => void, render: () => void): void => {
 	el.addEventListener('input', (e) => {
 		const v = parseFloat((e.target as HTMLInputElement).value);
 		if (!Number.isFinite(v)) return;
@@ -54,32 +56,35 @@ const bindNum = (el: HTMLInputElement, min: number, max: number, apply: (v: numb
 };
 
 /**
- * @brief Apply a catalog differential model id to running gear.
+ * @brief Apply a catalog differential model id to a running-gear setup.
+ * @brief Shared by the primary and the comparison running-gear selects.
+ * @param rg Target running-gear setup.
  * @param modelId Catalog id from the select.
  * @return void
  */
-const applyDiffModel = (modelId: string): void => {
+export const applyDiffModelTo = (rg: RunningGear, modelId: string): void => {
 	const preset = findDiffPreset(modelId);
 	if (!preset) return;
-	state.runningGear.differentialType = preset.type;
-	state.runningGear.differentialModelId = preset.id;
+	rg.differentialType = preset.type;
+	rg.differentialModelId = preset.id;
 	if (LSD_MODEL_IDS.has(preset.id) && preset.id !== 'lsd_custom') {
-		state.runningGear.differentialBias = preset.accLock;
-		state.runningGear.differentialCoastBias = preset.coastLock;
+		rg.differentialBias = preset.accLock;
+		rg.differentialCoastBias = preset.coastLock;
 	} else if (preset.id === 'lsd_custom') {
-		state.runningGear.differentialCoastBias = state.runningGear.differentialCoastBias ?? 0;
+		rg.differentialCoastBias = rg.differentialCoastBias ?? 0;
 	} else if (preset.id === 'open') {
-		state.runningGear.differentialCoastBias = 0;
+		rg.differentialCoastBias = 0;
 	} else if (preset.id === 'spool') {
-		state.runningGear.differentialBias = 1;
-		state.runningGear.differentialCoastBias = 1;
+		rg.differentialBias = 1;
+		rg.differentialCoastBias = 1;
 	} else if (preset.id === 'torsen') {
-		state.runningGear.differentialCoastBias = 0;
+		rg.differentialCoastBias = 0;
 	}
 };
 
 /**
  * @brief Bind selects and numeric running-gear inputs.
+ * @brief Layout changes also set the layout default drivetrain efficiency.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback.
  * @return void
@@ -89,13 +94,15 @@ const bindRgInputs = (refs: ElementRefs, render: () => void): void => {
 		const v = (e.target as HTMLSelectElement).value;
 		if (v === 'FWD' || v === 'RWD' || v === 'AWD') {
 			state.runningGear.drivetrainLayout = v as DrivetrainLayout;
+			state.drivetrainEff = efficiencyForLayout(v as DrivetrainLayout);
+			refs.effInput.value = String(state.drivetrainEff);
 			render();
 		}
 	});
 	refs.rgDiff.addEventListener('change', (e) => {
 		const v = (e.target as HTMLSelectElement).value;
 		if (DIFF_PRESETS.some((p) => p.id === v)) {
-			applyDiffModel(v);
+			applyDiffModelTo(state.runningGear, v);
 			applyRunningGearVisibility(refs);
 			syncLockInputs(refs);
 			render();
@@ -114,6 +121,9 @@ const bindRgInputs = (refs: ElementRefs, render: () => void): void => {
 	bindNum(refs.rgTrack, 1300, 1800, (v) => { state.runningGear.trackWidthMm = v; }, render);
 	bindNum(refs.rgSpringF, 10, 120, (v) => { state.runningGear.springRateFrontNmm = v; }, render);
 	bindNum(refs.rgSpringR, 10, 120, (v) => { state.runningGear.springRateRearNmm = v; }, render);
+	bindNum(refs.rgLift, 0, 4, (v) => { state.runningGear.liftCoefficient = v; }, render);
+	bindNum(refs.rgLiftArea, 0.5, 5, (v) => { state.runningGear.liftReferenceAreaM2 = v; }, render);
+	bindNum(refs.rgLiftShare, 20, 80, (v) => { state.runningGear.downforceFrontShare = v / 100; }, render);
 };
 
 /**
@@ -167,6 +177,9 @@ export const syncRunningGearInputs = (refs: ElementRefs): void => {
 	refs.rgTrack.value = String(rg.trackWidthMm);
 	refs.rgSpringF.value = String(rg.springRateFrontNmm);
 	refs.rgSpringR.value = String(rg.springRateRearNmm);
+	refs.rgLift.value = String(rg.liftCoefficient ?? 0.15);
+	refs.rgLiftArea.value = String(rg.liftReferenceAreaM2 ?? 2);
+	refs.rgLiftShare.value = String(Math.round((rg.downforceFrontShare ?? rg.frontWeightDistribution) * 100));
 	refs.rgLatg.value = String(rg.lateralG);
 	refs.rgLatgVal.textContent = `${rg.lateralG.toFixed(2)} G`;
 	applyRunningGearVisibility(refs);

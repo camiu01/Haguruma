@@ -9,7 +9,7 @@ import { toX } from './canvas-setup';
 
 /**
  * Draw vertical redline shift-drop connectors.
- * @purpose Visualize RPM loss when upshifting at the limiter.
+ * @brief Visualize RPM loss when upshifting at the limiter.
  */
 export const drawShiftDrops = (
 	ctx: CanvasRenderingContext2D,
@@ -30,7 +30,7 @@ export const drawShiftDrops = (
 
 /**
  * Draw one drop line with landing marker.
- * @purpose Keep the loop body small and testable.
+ * @brief Keep the loop body small and testable.
  */
 export const drawSingleDrop = (
 	ctx: CanvasRenderingContext2D,
@@ -66,7 +66,7 @@ export const drawSingleDrop = (
 
 /**
  * Hide markers outside the visible plot.
- * @purpose Guard for extreme ratios.
+ * @brief Guard for extreme ratios.
  */
 export const isPeakVisible = (frame: PlotFrame, peak: PeakPoint): boolean => {
 	return peak.endX >= frame.paddingLeft && peak.endX <= frame.paddingLeft + frame.plotWidth;
@@ -74,7 +74,7 @@ export const isPeakVisible = (frame: PlotFrame, peak: PeakPoint): boolean => {
 
 /**
  * Keep unused import alive for future tooltip anchoring.
- * @purpose Document that X mapping stays centralized here.
+ * @brief Document that X mapping stays centralized here.
  */
 export const peakX = (frame: PlotFrame, speed: number): number => {
 	return toX(frame, speed);

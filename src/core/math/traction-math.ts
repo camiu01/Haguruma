@@ -1,41 +1,37 @@
 /**
  * @file traction-math.ts
- * @brief Engine torque model, tractive force at the wheels and optimal shift points.
+ * @brief Tractive force at the wheels and optimal shift points.
  *
- * Physics chain: power curve (peak power + peak torque anchors) -> engine torque
- * via T = P * (30000/π) / n -> wheel force via F = T * i_total * eta / r_dyn.
- * Optimal shift per gear pair: shift where the next gear delivers more wheel
- * force than staying in the current gear (tractive-force curve crossing).
+ * Physics chain: engine torque (curve model in engine-curve-core) -> wheel
+ * force via F = T * i_total * eta / r_dyn. Optimal shift per gear pair:
+ * shift where the next gear delivers more wheel force than staying in the
+ * current gear (tractive-force curve crossing). The curve model symbols are
+ * re-exported so existing importers keep a single entry point.
  */
-
 import { rpmFromKmh, speedKmh, toDisplaySpeed } from './speed-math';
+import { CURVE_MIN_RPM, clamp, engineTorqueAt, type EngineCurve } from './engine-curve-core';
 import type { SpeedUnit } from '../models';
 
-/** kW to Nm conversion constant: T[Nm] = P[kW] * (30000/π) / n[rpm]. */
-export const KW_TO_NM = 30000 / Math.PI;
-
-/** Minimum engine speed sampled on the power curve. */
-export const CURVE_MIN_RPM = 1000;
+export {
+	KW_TO_NM,
+	CURVE_MIN_RPM,
+	POINTS_MIN_RPM,
+	POINTS_MAX_RPM,
+	POINTS_MIN_NM,
+	POINTS_MAX_NM,
+	torqueFromPower,
+	powerFromTorque,
+	sanitizeTorquePoints,
+	torqueAtRpm,
+	anchorsFromPoints,
+	validateCurve,
+	enginePowerAt,
+	engineTorqueAt,
+} from './engine-curve-core';
+export type { EngineCurve } from './engine-curve-core';
 
 /** Sampling step for curve crossing search. */
 const CURVE_STEP_RPM = 50;
-
-/**
- * Engine anchors defining the power curve shape.
- * @brief Peak torque point plus peak power point, interpolated linearly.
- */
-export interface EngineCurve {
-	/** Rev limiter in RPM. */
-	redline: number;
-	/** RPM of peak engine torque. */
-	peakTorqueRpm: number;
-	/** Peak engine torque in Nm. */
-	peakTorqueNm: number;
-	/** RPM of peak engine power. */
-	peakPowerRpm: number;
-	/** Peak engine power in kW. */
-	peakPowerKw: number;
-}
 
 /**
  * Optimal shift prescription for one gear pair.
@@ -55,93 +51,6 @@ export interface OptimalShift {
 	/** True when shifting at redline is already optimal. */
 	atRedline: boolean;
 }
-
-/**
- * @brief Clamp engine anchors into a sane, self-consistent curve.
- * @param curve Raw engine anchors from state.
- * @return Validated curve or null when unusable.
- */
-export const validateCurve = (curve: EngineCurve): EngineCurve | null => {
-	if (!curve || !Number.isFinite(curve.redline) || curve.redline < 3000 || curve.redline > 12000) {
-		return null;
-	}
-	if (!Number.isFinite(curve.peakPowerKw) || curve.peakPowerKw <= 0) {
-		return null;
-	}
-	const peakPowerRpm = clamp(curve.peakPowerRpm, CURVE_MIN_RPM, curve.redline);
-	const peakTorqueRpm = clamp(curve.peakTorqueRpm, CURVE_MIN_RPM, peakPowerRpm);
-	const peakTorqueNm = curve.peakTorqueNm;
-	if (!Number.isFinite(peakTorqueNm) || peakTorqueNm <= 0) {
-		return null;
-	}
-	return { redline: curve.redline, peakTorqueRpm, peakTorqueNm, peakPowerRpm, peakPowerKw: curve.peakPowerKw };
-};
-
-/**
- * @brief Derive engine torque from power: T = P * (30000/π) / n.
- * @param powerKw Engine power in kilowatts.
- * @param rpm Engine speed in RPM.
- * @return Engine torque in Nm, 0 when invalid.
- */
-export const torqueFromPower = (powerKw: number, rpm: number): number => {
-	if (!Number.isFinite(powerKw) || powerKw < 0 || !Number.isFinite(rpm) || rpm <= 0) {
-		return 0;
-	}
-	return (powerKw * KW_TO_NM) / rpm;
-};
-
-/**
- * @brief Derive engine power from torque: P = T * n / (30000/π).
- * @param torqueNm Engine torque in Nm.
- * @param rpm Engine speed in RPM.
- * @return Engine power in kilowatts, 0 when invalid.
- */
-export const powerFromTorque = (torqueNm: number, rpm: number): number => {
-	if (!Number.isFinite(torqueNm) || torqueNm < 0 || !Number.isFinite(rpm) || rpm <= 0) {
-		return 0;
-	}
-	return (torqueNm * rpm) / KW_TO_NM;
-};
-
-/**
- * @brief Engine power at a given RPM from the anchored curve.
- * @param rpm Engine speed in RPM.
- * @param curve Validated engine anchors.
- * @return Power in kilowatts.
- */
-export const enginePowerAt = (rpm: number, curve: EngineCurve): number => {
-	if (!Number.isFinite(rpm) || rpm <= 0) {
-		return 0;
-	}
-	if (rpm <= curve.peakTorqueRpm) {
-		const span = Math.max(1, curve.peakTorqueRpm - CURVE_MIN_RPM);
-		const k = clamp((rpm - CURVE_MIN_RPM) / span, 0, 1);
-		const t = curve.peakTorqueNm * (0.5 + 0.5 * k);
-		return powerFromTorque(t, rpm);
-	}
-	if (rpm <= curve.peakPowerRpm) {
-		const powerAtTorquePeak = powerFromTorque(curve.peakTorqueNm, curve.peakTorqueRpm);
-		const span = Math.max(1, curve.peakPowerRpm - curve.peakTorqueRpm);
-		const k = (rpm - curve.peakTorqueRpm) / span;
-		return powerAtTorquePeak + (curve.peakPowerKw - powerAtTorquePeak) * k;
-	}
-	if (rpm <= curve.redline) {
-		const span = Math.max(1, curve.redline - curve.peakPowerRpm);
-		const k = (rpm - curve.peakPowerRpm) / span;
-		return curve.peakPowerKw * (1 - 0.10 * k);
-	}
-	return 0;
-};
-
-/**
- * @brief Engine torque at a given RPM from the anchored curve.
- * @param rpm Engine speed in RPM.
- * @param curve Validated engine anchors.
- * @return Torque in Nm.
- */
-export const engineTorqueAt = (rpm: number, curve: EngineCurve): number => {
-	return torqueFromPower(enginePowerAt(rpm, curve), rpm);
-};
 
 /**
  * @brief Tractive force at the wheels for one gear and RPM.
@@ -362,15 +271,4 @@ export const optimalShiftsForAll = (
 		}
 	}
 	return out;
-};
-
-/**
- * @brief Clamp a value into [min, max].
- * @param v Candidate value.
- * @param min Lower bound.
- * @param max Upper bound.
- * @return Clamped value.
- */
-const clamp = (v: number, min: number, max: number): number => {
-	return Math.min(max, Math.max(min, v));
 };

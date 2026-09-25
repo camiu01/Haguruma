@@ -78,18 +78,17 @@ Development task management for the Haguruma vehicle dynamics simulator.
 - [x] Accel + coast lock percentage inputs for advanced LSD models; share keys `rg_dm`/`rg_dc` #share
 - [x] `diff-presets.test.ts` catalog + i18n label coverage #tests
 
+### Powertrain, Chassis & Comparison (this pass)
+
+- [x] Default drivetrain efficiency mapped to layout selection: FWD 0.90 / RWD 0.85 / AWD 0.80 (`config/drivetrain-eff.ts`, fired by the layout selector and preset apply) #powertrain
+- [x] Custom CSV import for dyno torque and power curves: `core/math/dyno-csv.ts` parser (header or header-less, `;`/`,`/tab, decimal comma, Nm/kgm, kW/cv/hp), torque-point engine model in `traction-math.ts`, share key `curve`, anchor inputs lock while active, EN/IT status line #engine #data
+- [x] Downforce inputs exposed in the running-gear UI: lift coefficient, reference area, front share + live downforce readout at 200 km/h; share keys `rg_lc`/`rg_la`/`rg_ls` (+ `crg_` mirror) #aero #physics
+- [x] Secondary comparison running-gear UI: `crg-*` controls (layout, diff + locks, weight, geometry, springs, downforce, lateral G) driving the dashed COMP grip curve; synced on copy-primary, preset load and URL restore #comparison
+- [x] Coast-lock fraction used in a coast/engine-braking model: `engineBrakeForceAt`, `maxCoastForceAtSpeed`, `criticalCoastLockupSpeed` + "Coast lock-up" readout in the running-gear card (+ `dynamics-math` tests) #dynamics
+
 ## Pending
 
-### Powertrain
-
-- [ ] Map default drivetrain efficiency to FWD/RWD/AWD layout selection (layout selector already done) #powertrain
-- [ ] Support custom CSV import for dyno torque and power curves #engine #data
-
-### Chassis & Grip
-
-- [ ] Expose downforce inputs in running-gear UI: lift coefficient, reference area, front share (model fields already exist) #aero #physics
-- [ ] Secondary comparison running-gear parameters (state + URL keys exist, no UI yet) #comparison
-- [ ] Use coast-lock fraction in a coast/engine-braking model (field stored and shared; physics still accel-only) #dynamics
+(none — every tracked task is shipped above)
 
 ### Setup Troubleshooting Matrix / Wizard (interactive diagnostic tool)
 

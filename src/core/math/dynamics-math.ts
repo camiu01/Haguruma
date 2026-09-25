@@ -1,6 +1,6 @@
 /**
  * @file dynamics-math.ts
- * @brief Load transfer, Kamm circle, differential and wheelspin limits.
+ * @brief Load transfer, Kamm circle, differential, wheelspin and coast limits.
  *
  * SI discipline: speeds enter in km/h at the API boundary but every
  * iterative relation (spin scan, force-vs-speed) converts once to SI
@@ -163,6 +163,52 @@ export const diffLimit = (type: DifferentialType, bias: number, fxInner: number,
 };
 
 /**
+ * @brief Friction-limited force the driven axle can transmit at speed.
+ *
+ * Shared by the acceleration path (differentialBias) and the coast /
+ * engine-braking path (differentialCoastBias). Physics: F_down(v) =
+ * ½ × ρ × CL × A × v² adds to the vertical load; the front/rear split
+ * follows downforceFrontShare (default = static weight distribution).
+ * Longitudinal transfer follows the signed accelMps2 (negative on
+ * deceleration moves load forward). The lateral force is distributed
+ * across the driven wheels in proportion to their vertical load, then
+ * each wheel's longitudinal capacity comes from the Kamm circle.
+ * @param rg Setup, massKg mass, speedKmh speed, accelMps2 signed accel.
+ * @param bias Lock fraction applied to the clutch-LSD model.
+ * @return Total driven-axle force limit in newtons.
+ */
+const drivenAxleLimitN = (rg: RunningGear, massKg: number, speedKmh: number, accelMps2: number, bias: number): number => {
+	const loads = wheelLoads(rg, massKg, accelMps2);
+	const vKmh = Number.isFinite(speedKmh) && speedKmh > 0 ? speedKmh : 0;
+	const cl = Number.isFinite(rg.liftCoefficient) ? (rg.liftCoefficient as number) : 0;
+	const area = Number.isFinite(rg.liftReferenceAreaM2) ? (rg.liftReferenceAreaM2 as number) : 0;
+	const down = downforceN(cl, area, vKmh);
+	const dist = clampNum(rg.frontWeightDistribution, 0, 1);
+	const fShare = Number.isFinite(rg.downforceFrontShare) ? clampNum(rg.downforceFrontShare as number, 0, 1) : dist;
+	const fz: Loads = { fl: loads.fl + (down * fShare) / 2, fr: loads.fr + (down * fShare) / 2, rl: loads.rl + (down * (1 - fShare)) / 2, rr: loads.rr + (down * (1 - fShare)) / 2 };
+	const totalLat = massKg * GRAVITY * Math.abs(Number.isFinite(rg.lateralG) ? rg.lateralG : 0);
+	const driven = drivenWheelsLoad(rg, fz);
+	const awd = rg.drivetrainLayout === 'AWD';
+	const share = rg.drivetrainLayout === 'FWD' ? dist : rg.drivetrainLayout === 'RWD' ? 1 - dist : 1;
+	const axleFy = awd ? totalLat : totalLat * share;
+	const latSum = driven.innerN + driven.outerN;
+	const fyInner = latSum > 0 ? axleFy * driven.innerN / latSum : 0;
+	const fyOuter = latSum > 0 ? axleFy * driven.outerN / latSum : 0;
+	const fxIn = kammLimit(muOf(rg), driven.innerN, fyInner);
+	const fxOut = kammLimit(muOf(rg), driven.outerN, fyOuter);
+	return Math.max(0, diffLimit(rg.differentialType, bias, fxIn, fxOut));
+};
+
+/**
+ * @brief Resolve the usable road friction coefficient of a setup.
+ * @param rg Setup carrying roadFrictionCoefficient.
+ * @return Friction coefficient, 0 when missing or invalid.
+ */
+const muOf = (rg: RunningGear): number => {
+	return Number.isFinite(rg?.roadFrictionCoefficient) && rg.roadFrictionCoefficient > 0 ? rg.roadFrictionCoefficient : 0;
+};
+
+/**
  * @brief Friction-limited drive force at speed, with real downforce.
  *
  * Physics: F_down(v) = ½ × ρ × CL × A × v² adds to the vertical
@@ -176,29 +222,33 @@ export const diffLimit = (type: DifferentialType, bias: number, fxInner: number,
  */
 export const maxDriveForceAtSpeed = (rg: RunningGear, massKg: number, speedKmh: number, engineForceN: number, accelMps2: number, liftCd?: number, liftAreaM2?: number): { limitN: number; perWheelN: number; isSpin: boolean } => {
 	if (!rg || !Number.isFinite(massKg) || massKg <= 0) return { limitN: 0, perWheelN: 0, isSpin: false };
-	const mu = Number.isFinite(rg.roadFrictionCoefficient) && rg.roadFrictionCoefficient > 0 ? rg.roadFrictionCoefficient : 0;
-	if (mu <= 0) return { limitN: 0, perWheelN: 0, isSpin: false };
-	const loads = wheelLoads(rg, massKg, accelMps2);
-	const vKmh = Number.isFinite(speedKmh) && speedKmh > 0 ? speedKmh : 0;
-	const cl = Number.isFinite(liftCd) ? (liftCd as number) : Number.isFinite(rg.liftCoefficient) ? (rg.liftCoefficient as number) : 0;
-	const area = Number.isFinite(liftAreaM2) ? (liftAreaM2 as number) : Number.isFinite(rg.liftReferenceAreaM2) ? (rg.liftReferenceAreaM2 as number) : 0;
-	const down = downforceN(cl, area, vKmh);
-	const dist = clampNum(rg.frontWeightDistribution, 0, 1);
-	const fShare = Number.isFinite(rg.downforceFrontShare) ? clampNum(rg.downforceFrontShare as number, 0, 1) : dist;
-	const fz: Loads = { fl: loads.fl + (down * fShare) / 2, fr: loads.fr + (down * fShare) / 2, rl: loads.rl + (down * (1 - fShare)) / 2, rr: loads.rr + (down * (1 - fShare)) / 2 };
-	const totalLat = massKg * GRAVITY * Math.abs(Number.isFinite(rg.lateralG) ? rg.lateralG : 0);
-	const driven = drivenWheelsLoad(rg, fz);
-	const awd = rg.drivetrainLayout === 'AWD';
-	const share = rg.drivetrainLayout === 'FWD' ? dist : rg.drivetrainLayout === 'RWD' ? 1 - dist : 1;
-	const axleFy = awd ? totalLat : totalLat * share;
-	const latSum = driven.innerN + driven.outerN;
-	const fyInner = latSum > 0 ? axleFy * driven.innerN / latSum : 0;
-	const fyOuter = latSum > 0 ? axleFy * driven.outerN / latSum : 0;
-	const fxIn = kammLimit(mu, driven.innerN, fyInner);
-	const fxOut = kammLimit(mu, driven.outerN, fyOuter);
-	const limitN = Math.max(0, diffLimit(rg.differentialType, rg.differentialBias, fxIn, fxOut));
+	if (muOf(rg) <= 0) return { limitN: 0, perWheelN: 0, isSpin: false };
+	const withOverrides = liftCd !== undefined || liftAreaM2 !== undefined ? { ...rg, liftCoefficient: Number.isFinite(liftCd as number) ? (liftCd as number) : rg.liftCoefficient, liftReferenceAreaM2: Number.isFinite(liftAreaM2 as number) ? (liftAreaM2 as number) : rg.liftReferenceAreaM2 } : rg;
+	const limitN = drivenAxleLimitN(withOverrides, massKg, speedKmh, accelMps2, rg.differentialBias);
 	const force = Number.isFinite(engineForceN) ? engineForceN : 0;
-	return { limitN, perWheelN: limitN / (awd ? 4 : 2), isSpin: force > limitN };
+	return { limitN, perWheelN: limitN / (rg.drivetrainLayout === 'AWD' ? 4 : 2), isSpin: force > limitN };
+};
+
+/**
+ * @brief Friction-limited engine-braking (coast) force at speed.
+ *
+ * Physics: on a closed throttle the engine drags through the driveline
+ * with roughly ENGINE_BRAKE_FRACTION of its full-throttle torque; the
+ * driven axle can only transmit as much of that force as the Kamm circle
+ * allows with the COAST-side differential lock (differentialCoastBias).
+ * Deceleration shifts load forward (negative accelMps2), so a RWD inner
+ * wheel unloads and locks first, exactly what a high coast-lock LSD
+ * exacerbates off-throttle.
+ * @param rg Setup, massKg mass, speedKmh speed, demandN engine-brake force.
+ * @param decelMps2 Deceleration magnitude causing the forward transfer.
+ * @return Limit, per-wheel share and inside-wheel lockup flag.
+ */
+export const maxCoastForceAtSpeed = (rg: RunningGear, massKg: number, speedKmh: number, demandN: number, decelMps2: number): { limitN: number; perWheelN: number; isLockup: boolean } => {
+	if (!rg || !Number.isFinite(massKg) || massKg <= 0) return { limitN: 0, perWheelN: 0, isLockup: false };
+	if (muOf(rg) <= 0) return { limitN: 0, perWheelN: 0, isLockup: false };
+	const limitN = drivenAxleLimitN(rg, massKg, speedKmh, -Math.abs(decelMps2), rg.differentialCoastBias ?? 0);
+	const demand = Number.isFinite(demandN) ? Math.abs(demandN) : 0;
+	return { limitN, perWheelN: limitN / (rg.drivetrainLayout === 'AWD' ? 4 : 2), isLockup: demand > limitN };
 };
 
 /**
@@ -228,6 +278,63 @@ const spinOnsetForGear = (gear: number, fd: number, circM: number, radius: numbe
 		if (!Number.isFinite(rpm) || rpm < 1000 || rpm > curve.redline) continue;
 		const force = tractiveForceAt(rpm, gear, fd, radius, curve, eff);
 		if (force > maxDriveForceAtSpeed(rg, massKg, vKmh, 0, 0).limitN) return toDisplaySpeed(vKmh, unit);
+	}
+	return null;
+};
+
+/** Closed-throttle engine drag as a fraction of the full-throttle torque. */
+export const ENGINE_BRAKE_FRACTION = 0.10;
+
+/**
+ * @brief Wheel force demanded by engine braking at one RPM.
+ * @brief Closed-throttle drag is modeled as ENGINE_BRAKE_FRACTION of the
+ * @brief full-throttle torque at the same engine speed.
+ * @param rpm Engine speed in RPM.
+ * @param gearRatio Selected gear ratio.
+ * @param fd Differential ratio.
+ * @param radius Dynamic rolling radius in metres.
+ * @param curve Validated engine anchors.
+ * @param eff Drivetrain efficiency between 0 and 1.
+ * @return Engine-braking force magnitude in newtons.
+ */
+export const engineBrakeForceAt = (rpm: number, gearRatio: number, fd: number, radius: number, curve: Curve, eff: number): number => {
+	return ENGINE_BRAKE_FRACTION * tractiveForceAt(rpm, gearRatio, fd, radius, curve, eff);
+};
+
+/**
+ * @brief First inside-wheel lockup speed per gear under engine braking.
+ * @brief Mirrors criticalWheelspinSpeed for the closed-throttle case: scans
+ * @brief each gear in 2 km/h steps for the speed where the engine-braking
+ * @brief demand exceeds the coast-lock-limited grip of the driven axle.
+ * @param gears Ratios, fd drive, circM circumference, curve engine, eff efficiency.
+ * @return Per-gear lockup speed or null when the gear never locks.
+ */
+export const criticalCoastLockupSpeed = (gears: number[], fd: number, circM: number, curve: Curve | null, eff: number, rg: RunningGear, massKg: number, unit: SpeedUnit = 'kmh'): (number | null)[] => {
+	if (!Array.isArray(gears)) return [];
+	if (gears.length === 0 || !curve) return gears.map(() => null);
+	const radius = dynamicRadiusM(circM);
+	if (!radius || !Number.isFinite(fd) || fd <= 0) return gears.map(() => null);
+	return gears.map((gear) => coastLockupForGear(gear, fd, circM, radius, curve, eff, rg, massKg, unit));
+};
+
+/**
+ * @brief Scan one gear in 2 km/h SI steps for coast lockup onset.
+ * @brief Deceleration from the demand itself drives the forward load
+ * @brief transfer, so a lightly loaded RWD inner wheel locks first.
+ * @param gear Ratio, fd drive, circM circumference, radius wheel radius, curve engine.
+ * @return Lockup onset speed in the display unit, or null.
+ */
+const coastLockupForGear = (gear: number, fd: number, circM: number, radius: number, curve: Curve, eff: number, rg: RunningGear, massKg: number, unit: SpeedUnit): number | null => {
+	if (!Number.isFinite(gear) || gear <= 0 || !Number.isFinite(curve?.redline) || curve.redline <= 0) return null;
+	if (!Number.isFinite(massKg) || massKg <= 0) return null;
+	const topKmh = speedKmh(curve.redline, gear, fd, circM);
+	if (!Number.isFinite(topKmh) || topKmh <= 0) return null;
+	for (let vKmh = 0; vKmh <= topKmh; vKmh += 2) {
+		const rpm = rpmFromKmh(vKmh, gear, fd, circM);
+		if (!Number.isFinite(rpm) || rpm < 1000 || rpm > curve.redline) continue;
+		const demand = engineBrakeForceAt(rpm, gear, fd, radius, curve, eff);
+		const limit = maxCoastForceAtSpeed(rg, massKg, vKmh, demand, demand / massKg).limitN;
+		if (demand > limit) return toDisplaySpeed(vKmh, unit);
 	}
 	return null;
 };

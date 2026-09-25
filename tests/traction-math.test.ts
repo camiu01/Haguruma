@@ -105,3 +105,33 @@ describe('optimalShiftFor/optimalShiftsForAll', () => {
 		expect(optimalShiftFor([3.58, 2.05], 0, 4.1, 1.935, null, 0.85, 'kmh')).toBeNull();
 	});
 });
+
+describe('dyno point curves', () => {
+	const points = [
+		{ rpm: 1000, torqueNm: 100 },
+		{ rpm: 3000, torqueNm: 200 },
+		{ rpm: 6000, torqueNm: 150 },
+	];
+	const curve = validateCurve({ ...makeCurve(), points });
+	it('engineTorqueAt returns the measured torque directly', () => {
+		expect(engineTorqueAt(3000, curve!)).toBeCloseTo(200, 6);
+		expect(engineTorqueAt(2000, curve!)).toBeCloseTo(150, 6);
+	});
+	it('enginePowerAt equals T x n / 9549.3 on the measured curve', () => {
+		expect(enginePowerAt(3000, curve!)).toBeCloseTo((200 * 3000) / (30000 / Math.PI), 3);
+	});
+	it('cuts to zero past the rev limiter', () => {
+		expect(engineTorqueAt(8000, curve!)).toBe(0);
+		expect(enginePowerAt(8000, curve!)).toBe(0);
+	});
+	it('tapers power past the last measured point toward the limiter', () => {
+		const lastKw = (150 * 6000) / (30000 / Math.PI);
+		const midKw = lastKw * (1 - 0.1 * ((6600 - 6000) / (7200 - 6000)));
+		expect(enginePowerAt(6600, curve!)).toBeCloseTo(midKw, 3);
+		expect(enginePowerAt(7200, curve!)).toBeCloseTo(lastKw * 0.9, 3);
+	});
+	it('keeps the anchor model without points', () => {
+		const anchors = validateCurve(makeCurve());
+		expect(engineTorqueAt(4500, anchors!)).toBeCloseTo(180, 0);
+	});
+});

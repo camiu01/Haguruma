@@ -54,7 +54,7 @@ export const observeCanvasResize = (
 
 /**
  * Build the plot frame from current canvas size.
- * @purpose Share coordinate mapping between axes, curves and tooltip.
+ * @brief Share coordinate mapping between axes, curves and tooltip.
  * @param canvas Target canvas.
  * @param maxSpeed Right edge of the X axis.
  * @param maxRpm Top edge of the Y axis.

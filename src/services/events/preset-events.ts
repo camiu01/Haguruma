@@ -10,6 +10,7 @@ import type { ElementRefs } from '../dom/element-refs';
 import { renderGearsList } from '../../components/gear-list';
 import { enhancePresetSearch } from '../../components/preset-search';
 import { t } from '../../core/i18n/language';
+import { efficiencyForLayout } from '../../config/drivetrain-eff';
 import { syncEngineInputs } from './engine-events';
 import { syncRoadLoadInputs } from './road-load-events';
 import { syncRunningGearInputs } from './running-gear-events';
@@ -22,6 +23,8 @@ const GROUP_LABEL_KEYS: Record<string, 'preset.groupFactory' | 'preset.groupComm
 
 /**
  * @brief Apply a preset to state and refresh every dependent control.
+ * @brief Clears any custom dyno curve and maps the default drivetrain
+ * @brief efficiency to the preset running-gear layout.
  * @param refs Cached DOM handles.
  * @param preset Preset data, built-in or user-defined.
  * @param render Full refresh callback.
@@ -56,8 +59,10 @@ export const applyPreset = (refs: ElementRefs, preset: GearPreset, render: () =>
 	}
 	state.rotatingMassKg = preset.rotatingMassKg ?? 0;
 	state.shiftTimeS = preset.shiftTimeS ?? 0;
+	state.torqueCurvePoints = null;
 	if (preset.runningGear !== undefined) {
 		state.runningGear = { ...defaultRunningGear, ...preset.runningGear };
+		state.drivetrainEff = efficiencyForLayout(state.runningGear.drivetrainLayout);
 	}
 	refs.primaryTire.value = preset.tire;
 	refs.primaryFd.value = String(preset.fd);

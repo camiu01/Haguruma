@@ -4,20 +4,25 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+	ENGINE_BRAKE_FRACTION,
 	GRAVITY,
 	TORSEN_TBR,
 	compressionMm,
+	criticalCoastLockupSpeed,
 	criticalWheelspinSpeed,
 	diffLimit,
 	downforceN,
 	drivenWheelsLoad,
+	engineBrakeForceAt,
 	kammLimit,
 	lateralTransfer,
 	longitudinalTransfer,
+	maxCoastForceAtSpeed,
 	maxDriveForceAtSpeed,
 	staticAxleLoads,
 	wheelLoads,
 } from '../src/core/math/dynamics-math';
+import { dynamicRadiusM, tractiveForceAt, type EngineCurve } from '../src/core/math/traction-math';
 import { defaultRunningGear } from '../src/core/state/app-state';
 import type { RunningGear } from '../src/core/models';
 
@@ -138,5 +143,42 @@ describe('criticalWheelspinSpeed', () => {
 		expect(out).toHaveLength(2);
 		expect(out[0]).not.toBeNull();
 		expect(out[1]).toBeNull();
+	});
+});
+
+describe('engine braking and coast lockup', () => {
+	const curve: EngineCurve = { redline: 7200, peakTorqueRpm: 4500, peakTorqueNm: 500, peakPowerRpm: 6500, peakPowerKw: 300 };
+	it('demands a fixed fraction of the tractive force', () => {
+		const radius = dynamicRadiusM(1.93);
+		const full = tractiveForceAt(4500, 3.58, 4.1, radius, curve, 0.85);
+		expect(engineBrakeForceAt(4500, 3.58, 4.1, radius, curve, 0.85)).toBeCloseTo(ENGINE_BRAKE_FRACTION * full, 6);
+	});
+	it('never locks with an open diff, full grip and no lateral load', () => {
+		const rg: RunningGear = { ...mildGear(), drivetrainLayout: 'RWD', differentialCoastBias: 0 };
+		const out = criticalCoastLockupSpeed([3.58, 0.68], 4.1, 1.93, curve, 0.85, rg, 1200, 'kmh');
+		expect(out).toHaveLength(2);
+		expect(out[0]).toBeNull();
+		expect(out[1]).toBeNull();
+	});
+	it('locks in first gear on low grip with lateral load', () => {
+		const rg: RunningGear = {
+			...mildGear(),
+			drivetrainLayout: 'RWD',
+			differentialType: 'spool',
+			differentialCoastBias: 1,
+			roadFrictionCoefficient: 0.5,
+			lateralG: 1.2,
+		};
+		const out = criticalCoastLockupSpeed([3.58], 4.1, 1.93, curve, 0.85, rg, 1200, 'kmh');
+		expect(out[0]).not.toBeNull();
+		expect(out[0] as number).toBeGreaterThan(0);
+	});
+	it('maxCoastForceAtSpeed uses the coast lock and flags lockup', () => {
+		const rg: RunningGear = { ...mildGear(), differentialType: 'clutch_lsd', differentialCoastBias: 0.5, lateralG: 1 };
+		const half = maxCoastForceAtSpeed(rg, 1200, 30, 50, 1);
+		const open = maxCoastForceAtSpeed({ ...rg, differentialCoastBias: 0 }, 1200, 30, 50, 1);
+		expect(half.limitN).toBeGreaterThan(open.limitN);
+		expect(half.isLockup).toBe(false);
+		expect(maxCoastForceAtSpeed(rg, 1200, 30, half.limitN + 1, 1).isLockup).toBe(true);
 	});
 });

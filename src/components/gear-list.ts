@@ -1,3 +1,7 @@
+/**
+ * @file gear-list.ts
+ * @brief Editable per-gear ratio rows for the primary transmission.
+ */
 import { state } from '../core/state/app-state';
 import { GRAPH_LIMITS } from '../config/graph-constants';
 import { getGearColor } from '../config/gear-colors';
@@ -6,7 +10,7 @@ import type { ElementRefs } from '../services/dom/element-refs';
 
 /**
  * Render editable gear ratio rows.
- * @purpose Rebuild the left-panel gear list after every structural change.
+ * @brief Rebuild the left-panel gear list after every structural change.
  * @param refs Cached DOM handles.
  * @param onChange Callback invoked after any ratio edit or removal.
  */
@@ -40,7 +44,7 @@ const updateAddButton = (refs: ElementRefs): void => {
 
 /**
  * Build one gear row element.
- * @purpose Isolate DOM templating from event wiring.
+ * @brief Isolate DOM templating from event wiring.
  */
 const buildGearRow = (
 	refs: ElementRefs,
@@ -110,7 +114,7 @@ const buildRemoveButton = (idx: number): string => {
 
 /**
  * Wire ratio inputs to state.
- * @purpose Update state live while typing without rebuilding inputs.
+ * @brief Update state live while typing without rebuilding inputs.
  */
 const bindGearInputs = (refs: ElementRefs, onChange: (redrawInputs: boolean) => void): void => {
 	refs.gearsContainer.querySelectorAll('.gear-input').forEach((inp) => {
@@ -128,7 +132,7 @@ const bindGearInputs = (refs: ElementRefs, onChange: (redrawInputs: boolean) => 
 
 /**
  * Wire remove buttons to state.
- * @purpose Delete a gear and trigger a full refresh.
+ * @brief Delete a gear and trigger a full refresh.
  */
 const bindRemoveButtons = (refs: ElementRefs, onChange: (redrawInputs: boolean) => void): void => {
 	refs.gearsContainer.querySelectorAll('.btn-remove-gear').forEach((btn) => {
@@ -144,7 +148,7 @@ const bindRemoveButtons = (refs: ElementRefs, onChange: (redrawInputs: boolean) 
 
 /**
  * Append a new gear derived from the previous ratio.
- * @purpose Offer a sensible default shorter ratio.
+ * @brief Offer a sensible default shorter ratio.
  * @param refs Cached DOM handles.
  * @param onChange Refresh callback.
  */

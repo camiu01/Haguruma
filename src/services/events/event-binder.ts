@@ -8,6 +8,7 @@ import { bindUnitEvents } from './unit-events';
 import { bindPresetEvents } from './preset-events';
 import { bindPrimaryEvents } from './primary-events';
 import { bindComparisonEvents, bindGearActions } from './comparison-events';
+import { bindCompRunningGearEvents } from './comp-running-gear-events';
 import { bindRoadLoadEvents } from './road-load-events';
 import { bindEngineEvents } from './engine-events';
 import { bindRunningGearEvents } from './running-gear-events';
@@ -23,10 +24,11 @@ import { bindDrawerUtilsEvents } from './drawer-utils-events';
 import { bindSetupGuideEvents } from './setup-guide-events';
 import { bindCruiseEvents } from './cruise-events';
 import { bindExportEvents } from './export-events';
+import { bindPwaEvents } from './pwa-events';
 
 /**
  * Wire every UI interaction exactly once.
- * @purpose Split startup wiring into focused sub-binders.
+ * @brief Split startup wiring into focused sub-binders.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback.
  */
@@ -36,6 +38,7 @@ export const bindAllEvents = (refs: ElementRefs, render: () => void): void => {
 	bindPresetEvents(refs, render);
 	bindPrimaryEvents(refs, render);
 	bindComparisonEvents(refs, render);
+	bindCompRunningGearEvents(refs, render);
 	bindRoadLoadEvents(refs, render);
 	bindEngineEvents(refs, render);
 	bindRunningGearEvents(refs, render);
@@ -52,4 +55,5 @@ export const bindAllEvents = (refs: ElementRefs, render: () => void): void => {
 	bindSetupGuideEvents(refs);
 	bindCruiseEvents(refs);
 	bindExportEvents(refs);
+	bindPwaEvents(refs);
 };

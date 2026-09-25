@@ -65,6 +65,7 @@ export const defaultState: AppState = {
 	peakTorqueRpm: 4500,
 	peakTorqueNm: 180,
 	peakPowerRpm: 6500,
+	torqueCurvePoints: null,
 	rotatingMassKg: 0,
 	shiftTimeS: 0,
 	runningGear: { ...defaultRunningGear },
@@ -74,7 +75,7 @@ export const defaultState: AppState = {
 
 /**
  * Mutable singleton store shared by all renderers.
- * @purpose Avoid prop drilling in this small vanilla-TS app.
+ * @brief Avoid prop drilling in this small vanilla-TS app.
  */
 export const state: AppState = {
 	...defaultState,

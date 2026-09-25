@@ -64,6 +64,10 @@ export interface ElementRefs {
 	torqueInput: HTMLInputElement;
 	powerRpmInput: HTMLInputElement;
 	powerAtDisplay: HTMLInputElement;
+	btnImportCsv: HTMLButtonElement;
+	csvImportInput: HTMLInputElement;
+	btnClearCsv: HTMLButtonElement;
+	csvStatus: HTMLElement;
 	customName: HTMLInputElement;
 	customTire: HTMLInputElement;
 	customFd: HTMLInputElement;
@@ -109,6 +113,9 @@ export interface ElementRefs {
 	rgTrack: HTMLInputElement;
 	rgSpringF: HTMLInputElement;
 	rgSpringR: HTMLInputElement;
+	rgLift: HTMLInputElement;
+	rgLiftArea: HTMLInputElement;
+	rgLiftShare: HTMLInputElement;
 	rgLatg: HTMLInputElement;
 	rgLatgVal: HTMLElement;
 	rgAccordion: HTMLElement;
@@ -205,6 +212,10 @@ export const getElementRefs = (): ElementRefs => {
 		torqueInput: get<HTMLInputElement>('engine-torque'),
 		powerRpmInput: get<HTMLInputElement>('engine-power-rpm'),
 		powerAtDisplay: get<HTMLInputElement>('engine-power-at'),
+		btnImportCsv: get<HTMLButtonElement>('btn-import-csv'),
+		csvImportInput: get<HTMLInputElement>('engine-csv-input'),
+		btnClearCsv: get<HTMLButtonElement>('btn-clear-csv'),
+		csvStatus: get<HTMLElement>('engine-csv-status'),
 		customName: get<HTMLInputElement>('custom-name'),
 		customTire: get<HTMLInputElement>('custom-tire'),
 		customFd: get<HTMLInputElement>('custom-fd'),
@@ -250,6 +261,9 @@ export const getElementRefs = (): ElementRefs => {
 		rgTrack: get<HTMLInputElement>('rg-track'),
 		rgSpringF: get<HTMLInputElement>('rg-spring-f'),
 		rgSpringR: get<HTMLInputElement>('rg-spring-r'),
+		rgLift: get<HTMLInputElement>('rg-lift'),
+		rgLiftArea: get<HTMLInputElement>('rg-lift-area'),
+		rgLiftShare: get<HTMLInputElement>('rg-lift-share'),
 		rgLatg: get<HTMLInputElement>('rg-latg'),
 		rgLatgVal: get<HTMLElement>('rg-latg-val'),
 		rgAccordion: get<HTMLElement>('running-gear-accordion'),
