@@ -57,6 +57,25 @@ export const dragForce = (
 	return 0.5 * rho * dragCd * frontalAreaM2 * v * v;
 };
 
+/** Speed reference for rolling-resistance growth (Crr doubles past ~160 km/h). */
+export const ROLLING_SPEED_REF_KMH = 160;
+
+/**
+ * @brief Scale the base rolling coefficient with speed.
+ * @param crr0 Base rolling-resistance coefficient at standstill.
+ * @param speedKmh Vehicle speed in km/h.
+ * @return Effective Crr, 0 when the base coefficient is not positive.
+ */
+export const rollingCrrAtSpeed = (crr0: number, speedKmh: number): number => {
+	if (!Number.isFinite(crr0) || crr0 <= 0) {
+		return 0;
+	}
+	if (!Number.isFinite(speedKmh) || speedKmh <= 0) {
+		return crr0;
+	}
+	return crr0 * (1 + speedKmh / ROLLING_SPEED_REF_KMH);
+};
+
 /**
  * @brief Compute rolling-resistance force from vehicle mass.
  * @param massKg Vehicle mass in kilograms.
@@ -68,6 +87,17 @@ export const rollingForce = (massKg: number, crr: number): number => {
 		return 0;
 	}
 	return massKg * GRAVITY * crr;
+};
+
+/**
+ * @brief Compute speed-sensitive rolling-resistance force.
+ * @param massKg Vehicle mass in kilograms.
+ * @param crr0 Base rolling coefficient at standstill.
+ * @param speedKmh Vehicle speed in km/h.
+ * @return Rolling force in newtons.
+ */
+export const rollingForceAtSpeed = (massKg: number, crr0: number, speedKmh: number): number => {
+	return rollingForce(massKg, rollingCrrAtSpeed(crr0, speedKmh));
 };
 
 /**
@@ -86,11 +116,14 @@ export const gradeForce = (massKg: number, gradePercent: number): number => {
 
 /**
  * @brief Estimate wheel power required to sustain a given speed.
+ *
+ * Rolling resistance uses the speed-sensitive coefficient
+ * Crr(v) = Crr0 * (1 + v / 160) with v in km/h.
  * @param speedKmh Vehicle speed in km/h.
  * @param massKg Vehicle mass in kilograms.
  * @param dragCd Drag coefficient.
  * @param frontalAreaM2 Frontal area in square metres.
- * @param crr Rolling-resistance coefficient.
+ * @param crr Base rolling-resistance coefficient at standstill.
  * @param gradePercent Road slope in percent (+uphill, -downhill).
  * @return Required power in kilowatts.
  */
@@ -103,7 +136,7 @@ export const roadLoadPowerKw = (
 	gradePercent: number = 0,
 ): number => {
 	const totalForce =
-		dragForce(speedKmh, dragCd, frontalAreaM2) + rollingForce(massKg, crr) + gradeForce(massKg, gradePercent);
+		dragForce(speedKmh, dragCd, frontalAreaM2) + rollingForceAtSpeed(massKg, crr, speedKmh) + gradeForce(massKg, gradePercent);
 	return (totalForce * kmhToMs(Math.max(0, speedKmh))) / 1000;
 };
 
@@ -142,7 +175,8 @@ export const availableWheelKw = (engineKw: number, drivetrainEff: number): numbe
  * @brief Solve the drag-limited top speed for a given wheel power.
  *
  * Physics: find v such that P_load(v) = P_avail, with
- * P_load(v) = [F_drag(v) + F_roll + F_grade] × v. On steep descents
+ * P_load(v) = [F_drag(v) + F_roll(v) + F_grade] × v, where
+ * F_roll(v) uses Crr(v) = Crr0 * (1 + v / 160). On steep descents
  * F_grade is negative and at low v the road-load power can become
  * negative: the bisection then starts from a low > 0 where P_load is
  * again positive (gravity alone cannot sustain arbitrarily low speeds
@@ -155,7 +189,7 @@ export const availableWheelKw = (engineKw: number, drivetrainEff: number): numbe
  * @param massKg Vehicle mass in kilograms.
  * @param dragCd Drag coefficient.
  * @param frontalAreaM2 Frontal area in square metres.
- * @param crr Rolling-resistance coefficient.
+ * @param crr Base rolling-resistance coefficient at standstill.
  * @param gradePercent Road slope in percent (+uphill, -downhill).
  * @return Drag-limited speed in km/h, 0 when power is zero or never sufficient.
  */

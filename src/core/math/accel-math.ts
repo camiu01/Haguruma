@@ -13,7 +13,7 @@
  * solver never throws.
  */
 
-import { dragForce, gradeForce, rollingForce } from './aero-math';
+import { dragForce, gradeForce, rollingForceAtSpeed } from './aero-math';
 import { maxDriveForceAtSpeed } from './dynamics-math';
 import { equivalentRotatingMassKg } from './inertia-math';
 import { rpmFromKmh } from './speed-math';
@@ -294,7 +294,7 @@ export const simulateAcceleration = (input: SimInput): SimResult => {
 		const mEff = input.massKg + resolveRotatingMass(input, input.gears[gear], radius);
 		const loads =
 			dragForce(speedBefore, input.dragCd ?? 0, input.frontalAreaM2 ?? 0) +
-			rollingForce(input.massKg, input.rollingCrr ?? 0) +
+			rollingForceAtSpeed(input.massKg, input.rollingCrr ?? 0, speedBefore) +
 			gradeForce(input.massKg, input.roadGradePercent ?? 0);
 		let accel = (drive - loads) / mEff;
 		if (!Number.isFinite(accel)) {

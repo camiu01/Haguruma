@@ -125,7 +125,61 @@ export const sanitizeTorquePoints = (points: TorqueCurvePoint[] | null | undefin
 };
 
 /**
- * @brief Linearly interpolate crank torque from custom dyno points.
+ * @brief Segment slopes between consecutive dyno points.
+ * @param points Sorted rpm/torque points (at least two).
+ * @return Slope per segment in Nm per RPM.
+ */
+const segmentSlopes = (points: TorqueCurvePoint[]): number[] => {
+	const out: number[] = [];
+	for (let i = 0; i < points.length - 1; i += 1) {
+		const dx = points[i + 1].rpm - points[i].rpm;
+		out.push(dx > 0 ? (points[i + 1].torqueNm - points[i].torqueNm) / dx : 0);
+	}
+	return out;
+};
+
+/**
+ * @brief Akima tangents at every point (edge slopes padded by duplication).
+ * @param slopes Segment slopes from segmentSlopes.
+ * @return Tangent per point in Nm per RPM.
+ */
+const akimaTangents = (slopes: number[]): number[] => {
+	const n = slopes.length + 1;
+	const m = [slopes[0], slopes[0], ...slopes, slopes[slopes.length - 1], slopes[slopes.length - 1]];
+	const out: number[] = [];
+	for (let i = 0; i < n; i += 1) {
+		const w1 = Math.abs(m[i + 3] - m[i + 2]);
+		const w2 = Math.abs(m[i + 1] - m[i]);
+		const denom = w1 + w2;
+		out.push(denom > 0 ? (w1 * m[i + 1] + w2 * m[i + 2]) / denom : (m[i + 1] + m[i + 2]) / 2);
+	}
+	return out;
+};
+
+/**
+ * @brief Cubic Hermite evaluation on one interval.
+ * @param x0 Left RPM bound.
+ * @param y0 Left torque in Nm.
+ * @param t0 Left tangent in Nm per RPM.
+ * @param x1 Right RPM bound.
+ * @param y1 Right torque in Nm.
+ * @param t1 Right tangent in Nm per RPM.
+ * @param rpm Query RPM inside the interval.
+ * @return Interpolated torque in Nm.
+ */
+const hermiteAt = (x0: number, y0: number, t0: number, x1: number, y1: number, t1: number, rpm: number): number => {
+	const h = x1 - x0;
+	const s = h > 0 ? (rpm - x0) / h : 0;
+	const s2 = s * s;
+	const s3 = s2 * s;
+	return (2 * s3 - 3 * s2 + 1) * y0 + (s3 - 2 * s2 + s) * h * t0 + (-2 * s3 + 3 * s2) * y1 + (s3 - s2) * h * t1;
+};
+
+/**
+ * @brief Akima interpolation of crank torque from custom dyno points.
+ * @brief Local cubic Hermite: smooth like a spline but without the global
+ * @brief overshoot on noisy roller data; exact at every measured node and
+ * @brief clamped to the segment range so monotone runs stay monotone.
  * @param points Sorted rpm/torque points (at least two).
  * @param rpm Engine speed in RPM.
  * @return Torque in Nm, holding the end values outside the data range.
@@ -142,13 +196,18 @@ export const torqueAtRpm = (points: TorqueCurvePoint[], rpm: number): number => 
 	if (rpm >= last.rpm) {
 		return last.torqueNm;
 	}
+	if (points.length === 2) {
+		const span = last.rpm - points[0].rpm;
+		const k = span > 0 ? (rpm - points[0].rpm) / span : 0;
+		return points[0].torqueNm + (last.torqueNm - points[0].torqueNm) * k;
+	}
+	const tangents = akimaTangents(segmentSlopes(points));
 	for (let i = 1; i < points.length; i += 1) {
 		const hi = points[i];
 		if (rpm <= hi.rpm) {
 			const lo = points[i - 1];
-			const span = hi.rpm - lo.rpm;
-			const k = span > 0 ? (rpm - lo.rpm) / span : 0;
-			return lo.torqueNm + (hi.torqueNm - lo.torqueNm) * k;
+			const raw = hermiteAt(lo.rpm, lo.torqueNm, tangents[i - 1], hi.rpm, hi.torqueNm, tangents[i], rpm);
+			return Math.min(Math.max(lo.torqueNm, hi.torqueNm), Math.max(Math.min(lo.torqueNm, hi.torqueNm), raw));
 		}
 	}
 	return last.torqueNm;

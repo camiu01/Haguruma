@@ -798,6 +798,8 @@
 						<button id='btn-export-png' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.png' data-i18n-tip='export.pngTip' title='Export graph as PNG' data-tip='Export graph as PNG' aria-label='Export graph as PNG'>PNG</button>
 						<button id='btn-export-svg' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.svg' data-i18n-tip='export.svgTip' title='Export graph as vector SVG' data-tip='Export graph as vector SVG' aria-label='Export graph as vector SVG'>SVG</button>
 						<button id='btn-print' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='print.label' data-i18n-tip='print.tip' title='Print summary or save as PDF' data-tip='Print summary or save as PDF' aria-label='Print summary or save as PDF'>Print / PDF</button>
+						<button id='btn-export-ini' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.ini' data-i18n-tip='export.iniTip' title='Export gears as Assetto Corsa drivetrain.ini' data-tip='Export gears as Assetto Corsa drivetrain.ini' aria-label='Export gears as Assetto Corsa drivetrain.ini'>INI</button>
+						<button id='btn-export-gear-json' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.gearJson' data-i18n-tip='export.gearJsonTip' title='Export gears as JSON' data-tip='Export gears as JSON' aria-label='Export gears as JSON'>JSON</button>
 					</div>
 				</div>
 				<div class='graph-wrap relative w-full aspect-[16/9] bg-page rounded-lg border border-border overflow-hidden'>
@@ -960,7 +962,10 @@
 				<button id='btn-save-custom' type='button' class='flex-1 px-2.5 py-2.5 text-xs bg-surface-input border border-surface-border text-text-main rounded' data-i18n='custom.save'>Save car</button>
 				<button id='btn-import-custom' type='button' class='px-2.5 py-2.5 text-xs bg-surface-input border border-surface-border text-text-main rounded' data-i18n='custom.import'>Import JSON</button>
 				<input type='file' id='custom-import-input' accept='.json' class='hidden' />
+				<button id='btn-import-ini' type='button' class='px-2.5 py-2.5 text-xs bg-surface-input border border-surface-border text-text-main rounded' data-i18n='export.importIni' data-i18n-tip='export.importIniTip' title='Import gears from drivetrain.ini' data-tip='Import gears from drivetrain.ini' aria-label='Import gears from drivetrain.ini'>Import INI</button>
+				<input type='file' id='drivetrain-import-input' accept='.ini,.txt' class='hidden' />
 			</div>
+			<p id='drivetrain-status' class='text-[10px] font-mono text-text-dim mt-2 hidden' role='status'></p>
 			<div id='custom-list' class='mt-3 space-y-1.5'></div>
 		</div>
 	</div>

@@ -10,20 +10,25 @@ import { defaultRunningGear } from '../state/app-state';
 import { sanitizeTorquePoints } from '../math/engine-curve-core';
 import { MAX_CURVE_POINTS, resampleTorquePoints } from '../math/dyno-csv';
 import { decodeGripParams, encodeRunningGear, numParam } from './running-gear-share';
+import { decodeCompactSetup, encodeCompactSetup } from './share-compact';
 
 /**
  * @brief Serialize current state into a compact hash string.
  * @brief Hash holds setup fields only, unit and theme stay in localStorage.
+ * @brief Primary gears ride in the packed `c` token, the rest stays verbose.
  * @param s Full application state.
  * @return URL-encoded query string without leading #.
  */
 export const encodeState = (s: AppState): string => {
 	const p = new URLSearchParams();
-	p.set('tire', s.primaryTire); p.set('fd', String(s.primaryFd)); p.set('rl', String(s.primaryRedline));
-	p.set('max', String(s.maxGraphSpeed)); p.set('g', s.gears.join(','));
-	if (s.reverseRatio !== null) {
-		p.set('rev', String(s.reverseRatio));
+	if (!encodeCompactPrimary(p, s)) {
+		p.set('tire', s.primaryTire); p.set('fd', String(s.primaryFd)); p.set('rl', String(s.primaryRedline));
+		p.set('g', s.gears.join(','));
+		if (s.reverseRatio !== null) {
+			p.set('rev', String(s.reverseRatio));
+		}
 	}
+	p.set('max', String(s.maxGraphSpeed));
 	p.set('cmp', s.compareEnabled ? '1' : '0'); p.set('ctire', s.compTire); p.set('cfd', String(s.compFd));
 	p.set('cg', s.compGears.join(',')); p.set('crl', String(s.compRedline)); p.set('cmass', String(s.compMassKg));
 	p.set('ccd', String(s.compCd)); p.set('carea', String(s.compFrontalAreaM2)); p.set('cpw', String(s.compPowerKw));
@@ -39,6 +44,27 @@ export const encodeState = (s: AppState): string => {
 	encodeRunningGear(p, s.runningGear ?? defaultRunningGear, 'rg_');
 	encodeRunningGear(p, s.compRunningGear ?? s.runningGear ?? defaultRunningGear, 'crg_');
 	return p.toString();
+};
+
+/**
+ * @brief Encode primary gears into the packed `c` token.
+ * @param p Params receiving the token.
+ * @param s Full application state.
+ * @return True when the token was emitted (verbose keys skipped).
+ */
+const encodeCompactPrimary = (p: URLSearchParams, s: AppState): boolean => {
+	const code = encodeCompactSetup({
+		tire: s.primaryTire,
+		fd: s.primaryFd,
+		redline: s.primaryRedline,
+		gears: s.gears,
+		reverseRatio: s.reverseRatio,
+	});
+	if (!code) {
+		return false;
+	}
+	p.set('c', code);
+	return true;
 };
 
 /**
@@ -90,11 +116,35 @@ export const decodeState = (hash: string): Partial<AppState> => {
 		return {};
 	}
 	return {
+		...decodeCompactParams(params),
 		...decodePrimaryParams(params),
 		...decodeCompareParams(params),
 		...decodeRoadParams(params),
 		...decodeEngineParams(params),
 		...decodeGripParams(params),
+	};
+};
+
+/**
+ * @brief Decode the optional compact `c` token into primary fields.
+ * @param params Parsed query params.
+ * @return Partial primary fields from the token, or empty when absent.
+ */
+const decodeCompactParams = (params: URLSearchParams): Partial<AppState> => {
+	const raw = params.get('c');
+	if (!raw) {
+		return {};
+	}
+	const setup = decodeCompactSetup(raw);
+	if (!setup) {
+		return {};
+	}
+	return {
+		primaryTire: setup.tire,
+		primaryFd: setup.fd,
+		primaryRedline: Math.round(setup.redline),
+		gears: [...setup.gears],
+		reverseRatio: setup.reverseRatio,
 	};
 };
 

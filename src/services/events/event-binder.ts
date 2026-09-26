@@ -54,6 +54,6 @@ export const bindAllEvents = (refs: ElementRefs, render: () => void): void => {
 	bindDrawerUtilsEvents(refs, render);
 	bindSetupGuideEvents(refs);
 	bindCruiseEvents(refs);
-	bindExportEvents(refs);
+	bindExportEvents(refs, render);
 	bindPwaEvents(refs);
 };

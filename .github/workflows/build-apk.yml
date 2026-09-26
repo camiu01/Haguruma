@@ -49,14 +49,17 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug
 
+      - name: Rename APK with release tag
+        run: mv android/app/build/outputs/apk/debug/app-debug.apk "android/app/build/outputs/apk/debug/haguruma-${{ github.ref_name }}.apk"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: haguruma-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/haguruma-*.apk
 
       - name: Attach APK to release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          files: android/app/build/outputs/apk/debug/haguruma-*.apk

@@ -127,6 +127,11 @@ export interface ElementRefs {
 	btnExportPng: HTMLButtonElement;
 	btnExportSvg: HTMLButtonElement;
 	btnPrint: HTMLButtonElement;
+	btnExportIni: HTMLButtonElement;
+	btnExportGearJson: HTMLButtonElement;
+	btnImportIni: HTMLButtonElement;
+	drivetrainImportInput: HTMLInputElement;
+	drivetrainStatus: HTMLElement;
 	cruiseSpeed: HTMLInputElement;
 	cruiseResult: HTMLElement;
 }
@@ -275,6 +280,11 @@ export const getElementRefs = (): ElementRefs => {
 		btnExportPng: get<HTMLButtonElement>('btn-export-png'),
 		btnExportSvg: get<HTMLButtonElement>('btn-export-svg'),
 		btnPrint: get<HTMLButtonElement>('btn-print'),
+		btnExportIni: get<HTMLButtonElement>('btn-export-ini'),
+		btnExportGearJson: get<HTMLButtonElement>('btn-export-gear-json'),
+		btnImportIni: get<HTMLButtonElement>('btn-import-ini'),
+		drivetrainImportInput: get<HTMLInputElement>('drivetrain-import-input'),
+		drivetrainStatus: get<HTMLElement>('drivetrain-status'),
 		cruiseSpeed: get<HTMLInputElement>('cruise-speed'),
 		cruiseResult: get<HTMLElement>('cruise-result'),
 	};

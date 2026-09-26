@@ -20,6 +20,10 @@
 	#btn-export-png,
 	#btn-export-svg,
 	#btn-print,
+	#btn-export-ini,
+	#btn-export-gear-json,
+	#btn-import-ini,
+	#drivetrain-status,
 	footer,
 	.graph-legend .chevron,
 	.chevron {

@@ -3,7 +3,7 @@
  * @brief Unit tests for tire string parsing.
  */
 import { describe, expect, it } from 'vitest';
-import { clampRollingFactor, effectiveCircumferenceM, parseTire } from '../src/core/math/tire-math';
+import { clampRollingFactor, dynamicCircumferenceM, effectiveCircumferenceM, parseTire, tireGrowthFactorAtSpeed } from '../src/core/math/tire-math';
 
 describe('parseTire', () => {
 	it('parses a valid spec', () => {
@@ -38,5 +38,25 @@ describe('effectiveCircumferenceM', () => {
 		expect(clampRollingFactor(Number.NaN)).toBe(0.975);
 		expect(effectiveCircumferenceM(null)).toBe(0);
 		expect(effectiveCircumferenceM(parsed, 1.0)).toBeCloseTo(parsed?.circumferenceM ?? 0, 6);
+	});
+});
+
+describe('tireGrowthFactorAtSpeed', () => {
+	it('is 1 at standstill and grows with speed', () => {
+		expect(tireGrowthFactorAtSpeed(0)).toBe(1);
+		const city = tireGrowthFactorAtSpeed(50);
+		const fast = tireGrowthFactorAtSpeed(200);
+		expect(fast).toBeGreaterThan(city);
+		expect(city).toBeGreaterThan(1);
+	});
+	it('caps growth at about 3 percent', () => {
+		expect(tireGrowthFactorAtSpeed(250)).toBeCloseTo(1.03, 4);
+		expect(tireGrowthFactorAtSpeed(400)).toBeCloseTo(1.03, 4);
+	});
+	it('matches the dynamic circumference helper', () => {
+		const parsed = parseTire('225/45R17');
+		const base = effectiveCircumferenceM(parsed);
+		expect(dynamicCircumferenceM(parsed, 0.975, 0)).toBeCloseTo(base, 6);
+		expect(dynamicCircumferenceM(parsed, 0.975, 250)).toBeCloseTo(base * 1.03, 4);
 	});
 });

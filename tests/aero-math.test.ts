@@ -3,7 +3,7 @@
  * @brief Unit tests for secondary road-load physics.
  */
 import { describe, expect, it } from 'vitest';
-import { availableWheelKw, clampGrade, dragForce, dragLimitedSpeedKmh, gradeForce, hpToKw, kmhToMs, kwToHp, roadLoadPowerKw, rollingForce } from '../src/core/math/aero-math';
+import { availableWheelKw, clampGrade, dragForce, dragLimitedSpeedKmh, gradeForce, hpToKw, kmhToMs, kwToHp, roadLoadPowerKw, rollingCrrAtSpeed, rollingForce, rollingForceAtSpeed } from '../src/core/math/aero-math';
 
 describe('kmhToMs', () => {
 	it('converts 36 kmh to 10 m/s', () => {
@@ -36,6 +36,20 @@ describe('rollingForce', () => {
 	});
 });
 
+describe('rollingCrrAtSpeed', () => {
+	it('returns the base coefficient at standstill', () => {
+		expect(rollingCrrAtSpeed(0.012, 0)).toBeCloseTo(0.012, 6);
+	});
+	it('grows as Crr0 * (1 + v/160)', () => {
+		expect(rollingCrrAtSpeed(0.012, 160)).toBeCloseTo(0.024, 6);
+		expect(rollingForceAtSpeed(1200, 0.012, 160)).toBeCloseTo(rollingForce(1200, 0.024), 5);
+	});
+	it('rejects non-positive base coefficients', () => {
+		expect(rollingCrrAtSpeed(0, 200)).toBe(0);
+		expect(rollingForceAtSpeed(1200, 0, 200)).toBe(0);
+	});
+});
+
 describe('roadLoadPowerKw', () => {
 	it('is zero at standstill', () => {
 		expect(roadLoadPowerKw(0, 1270, 0.29, 1.95, 0.012)).toBe(0);
@@ -44,6 +58,11 @@ describe('roadLoadPowerKw', () => {
 		const kw = roadLoadPowerKw(200, 1270, 0.29, 1.95, 0.012);
 		expect(kw).toBeGreaterThan(30);
 		expect(kw).toBeLessThan(120);
+	});
+	it('exceeds the constant-Crr load at high speed', () => {
+		const fast = roadLoadPowerKw(200, 1270, 0.29, 1.95, 0.012);
+		const rollingOnly = (1270 * 9.81 * 0.012 * (200 / 3.6)) / 1000;
+		expect(fast).toBeGreaterThan(rollingOnly);
 	});
 });
 

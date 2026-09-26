@@ -38,36 +38,101 @@ const unwrapModule = (mod: unknown): unknown => {
  * @return True when the entry is usable.
  */
 export const isCatalogEntry = (entry: unknown): entry is CarCatalogEntry => {
+	return validateCatalogEntry(entry).length === 0;
+};
+
+/**
+ * @brief Strict validator returning one error per broken rule (Zod-style).
+ * @param entry Unknown parsed JSON value.
+ * @return Error list, empty when the entry is usable.
+ */
+export const validateCatalogEntry = (entry: unknown): string[] => {
+	const errors: string[] = [];
 	if (typeof entry !== 'object' || entry === null) {
-		return false;
+		return ['entry must be an object'];
 	}
 	const candidate = entry as Record<string, unknown>;
-	const preset = candidate.preset as Record<string, unknown> | undefined;
 	if (typeof candidate.id !== 'string' || candidate.id.length === 0) {
-		return false;
+		errors.push('id must be a non-empty string');
 	}
 	if (typeof candidate.label !== 'string' || candidate.label.length === 0) {
-		return false;
+		errors.push('label must be a non-empty string');
 	}
 	if (typeof candidate.group !== 'string' || candidate.group.length === 0) {
-		return false;
+		errors.push('group must be a non-empty string');
 	}
+	errors.push(...validatePresetBody(candidate.preset));
+	return errors;
+};
+
+/**
+ * @brief Validate the preset body of one catalog entry.
+ * @param preset Unknown preset value.
+ * @return Error list, empty when the body is usable.
+ */
+const validatePresetBody = (preset: unknown): string[] => {
+	const errors: string[] = [];
 	if (typeof preset !== 'object' || preset === null) {
-		return false;
+		return ['preset must be an object'];
 	}
-	if (typeof preset.tire !== 'string' || preset.tire.length === 0) {
-		return false;
+	const p = preset as Record<string, unknown>;
+	if (typeof p.tire !== 'string' || p.tire.length === 0) {
+		errors.push('preset.tire must be a non-empty string');
 	}
-	if (typeof preset.fd !== 'number' || preset.fd <= 0) {
-		return false;
+	if (typeof p.fd !== 'number' || !(p.fd > 0)) {
+		errors.push('preset.fd must be a positive number');
 	}
-	if (typeof preset.redline !== 'number' || preset.redline <= 0) {
-		return false;
+	if (typeof p.redline !== 'number' || !(p.redline > 0)) {
+		errors.push('preset.redline must be a positive number');
 	}
-	if (!Array.isArray(preset.gears) || preset.gears.length === 0) {
-		return false;
+	errors.push(...validateGearRatios(p.gears));
+	errors.push(...validateRunningGearBody(p.runningGear));
+	return errors;
+};
+
+/**
+ * @brief Validate gear ratios are positive and strictly decreasing.
+ * @param gears Unknown gears value.
+ * @return Error list, empty when ratios are usable.
+ */
+const validateGearRatios = (gears: unknown): string[] => {
+	if (!Array.isArray(gears) || gears.length === 0) {
+		return ['preset.gears must be a non-empty array'];
 	}
-	return (preset.gears as unknown[]).every((g) => typeof g === 'number' && g > 0);
+	if (!(gears as unknown[]).every((g) => typeof g === 'number' && g > 0)) {
+		return ['preset.gears must hold positive numbers'];
+	}
+	const ratios = gears as number[];
+	for (let i = 1; i < ratios.length; i += 1) {
+		if (!(ratios[i] < ratios[i - 1])) {
+			return ['preset.gears must be strictly decreasing'];
+		}
+	}
+	return [];
+};
+
+/**
+ * @brief Validate the runningGear block when present.
+ * @param rg Unknown runningGear value.
+ * @return Error list, empty when absent or valid.
+ */
+const validateRunningGearBody = (rg: unknown): string[] => {
+	if (rg === undefined) {
+		return [];
+	}
+	if (typeof rg !== 'object' || rg === null) {
+		return ['preset.runningGear must be an object'];
+	}
+	const g = rg as Record<string, unknown>;
+	const layouts = ['FWD', 'RWD', 'AWD'];
+	const diffs = ['open', 'torsen', 'clutch_lsd', 'spool', 'custom'];
+	if (!layouts.includes(g.drivetrainLayout as string)) {
+		return ['preset.runningGear.drivetrainLayout has an unknown layout'];
+	}
+	if (!diffs.includes(g.differentialType as string)) {
+		return ['preset.runningGear.differentialType has an unknown type'];
+	}
+	return [];
 };
 
 /**

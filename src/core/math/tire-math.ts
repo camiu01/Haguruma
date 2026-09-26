@@ -19,6 +19,12 @@ export const ROLLING_FACTOR_MIN = 0.9;
 /** Maximum accepted deflection factor (geometric circumference). */
 export const ROLLING_FACTOR_MAX = 1.0;
 
+/** Reference speed for centrifugal tire growth (growth hits cap near 250 km/h). */
+export const TIRE_GROWTH_REF_KMH = 250;
+
+/** Maximum radial growth fraction at very high speed (≈3%). */
+export const TIRE_GROWTH_MAX = 0.03;
+
 /**
  * @brief Parse a tire string like 205/55R16.
  * @param specStr Raw input value.
@@ -71,4 +77,33 @@ export const effectiveCircumferenceM = (spec: TireSpec | null, factor: number = 
 		return 0;
 	}
 	return spec.circumferenceM * clampRollingFactor(factor);
+};
+
+/**
+ * @brief Centrifugal growth factor at speed (quadratic, capped at +3%).
+ * @param speedKmh Vehicle speed in km/h.
+ * @return Multiplier >= 1, 1 at standstill.
+ */
+export const tireGrowthFactorAtSpeed = (speedKmh: number): number => {
+	if (!Number.isFinite(speedKmh) || speedKmh <= 0) {
+		return 1;
+	}
+	const ratio = speedKmh / TIRE_GROWTH_REF_KMH;
+	const growth = TIRE_GROWTH_MAX * ratio * ratio;
+	return 1 + Math.min(TIRE_GROWTH_MAX, growth);
+};
+
+/**
+ * @brief Dynamic rolling circumference with centrifugal growth.
+ * @param spec Parsed tire geometry.
+ * @param factor Static deflection factor (load squash).
+ * @param speedKmh Vehicle speed in km/h.
+ * @return Growth-adjusted circumference in metres, 0 when spec is null.
+ */
+export const dynamicCircumferenceM = (
+	spec: TireSpec | null,
+	factor: number = ROLLING_FACTOR_DEFAULT,
+	speedKmh: number = 0,
+): number => {
+	return effectiveCircumferenceM(spec, factor) * tireGrowthFactorAtSpeed(speedKmh);
 };
