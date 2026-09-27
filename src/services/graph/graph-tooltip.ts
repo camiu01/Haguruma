@@ -100,9 +100,23 @@ const renderTooltip = (
 	}
 	content += buildGripSection(speed, circM);
 	refs.tooltip.innerHTML = content;
-	refs.tooltip.style.left = `${mouseX}px`;
-	refs.tooltip.style.top = `${mouseY}px`;
 	refs.tooltip.classList.remove('hidden');
+	const box = refs.canvas.getBoundingClientRect();
+	const tw = refs.tooltip.offsetWidth;
+	const th = refs.tooltip.offsetHeight;
+	refs.tooltip.style.left = `${clampTip(mouseX + 12, tw, box.width)}px`;
+	refs.tooltip.style.top = `${clampTip(mouseY - th - 12, th, box.height)}px`;
+};
+
+/**
+ * @brief Clamp a tooltip coordinate inside the canvas box.
+ * @param v Desired coordinate in CSS pixels.
+ * @param size Tooltip size along the axis.
+ * @param bound Canvas size along the axis.
+ * @return Clamped coordinate, 0 when nothing fits.
+ */
+const clampTip = (v: number, size: number, bound: number): number => {
+	return Math.min(Math.max(0, bound - size - 8), Math.max(0, v));
 };
 
 /**

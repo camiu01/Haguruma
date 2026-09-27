@@ -84,6 +84,7 @@ export const enhancePresetSearch = (select: HTMLSelectElement): void => {
 	input.setAttribute('role', 'combobox');
 	input.setAttribute('aria-expanded', 'false');
 	input.setAttribute('aria-autocomplete', 'list');
+	input.setAttribute('aria-label', t('header.presetSearch'));
 	input.setAttribute('autocomplete', 'off');
 	input.setAttribute('data-i18n-ph', 'header.presetSearch');
 	input.placeholder = t('header.presetSearch');

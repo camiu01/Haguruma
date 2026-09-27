@@ -74,7 +74,7 @@ Development task management for the Haguruma vehicle dynamics simulator.
 
 - [x] BMW M3 E36 3.2 preset (`e36_m3`) #presets
 - [x] Volvo 240 Turbo preset (`volvo_240`) #presets
-- [x] Extensible differential catalog `config/diff-presets.ts` (open, 1-way, 1.5-way, 2-way, custom, Torsen, spool) #dynamics
+- [x] Extensible differential catalog `config/diff-presets.ts` (open, 1-way, 1.5-way, 2-way, custom, Torsen, spool, OS Giken, Cusco MZ, KAAZ 2-Way, Wavetrac, Quaife) #dynamics
 - [x] Accel + coast lock percentage inputs for advanced LSD models; share keys `rg_dm`/`rg_dc` #share
 - [x] `diff-presets.test.ts` catalog + i18n label coverage #tests
 
@@ -102,33 +102,44 @@ Development task management for the Haguruma vehicle dynamics simulator.
 - [x] 8-color gear palette with wrap-around past 8 gears (`gear-colors.ts`) #ux #theme
 - [x] Live running-gear readouts module (downforce at 200 km/h + coast lock-up speed via `running-gear-readouts.ts`) #dynamics #ux
 - [x] Deploy/infra: `vite base './'` for Pages, strict `tsconfig`, Capacitor `appId`, CI typecheck+tests, CD Pages deploy, PWA manifest + icons (`vite.config.ts`, `ci.yml`, `cd.yml`) #infra #pwa
-- [x] Extended test coverage (23 files: accel, inertia, tire, speed, aero, traction, cruise, shift-drops, share-utils, unit-utils, i18n, custom-store, setup-matrix and more) #tests
+- [x] Extended test coverage (28 files: accel, inertia, tire, speed, aero, traction, cruise, shift-drops, share-utils, share-compact, unit-utils, i18n, custom-store, setup-matrix, presets, catalog-validation, drivetrain-export, engine-curve-akima, graph-layers and more) #tests
 
 ## Pending
+
+(no open items — everything below is shipped; new ideas land here)
+
+### UX & Accessibility pass
+
+- [x] Graph tooltip clamped inside the canvas box (no more off-screen clipping) #ux
+- [x] Real Tab focus trap in the mobile drawer and My Cars modal (`dom/focus-trap.ts`) #a11y #ux
+- [x] Accordion headers work with keyboard (tabindex, role=button, Enter/Space, aria-expanded) #a11y
+- [x] Screen-reader labels on gear ratio inputs and the preset search combobox #a11y
+- [x] `prefers-reduced-motion` gate, visible `:focus-visible` rings, tap-highlight/overscroll guards, legible placeholders #a11y #ux
 
 ### Physics & Engine Math (`src/core/math/`)
 
 - [x] Speed-sensitive rolling resistance: `aero-math.ts` `Crr(v) = Crr0 * (1 + v/160)` via `rollingCrrAtSpeed()`/`rollingForceAtSpeed()`, wired into `roadLoadPowerKw()`, `dragLimitedSpeedKmh()` and the `accel-math.ts` solver #physics
 - [x] Dynamic tire growth: `tire-math.ts` `tireGrowthFactorAtSpeed()` (quadratic, capped +3% at 250 km/h) + `dynamicCircumferenceM()`; static load squash stays on the rolling factor #physics #tires
 - [x] Advanced dyno interpolation: Akima local cubic Hermite in `engine-curve-core.ts` (`torqueAtRpm()` exact at nodes, segment-clamped, linear fallback on 2 points) + `tests/engine-curve-akima.test.ts` #engine #physics
-- [ ] Raw dyno smoothing option: add Gaussian / Savitzky-Golay pre-filter for `dyno-csv.ts` imports to clean roller-slip and ignition-resonance spikes before traction computation #engine #data
+- [x] Raw dyno smoothing option: Gaussian `[1,4,6,4,1]/16` pre-filter `smoothTorquePoints()` in `dyno-csv.ts`, opt-in via `parseDynoCsv(text, { smooth })` + engine-card checkbox (`engine-events.ts`), EN/IT keys #engine #data
 
 ### Graph Engine & Visualization (`src/services/graph/`)
 
-- [ ] Dual-layer canvas architecture: split rendering into a static offscreen layer (grid, axes, redline band via `graph-axes.ts`) and a dynamic interactive layer (traction curves, shift drops, `graph-tooltip.ts` markers) to avoid full redraws on every pointermove #ux #perf
-- [ ] Wheel force vs road-speed overlay: plot the road-load parabola (`F_aero + F_rr` from `aero-math.ts`) over the per-gear traction curves in `graph-curves.ts` to show friction- vs limiter-bound Vmax visually #ux #physics
+- [x] Dual-layer canvas architecture: `graph-layers.ts` offscreen static bitmap (background, grids, redline band, titles) keyed on frame/unit/theme/redline, blitted in `drawGraph()` with dynamic curves/drops/markers on top #ux #perf
+- [x] Wheel force vs road-speed overlay: aero-wall shading past the drag-limited Vmax (`shadeAeroWall()` in `graph-axes.ts`, primary + COMP) so limiter-bound vs friction-bound top speed reads visually #ux #physics
+- [x] Graph fullscreen overlay: Expand button in the graph header toggles a fixed overlay card (ResizeObserver repaints, Escape closes, EN/IT keys) #ux
 
 ### Presets, Config & Data Integrity (`src/config/cars/`)
 
 - [x] Preset validation test (`tests/presets.test.ts`): required fields, strictly decreasing gears (`i1 > i2 > ... > in`), sane ranges, reverse ratio + `runningGear` enums on all 26 presets #presets #tests
 - [x] Strict catalog contract shared by loader and CI: `validateCatalogEntry()` in `car-catalog.ts` (required fields, decreasing gears, physical ranges, drivetrain enums) + `tests/catalog-validation.test.ts`; zero-dep instead of a Zod package #presets #tests
-- [ ] Multiple final-drive / drop-gear variants: extend the car preset schema with selectable optional final drives and aftermarket gearsets (e.g. 4.10 / 4.30 / 4.77, Quaife / Albins / Samsonas) without redefining the whole vehicle #presets #ux
+- [x] Multiple final-drive variants: optional `finalDrives` on `GearPreset` (must contain stock `fd`), Miata NA6 / AE86 / S2000 option lists, FD variant select under the primary input (`preset-events.ts` `syncFdVariants()`), validator + tests #presets #ux
 
 ### Sharing, Storage & PWA (`src/core/share/`, `src/core/state/`, `android/`)
 
-- [x] URL state compression: packed Base64URL codec in `share-compact.ts` (`encodeCompactSetup()`/`decodeCompactSetup()`, ~27 chars for 5 gears) with legacy-safe `c` param decode in `share-utils.ts`, no new dependencies #share #ux
-- [ ] Custom-preset storage migration: add `schemaVersion: number` plus automatic migrations to the `haguruma-custom-presets` localStorage store so future field refactors never break saved user cars #data #pwa
-- [ ] Stale-while-revalidate preset caching: serve car `.json` presets offline-first with background revalidation and a cache cap, keeping track-side usage fully offline while staying fresh on network #pwa #offline
+- [x] URL state compression: full-state packed Base64URL codec in `share-compact.ts` (v1: primary, compare, road/engine, both running-gear blocks, ~170 chars vs ~700 verbose) with legacy-safe `c` param decode in `share-utils.ts`, verbose fallback on dyno curves, no new dependencies #share #ux
+- [x] Custom-preset storage migration: `CUSTOM_STORE_VERSION` envelope in `custom-store.ts`, pure `migrateCustomStore()` accepting v1 / legacy bare maps and rejecting corrupt or future payloads #data #pwa
+- [x] Stale-while-revalidate preset caching: `sw.js` serves same-origin GET assets stale-while-revalidate with a 60-entry cap (navigations stay network-first), cache bumped to `haguruma-v2` #pwa #offline
 
 ### Sim & Motorsport Export (`src/services/events/`)
 

@@ -3,7 +3,7 @@
  * @brief Unit tests for dyno CSV parsing, resampling and derived anchors.
  */
 import { describe, expect, it } from 'vitest';
-import { MAX_CURVE_POINTS, parseDynoCsv } from '../src/core/math/dyno-csv';
+import { MAX_CURVE_POINTS, parseDynoCsv, smoothTorquePoints } from '../src/core/math/dyno-csv';
 import { KW_TO_NM, powerFromTorque, sanitizeTorquePoints, torqueAtRpm, validateCurve } from '../src/core/math/traction-math';
 import type { TorqueCurvePoint } from '../src/core/models';
 
@@ -62,8 +62,7 @@ describe('parseDynoCsv', () => {
 		expect(dyno!.points.length).toBeGreaterThanOrEqual(2);
 	});
 	it('derives a consistent peak-power anchor', () => {
-		const dyno = parseDynoCsv('1000,100\n3000,200\n6000,150');
-		expect(dyno!.peakPowerRpm).toBe(6000);
+		const dyno = parseDynoCsv('1000,100\n3000,200\n6000,150');		expect(dyno!.peakPowerRpm).toBe(6000);
 		expect(dyno!.peakPowerKw).toBeCloseTo(powerFromTorque(150, 6000), 0);
 	});
 });
@@ -123,5 +122,42 @@ describe('validateCurve with dyno points', () => {
 	it('drops invalid rows and needs two survivors', () => {
 		expect(sanitizeTorquePoints([{ rpm: 100, torqueNm: 100 }, { rpm: 1000, torqueNm: 100 }])).toBeNull();
 		expect(sanitizeTorquePoints([{ rpm: 1000, torqueNm: 100 }, { rpm: 1000, torqueNm: 140 }, { rpm: 2000, torqueNm: 120 }])).toHaveLength(2);
+	});
+});
+
+describe('smoothTorquePoints', () => {
+	const SPIKY: TorqueCurvePoint[] = [
+		{ rpm: 1000, torqueNm: 150 },
+		{ rpm: 2000, torqueNm: 160 },
+		{ rpm: 3000, torqueNm: 260 },
+		{ rpm: 4000, torqueNm: 165 },
+		{ rpm: 5000, torqueNm: 155 },
+	];
+	it('tames single-sample spikes but keeps length and RPMs', () => {
+		const out = smoothTorquePoints(SPIKY);
+		expect(out).toHaveLength(SPIKY.length);
+		expect(out.map((p) => p.rpm)).toEqual(SPIKY.map((p) => p.rpm));
+		expect(out[2].torqueNm).toBeLessThan(260);
+		expect(out[2].torqueNm).toBeGreaterThan(165);
+	});
+	it('leaves flat runs untouched and passes short lists through', () => {
+		const flat: TorqueCurvePoint[] = [
+			{ rpm: 1000, torqueNm: 150 },
+			{ rpm: 2000, torqueNm: 150 },
+			{ rpm: 3000, torqueNm: 150 },
+		];
+		for (const [i, p] of smoothTorquePoints(flat).entries()) {
+			expect(p.torqueNm).toBeCloseTo(flat[i].torqueNm, 6);
+		}
+		expect(smoothTorquePoints(flat.slice(0, 2))).toEqual(flat.slice(0, 2));
+	});
+	it('smooths spiky CSV imports only on request', () => {
+		const csv = '1000,150\n2000,160\n3000,260\n4000,165\n5000,155';
+		const raw = parseDynoCsv(csv);
+		const soft = parseDynoCsv(csv, { smooth: true });
+		expect(raw).not.toBeNull();
+		expect(soft).not.toBeNull();
+		expect(raw!.peakTorqueNm).toBe(260);
+		expect(soft!.peakTorqueNm).toBeLessThan(260);
 	});
 });

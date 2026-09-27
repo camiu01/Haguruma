@@ -67,19 +67,21 @@ export const applyDiffModelTo = (rg: RunningGear, modelId: string): void => {
 	if (!preset) return;
 	rg.differentialType = preset.type;
 	rg.differentialModelId = preset.id;
-	if (LSD_MODEL_IDS.has(preset.id) && preset.id !== 'lsd_custom') {
+	if (preset.id === 'lsd_custom') {
+		rg.differentialCoastBias = rg.differentialCoastBias ?? 0;
+		return;
+	}
+	if (LSD_MODEL_IDS.has(preset.id)) {
 		rg.differentialBias = preset.accLock;
 		rg.differentialCoastBias = preset.coastLock;
-	} else if (preset.id === 'lsd_custom') {
-		rg.differentialCoastBias = rg.differentialCoastBias ?? 0;
-	} else if (preset.id === 'open') {
-		rg.differentialCoastBias = 0;
-	} else if (preset.id === 'spool') {
+		return;
+	}
+	if (preset.type === 'spool') {
 		rg.differentialBias = 1;
 		rg.differentialCoastBias = 1;
-	} else if (preset.id === 'torsen') {
-		rg.differentialCoastBias = 0;
+		return;
 	}
+	rg.differentialCoastBias = 0;
 };
 
 /**

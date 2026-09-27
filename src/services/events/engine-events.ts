@@ -94,7 +94,7 @@ const readCsvFile = (file: File): Promise<string> => {
  * @return void
  */
 const applyDynoCsv = (refs: ElementRefs, text: string, render: () => void): void => {
-	const dyno = parseDynoCsv(text);
+	const dyno = parseDynoCsv(text, { smooth: refs.csvSmoothInput.checked });
 	if (!dyno) {
 		showCsvStatus(refs, 'error', 0);
 		return;

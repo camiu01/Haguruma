@@ -38,10 +38,15 @@ export const DIFF_PRESETS: DiffPreset[] = [
 	{ id: 'lsd_custom', labelKey: 'running.diffCustom', type: 'clutch_lsd', accLock: 0.35, coastLock: 0.2 },
 	{ id: 'torsen', labelKey: 'running.diffTorsen', type: 'torsen', accLock: 0, coastLock: 0 },
 	{ id: 'spool', labelKey: 'running.diffSpool', type: 'spool', accLock: 1, coastLock: 1 },
+	{ id: 'lsd_osgiken', labelKey: 'running.diffOsGiken', type: 'clutch_lsd', accLock: 0.55, coastLock: 0.3 },
+	{ id: 'lsd_cusco', labelKey: 'running.diffCusco', type: 'clutch_lsd', accLock: 0.5, coastLock: 0.25 },
+	{ id: 'lsd_kaaz', labelKey: 'running.diffKaaz', type: 'clutch_lsd', accLock: 0.5, coastLock: 0.5 },
+	{ id: 'torsen_wavetrac', labelKey: 'running.diffWavetrac', type: 'torsen', accLock: 0, coastLock: 0 },
+	{ id: 'torsen_quaife', labelKey: 'running.diffQuaife', type: 'torsen', accLock: 0, coastLock: 0 },
 ];
 
 /** UI ids that use the clutch-lsd physics path and show lock inputs. */
-export const LSD_MODEL_IDS = new Set(['lsd_1way', 'lsd_1_5way', 'lsd_2way', 'lsd_custom']);
+export const LSD_MODEL_IDS = new Set(['lsd_1way', 'lsd_1_5way', 'lsd_2way', 'lsd_custom', 'lsd_osgiken', 'lsd_cusco', 'lsd_kaaz']);
 
 /**
  * @brief Look up a catalog entry by id.

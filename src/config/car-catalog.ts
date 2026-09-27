@@ -86,6 +86,7 @@ const validatePresetBody = (preset: unknown): string[] => {
 		errors.push('preset.redline must be a positive number');
 	}
 	errors.push(...validateGearRatios(p.gears));
+	errors.push(...validateFinalDrives(p.finalDrives, p.fd));
 	errors.push(...validateRunningGearBody(p.runningGear));
 	return errors;
 };
@@ -107,6 +108,28 @@ const validateGearRatios = (gears: unknown): string[] => {
 		if (!(ratios[i] < ratios[i - 1])) {
 			return ['preset.gears must be strictly decreasing'];
 		}
+	}
+	return [];
+};
+
+/**
+ * @brief Validate optional alternative final drives.
+ * @param drives Unknown finalDrives value.
+ * @param fd Stock final drive that the list must contain.
+ * @return Error list, empty when absent or valid.
+ */
+const validateFinalDrives = (drives: unknown, fd: unknown): string[] => {
+	if (drives === undefined) {
+		return [];
+	}
+	if (!Array.isArray(drives) || drives.length < 2) {
+		return ['preset.finalDrives must hold at least two ratios'];
+	}
+	if (!(drives as unknown[]).every((d) => typeof d === 'number' && d >= 1 && d <= 10)) {
+		return ['preset.finalDrives must hold ratios between 1 and 10'];
+	}
+	if (typeof fd !== 'number' || !(drives as number[]).includes(fd)) {
+		return ['preset.finalDrives must contain the stock fd'];
 	}
 	return [];
 };

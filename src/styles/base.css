@@ -53,12 +53,61 @@ input[type='range'] {
 	white-space: nowrap;
 }
 .graph-wrap { aspect-ratio: 16 / 9; min-height: unset; height: auto; width: 100%; }
+
+/* Fullscreen graph overlay toggled by the Expand button. */
+.graph-card.graph-fullscreen {
+	position: fixed;
+	inset: 0;
+	z-index: 70;
+	overflow-y: auto;
+	border-radius: 0;
+}
+.graph-card.graph-fullscreen .graph-wrap {
+	aspect-ratio: auto;
+	height: calc(100dvh - 160px);
+	min-height: 320px;
+}
 .graph-legend { display: flex; flex-direction: column; gap: 0.375rem; }
 @media (min-width: 640px) { .graph-legend { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 0.75rem; } }
 
 :focus-visible {
 	outline: 2px solid #38bdf8;
 	outline-offset: 2px;
+}
+
+/* Cross-input focus ring for controls that restyle :focus borders. */
+input:focus-visible,
+select:focus-visible,
+button:focus-visible,
+.input-precision:focus-visible,
+.preset-search-input:focus-visible {
+	outline: 2px solid #38bdf8;
+	outline-offset: 1px;
+}
+
+/* Mobile tap and scroll guards. */
+button, a {
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
+#mobile-drawer,
+#mycars-modal {
+	overscroll-behavior: contain;
+}
+
+/* Placeholder legibility on dark surfaces. */
+::placeholder {
+	color: var(--text-dim);
+	opacity: 1;
+}
+
+/* Motion-sensitive users get an instant UI. */
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after {
+		transition: none !important;
+		animation: none !important;
+		scroll-behavior: auto !important;
+	}
 }
 
 @media (max-width: 767px) {

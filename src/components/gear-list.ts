@@ -57,7 +57,7 @@ const buildGearRow = (
 	const row = document.createElement('div');
 	row.className = 'flex items-center gap-2 bg-surface-row border border-surface-border hover:border-input px-2 py-1.5 rounded-lg transition-colors';
 	const removable = state.gears.length > 1 ? buildRemoveButton(idx) : '';
-	row.innerHTML = `<span class='w-2.5 h-2.5 rounded-full flex-shrink-0 ${glowClass}' style='background-color: ${color}'></span><span class='gear-label text-xs font-medium text-text-dim font-mono w-16'>${t('gear.prefix')} ${idx + 1}</span><input type='number' inputmode='decimal' step='0.01' min='0.4' max='6.0' value='${ratio}' data-index='${idx}' class='gear-input flex-1 bg-surface-input border border-surface-border rounded px-2.5 py-1 text-xs font-mono font-bold text-text-output text-right focus:border-text-dim outline-none' /><span class='text-text-muted font-mono text-xs flex-shrink-0'>: 1</span>${removable}`;
+	row.innerHTML = `<span class='w-2.5 h-2.5 rounded-full flex-shrink-0 ${glowClass}' style='background-color: ${color}'></span><span class='gear-label text-xs font-medium text-text-dim font-mono w-16'>${t('gear.prefix')} ${idx + 1}</span><input type='number' inputmode='decimal' step='0.01' min='0.4' max='6.0' value='${ratio}' data-index='${idx}' aria-label='${t('gear.prefix')} ${idx + 1}' class='gear-input flex-1 bg-surface-input border border-surface-border rounded px-2.5 py-1 text-xs font-mono font-bold text-text-output text-right focus:border-text-dim outline-none' /><span class='text-text-muted font-mono text-xs flex-shrink-0'>: 1</span>${removable}`;
 	void refs;
 	void onChange;
 	return row;
@@ -72,7 +72,7 @@ const buildReverseRow = (): HTMLElement => {
 	const row = document.createElement('div');
 	row.className = 'flex items-center gap-2 bg-surface-row border border-dashed border-surface-border px-2 py-1.5 rounded-lg';
 	const value = state.reverseRatio === null ? '' : String(state.reverseRatio);
-	row.innerHTML = `<span class='w-2.5 h-2.5 rounded-full flex-shrink-0 bg-text-muted'></span><span class='gear-label text-xs font-medium text-text-dim font-mono w-16'>${t('gear.reverse')}</span><input type='number' inputmode='decimal' step='0.01' min='1.0' max='6.0' value='${value}' placeholder='opt.' class='reverse-input flex-1 bg-surface-input border border-surface-border rounded px-2.5 py-1 text-xs font-mono font-bold text-text-output text-right focus:border-text-dim outline-none' /><span class='text-text-muted font-mono text-xs flex-shrink-0'>: 1</span>`;
+	row.innerHTML = `<span class='w-2.5 h-2.5 rounded-full flex-shrink-0 bg-text-muted'></span><span class='gear-label text-xs font-medium text-text-dim font-mono w-16'>${t('gear.reverse')}</span><input type='number' inputmode='decimal' step='0.01' min='1.0' max='6.0' value='${value}' placeholder='opt.' aria-label='${t('gear.reverse')}' class='reverse-input flex-1 bg-surface-input border border-surface-border rounded px-2.5 py-1 text-xs font-mono font-bold text-text-output text-right focus:border-text-dim outline-none' /><span class='text-text-muted font-mono text-xs flex-shrink-0'>: 1</span>`;
 	return row;
 };
 

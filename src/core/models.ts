@@ -94,6 +94,8 @@ export interface GearPreset {
 	tire: string;
 	/** Differential ratio. */
 	fd: number;
+	/** Optional alternative final drives (stock fd included first). */
+	finalDrives?: number[];
 	/** Rev limiter in RPM. */
 	redline: number;
 	/** Forward gear ratios from first to top gear. */

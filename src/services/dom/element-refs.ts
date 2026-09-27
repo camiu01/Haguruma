@@ -5,6 +5,7 @@
 export interface ElementRefs {
 	primaryTire: HTMLInputElement;
 	primaryFd: HTMLInputElement;
+	primaryFdVariant: HTMLSelectElement;
 	primaryRedline: HTMLInputElement;
 	graphMaxSpeed: HTMLInputElement;
 	gearsContainer: HTMLElement;
@@ -66,6 +67,7 @@ export interface ElementRefs {
 	powerAtDisplay: HTMLInputElement;
 	btnImportCsv: HTMLButtonElement;
 	csvImportInput: HTMLInputElement;
+	csvSmoothInput: HTMLInputElement;
 	btnClearCsv: HTMLButtonElement;
 	csvStatus: HTMLElement;
 	customName: HTMLInputElement;
@@ -125,6 +127,7 @@ export interface ElementRefs {
 	setupFeel: HTMLElement;
 	setupProcedure: HTMLElement;
 	btnExportPng: HTMLButtonElement;
+	btnExpandGraph: HTMLButtonElement;
 	btnExportSvg: HTMLButtonElement;
 	btnPrint: HTMLButtonElement;
 	btnExportIni: HTMLButtonElement;
@@ -158,6 +161,7 @@ export const getElementRefs = (): ElementRefs => {
 	return {
 		primaryTire: get<HTMLInputElement>('primary-tire'),
 		primaryFd: get<HTMLInputElement>('primary-fd'),
+		primaryFdVariant: get<HTMLSelectElement>('primary-fd-variant'),
 		primaryRedline: get<HTMLInputElement>('primary-redline'),
 		graphMaxSpeed: get<HTMLInputElement>('graph-max-speed'),
 		gearsContainer: get<HTMLElement>('gears-container'),
@@ -219,6 +223,7 @@ export const getElementRefs = (): ElementRefs => {
 		powerAtDisplay: get<HTMLInputElement>('engine-power-at'),
 		btnImportCsv: get<HTMLButtonElement>('btn-import-csv'),
 		csvImportInput: get<HTMLInputElement>('engine-csv-input'),
+		csvSmoothInput: get<HTMLInputElement>('engine-csv-smooth'),
 		btnClearCsv: get<HTMLButtonElement>('btn-clear-csv'),
 		csvStatus: get<HTMLElement>('engine-csv-status'),
 		customName: get<HTMLInputElement>('custom-name'),
@@ -278,6 +283,7 @@ export const getElementRefs = (): ElementRefs => {
 		setupFeel: get<HTMLElement>('setup-feel'),
 		setupProcedure: get<HTMLElement>('setup-procedure'),
 		btnExportPng: get<HTMLButtonElement>('btn-export-png'),
+		btnExpandGraph: get<HTMLButtonElement>('btn-expand-graph'),
 		btnExportSvg: get<HTMLButtonElement>('btn-export-svg'),
 		btnPrint: get<HTMLButtonElement>('btn-print'),
 		btnExportIni: get<HTMLButtonElement>('btn-export-ini'),

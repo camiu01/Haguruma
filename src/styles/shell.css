@@ -105,7 +105,6 @@
 	font-size: 12px;
 	font-family: 'JetBrains Mono', monospace;
 	color: var(--text-output);
-	outline: none;
 	touch-action: manipulation;
 }
 .preset-search-input:focus {

@@ -119,6 +119,31 @@ export const drawAxisTitles = (
 };
 
 /**
+ * @brief Shade the unreachable region past the drag-limited top speed.
+ * @param ctx Rendering context.
+ * @param frame Plot geometry and limits.
+ * @param limitKmh Drag-limited speed in km/h.
+ * @param unit Display unit.
+ * @param fill Fill color for the unreachable zone.
+ * @return void
+ */
+export const shadeAeroWall = (
+	ctx: CanvasRenderingContext2D,
+	frame: PlotFrame,
+	limitKmh: number,
+	unit: SpeedUnit,
+	fill: string = 'rgba(56, 189, 248, 0.07)',
+): void => {
+	const limitDisplay = toDisplaySpeed(limitKmh, unit);
+	if (limitDisplay <= 0 || limitDisplay >= frame.maxSpeed) {
+		return;
+	}
+	const x = toX(frame, limitDisplay);
+	ctx.fillStyle = fill;
+	ctx.fillRect(x, frame.paddingTop, frame.paddingLeft + frame.plotWidth - x, frame.plotHeight);
+};
+
+/**
  * @brief Draw the drag-limited top-speed marker.
  * @param ctx Rendering context.
  * @param frame Plot geometry and limits.

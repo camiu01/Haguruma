@@ -3,6 +3,7 @@
  * @brief Left slide-over drawer relocating header controls on mobile.
  */
 import type { ElementRefs } from '../dom/element-refs';
+import { trapTabKey } from '../dom/focus-trap';
 import { t } from '../../core/i18n/language';
 
 /** Element focused before the drawer opened, restored on close. */
@@ -33,6 +34,10 @@ export const bindDrawerEvents = (refs: ElementRefs): void => {
 	document.addEventListener('keydown', (e: KeyboardEvent) => {
 		if (e.key === 'Escape' && isOpen(refs)) {
 			closeDrawer(refs);
+			return;
+		}
+		if (e.key === 'Tab' && isOpen(refs)) {
+			trapTabKey(refs.mobileDrawer, e);
 		}
 	});
 	refs.presetSelector.addEventListener('change', () => {

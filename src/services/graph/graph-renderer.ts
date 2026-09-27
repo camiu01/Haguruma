@@ -13,16 +13,17 @@ import { getMaxRpm } from '../../core/units/unit-utils';
 import type { PlotFrame } from '../../core/models';
 import type { ElementRefs } from '../dom/element-refs';
 import { buildPlotFrame, toX, toY } from './canvas-setup';
-import { drawBackground, drawSpeedGrid, drawRpmGrid, drawRedlineBand, drawAxisTitles, drawAeroLimit } from './graph-axes';
+import { drawAeroLimit, shadeAeroWall } from './graph-axes';
+import { blitStaticLayer } from './graph-layers';
 import { drawComparisonCurves, drawPrimaryCurves, drawReverseCurve } from './graph-curves';
 import { drawShiftDrops } from './graph-shift-drops';
 import { drawGripCurve, shadeWheelspin } from './graph-limits';
 
 /**
  * Render the full RPM vs speed graph.
- * @brief Orchestrate background, grids, curves and shift markers.
- * @brief Layer order: background, grid/redline/labels, primary curves,
- * @brief shift drops, comparison dashed overlay, then axis titles/legend.
+ * @brief Composite the cached static layer, then draw dynamic curves.
+ * @brief Layer order: static bitmap, primary curves, shift drops, aero wall,
+ * @brief comparison dashed overlay, grip limits (titles live in the static layer).
  * @param refs Cached DOM handles.
  * @return void
  */
@@ -39,10 +40,7 @@ export const drawGraph = (refs: ElementRefs): void => {
 		return;
 	}
 	const { ctx } = refs;
-	drawBackground(ctx, frame);
-	drawSpeedGrid(ctx, frame, state.unit);
-	drawRpmGrid(ctx, frame);
-	drawRedlineBand(ctx, frame, state.primaryRedline);
+	blitStaticLayer(ctx, refs.canvas, frame, state.unit, state.primaryRedline);
 	const peaks = drawPrimaryCurves(ctx, frame, state.gears, state.primaryFd, circM, state.primaryRedline, state.unit);
 	if (state.reverseRatio !== null && state.reverseRatio > 0) {
 		drawReverseCurve(ctx, frame, state.reverseRatio, state.primaryFd, circM, state.primaryRedline, state.unit);
@@ -53,7 +51,6 @@ export const drawGraph = (refs: ElementRefs): void => {
 	drawOptionalComparison(ctx, frame);
 	drawOptionalCompAeroLimit(ctx, frame);
 	drawOptionalGripLimit(ctx, frame);
-	drawAxisTitles(ctx, frame, state.unit);
 };
 
 /**
@@ -77,6 +74,7 @@ export const drawOptionalAeroLimit = (
 		state.roadGradePercent,
 	);
 	if (limit > 0) {
+		shadeAeroWall(ctx, frame, limit, state.unit);
 		drawAeroLimit(ctx, frame, limit, state.unit);
 	}
 };
@@ -112,6 +110,8 @@ export const drawOptionalCompAeroLimit = (
 		return;
 	}
 	const x = toX(frame, limitDisplay);
+	ctx.fillStyle = 'rgba(251, 191, 36, 0.08)';
+	ctx.fillRect(x, frame.paddingTop, frame.paddingLeft + frame.plotWidth - x, frame.plotHeight);
 	ctx.strokeStyle = 'rgba(251, 191, 36, 0.8)';
 	ctx.lineWidth = 1.5;
 	ctx.setLineDash([6, 4]);

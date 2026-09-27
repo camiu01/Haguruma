@@ -5,6 +5,7 @@
   "preset": {
     "tire": "185/60R14",
     "fd": 4.3,
+    "finalDrives": [4.1, 4.3, 4.77],
     "redline": 7200,
     "gears": [
       3.136,

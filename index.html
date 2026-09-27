@@ -255,6 +255,7 @@
 									<input type='number' inputmode='decimal' step='0.01' min='1.0' max='10.0' id='primary-fd' value='4.10' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-sm text-text-output font-mono focus:border-text-dim outline-none' />
 									<span class='absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none'>: 1</span>
 								</div>
+								<select id='primary-fd-variant' class='hidden mt-1.5 w-full bg-surface-input border border-surface-border rounded-lg px-2 py-1.5 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim' data-i18n-tip='primary.fdVariantTip' title='Optional final drives for this chassis' aria-label='Optional final drives for this chassis'></select>
 							</div>
 							<div class='col-span-2 sm:col-span-1'>
 								<label class='block text-xs font-medium text-text-dim mb-1' for='primary-redline' data-i18n='primary.redline'>Redline RPM</label>
@@ -411,6 +412,7 @@
 							<button id='btn-import-csv' type='button' class='px-2.5 py-1.5 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='engine.importCsv' data-i18n-tip='engine.csvTip' title='Import a dyno CSV: rpm + torque Nm columns, or rpm + power kW/cv (power-only files need a header row). Semicolon and decimal comma are supported.' data-tip='Import a dyno CSV: rpm + torque Nm columns, or rpm + power kW/cv (power-only files need a header row). Semicolon and decimal comma are supported.' aria-label='Import a dyno CSV: rpm + torque Nm columns, or rpm + power kW/cv (power-only files need a header row). Semicolon and decimal comma are supported.'>Import dyno CSV</button>
 							<button id='btn-clear-csv' type='button' class='px-2.5 py-1.5 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition hidden' data-i18n='engine.clearCsv' title='Back to the anchor curve model' data-tip='Back to the anchor curve model' aria-label='Back to the anchor curve model'>Back to anchors</button>
 							<input type='file' id='engine-csv-input' accept='.csv,text/csv' class='hidden' />
+							<label class='inline-flex items-center gap-1.5 text-[11px] font-mono text-text-dim cursor-pointer'><input type='checkbox' id='engine-csv-smooth' class='rounded bg-surface-input border-surface-border cursor-pointer w-4 h-4' /><span data-i18n='engine.smooth'>Smooth raw dyno</span></label>
 							<span id='engine-csv-status' class='text-[10px] text-text-dim font-mono' data-i18n='engine.csvIdle'>Anchor curve (torque + power peak)</span>
 						</div>
 					</div>
@@ -445,9 +447,16 @@
 								<option value='lsd_1_5way' data-i18n='running.diff15Way'>LSD 1.5-Way</option>
 								<option value='lsd_2way' data-i18n='running.diff2Way'>LSD 2-Way</option>
 								<option value='lsd_custom' data-i18n='running.diffCustom'>LSD Custom</option>
+								<option value='lsd_osgiken' data-i18n='running.diffOsGiken'>OS Giken Super Lock</option>
+								<option value='lsd_cusco' data-i18n='running.diffCusco'>Cusco MZ</option>
+								<option value='lsd_kaaz' data-i18n='running.diffKaaz'>KAAZ 2-Way</option>
 								<option value='torsen' data-i18n='running.diffTorsen'>Torsen</option>
+								<option value='torsen_wavetrac' data-i18n='running.diffWavetrac'>Wavetrac ATB</option>
+								<option value='torsen_quaife' data-i18n='running.diffQuaife'>Quaife ATB</option>
 								<option value='spool' data-i18n='running.diffSpool'>Spool</option>
 							</select>
+						</div>
+						<div class='col-span-2 sm:col-span-1' id='rg-bias-wrap'>
 						</div>
 						<div class='col-span-2 sm:col-span-1' id='rg-bias-wrap'>
 							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-bias' data-i18n='running.bias'>Accel lock</label>
@@ -671,7 +680,12 @@
 												<option value='lsd_1_5way' data-i18n='running.diff15Way'>LSD 1.5-Way</option>
 												<option value='lsd_2way' data-i18n='running.diff2Way'>LSD 2-Way</option>
 												<option value='lsd_custom' data-i18n='running.diffCustom'>LSD Custom</option>
+												<option value='lsd_osgiken' data-i18n='running.diffOsGiken'>OS Giken Super Lock</option>
+												<option value='lsd_cusco' data-i18n='running.diffCusco'>Cusco MZ</option>
+												<option value='lsd_kaaz' data-i18n='running.diffKaaz'>KAAZ 2-Way</option>
 												<option value='torsen' data-i18n='running.diffTorsen'>Torsen</option>
+												<option value='torsen_wavetrac' data-i18n='running.diffWavetrac'>Wavetrac ATB</option>
+												<option value='torsen_quaife' data-i18n='running.diffQuaife'>Quaife ATB</option>
 												<option value='spool' data-i18n='running.diffSpool'>Spool</option>
 											</select>
 										</div>
@@ -766,6 +780,7 @@
 					</div>
 				</div>
 			</div>
+			<div id='cruise-mount'></div>
 			<div class='card border border-border rounded-xl p-4'>
 				<div data-accordion='mycars'>
 					<div class='section-header' data-accordion-header>
@@ -788,13 +803,13 @@
 				</div>
 			</div>
 			<div id='setup-guide-mount'></div>
-			<div id='cruise-mount'></div>
 		</section>
 		<section class='order-1 xl:order-2 xl:col-span-7 flex flex-col gap-4'>
 			<div class='card graph-card border border-border rounded-xl p-4 flex flex-col'>
 				<div class='flex items-center justify-between mb-3 gap-2 flex-wrap'>
 					<h2 class='text-sm font-semibold text-text-main' data-i18n='graph.title'>Engine RPM vs Vehicle Speed</h2>
 					<div class='flex items-center gap-1.5'>
+						<button id='btn-expand-graph' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='graph.expand' data-i18n-tip='graph.expandTip' title='Expand graph fullscreen' data-tip='Expand graph fullscreen' aria-label='Expand graph fullscreen' aria-expanded='false'>Expand</button>
 						<button id='btn-export-png' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.png' data-i18n-tip='export.pngTip' title='Export graph as PNG' data-tip='Export graph as PNG' aria-label='Export graph as PNG'>PNG</button>
 						<button id='btn-export-svg' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.svg' data-i18n-tip='export.svgTip' title='Export graph as vector SVG' data-tip='Export graph as vector SVG' aria-label='Export graph as vector SVG'>SVG</button>
 						<button id='btn-print' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='print.label' data-i18n-tip='print.tip' title='Print summary or save as PDF' data-tip='Print summary or save as PDF' aria-label='Print summary or save as PDF'>Print / PDF</button>

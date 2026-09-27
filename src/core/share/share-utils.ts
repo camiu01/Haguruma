@@ -10,23 +10,24 @@ import { defaultRunningGear } from '../state/app-state';
 import { sanitizeTorquePoints } from '../math/engine-curve-core';
 import { MAX_CURVE_POINTS, resampleTorquePoints } from '../math/dyno-csv';
 import { decodeGripParams, encodeRunningGear, numParam } from './running-gear-share';
-import { decodeCompactSetup, encodeCompactSetup } from './share-compact';
+import { decodeCompactHash, decodeCompactSetup, encodeCompactHash } from './share-compact';
 
 /**
  * @brief Serialize current state into a compact hash string.
  * @brief Hash holds setup fields only, unit and theme stay in localStorage.
- * @brief Primary gears ride in the packed `c` token, the rest stays verbose.
+ * @brief The packed `c` token carries everything; verbose keys are the fallback.
  * @param s Full application state.
  * @return URL-encoded query string without leading #.
  */
 export const encodeState = (s: AppState): string => {
 	const p = new URLSearchParams();
-	if (!encodeCompactPrimary(p, s)) {
-		p.set('tire', s.primaryTire); p.set('fd', String(s.primaryFd)); p.set('rl', String(s.primaryRedline));
-		p.set('g', s.gears.join(','));
-		if (s.reverseRatio !== null) {
-			p.set('rev', String(s.reverseRatio));
-		}
+	if (encodeCompactPrimary(p, s)) {
+		return p.toString();
+	}
+	p.set('tire', s.primaryTire); p.set('fd', String(s.primaryFd)); p.set('rl', String(s.primaryRedline));
+	p.set('g', s.gears.join(','));
+	if (s.reverseRatio !== null) {
+		p.set('rev', String(s.reverseRatio));
 	}
 	p.set('max', String(s.maxGraphSpeed));
 	p.set('cmp', s.compareEnabled ? '1' : '0'); p.set('ctire', s.compTire); p.set('cfd', String(s.compFd));
@@ -47,19 +48,14 @@ export const encodeState = (s: AppState): string => {
 };
 
 /**
- * @brief Encode primary gears into the packed `c` token.
+ * @brief Encode the full state into the packed `c` token.
+ * @brief Falls back to false (verbose keys) with dyno curves or exotic values.
  * @param p Params receiving the token.
  * @param s Full application state.
- * @return True when the token was emitted (verbose keys skipped).
+ * @return True when the token was emitted (all other keys skipped).
  */
 const encodeCompactPrimary = (p: URLSearchParams, s: AppState): boolean => {
-	const code = encodeCompactSetup({
-		tire: s.primaryTire,
-		fd: s.primaryFd,
-		redline: s.primaryRedline,
-		gears: s.gears,
-		reverseRatio: s.reverseRatio,
-	});
+	const code = encodeCompactHash(s);
 	if (!code) {
 		return false;
 	}
@@ -126,14 +122,19 @@ export const decodeState = (hash: string): Partial<AppState> => {
 };
 
 /**
- * @brief Decode the optional compact `c` token into primary fields.
+ * @brief Decode the optional compact `c` token into state fields.
+ * @brief Full v1 hashes carry the whole setup, legacy tokens primary only.
  * @param params Parsed query params.
- * @return Partial primary fields from the token, or empty when absent.
+ * @return Partial state from the token, or empty when absent.
  */
 const decodeCompactParams = (params: URLSearchParams): Partial<AppState> => {
 	const raw = params.get('c');
 	if (!raw) {
 		return {};
+	}
+	const full = decodeCompactHash(raw);
+	if (full) {
+		return full;
 	}
 	const setup = decodeCompactSetup(raw);
 	if (!setup) {

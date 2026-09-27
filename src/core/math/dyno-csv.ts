@@ -75,11 +75,50 @@ export const resampleTorquePoints = (points: TorqueCurvePoint[], maxPoints: numb
 };
 
 /**
+ * @brief Gaussian smoothing weights ([1,4,6,4,1]/16) for raw dyno noise.
+ */
+const SMOOTH_KERNEL = [1, 4, 6, 4, 1];
+
+/** Kernel weight sum. */
+const SMOOTH_NORM = 16;
+
+/**
+ * @brief Gaussian pre-filter for raw roller torque data.
+ * @brief Tames single-sample spikes (roller slip, ignition resonance) while
+ * @brief keeping peak shape; edges reuse the nearest sample (clamped index).
+ * @param points Sorted unique torque points.
+ * @return New smoothed points, same RPMs and length.
+ */
+export const smoothTorquePoints = (points: TorqueCurvePoint[]): TorqueCurvePoint[] => {
+	if (!Array.isArray(points) || points.length < 3) {
+		return points;
+	}
+	const half = 2;
+	return points.map((p, i) => {
+		let acc = 0;
+		for (let k = -half; k <= half; k += 1) {
+			const j = Math.min(points.length - 1, Math.max(0, i + k));
+			acc += points[j].torqueNm * SMOOTH_KERNEL[k + half];
+		}
+		return { rpm: p.rpm, torqueNm: acc / SMOOTH_NORM };
+	});
+};
+
+/**
+ * @brief Optional smoothing for a dyno CSV import.
+ */
+export interface DynoCsvOptions {
+	/** Apply the Gaussian pre-filter before resampling. */
+	smooth?: boolean;
+}
+
+/**
  * @brief Parse raw dyno CSV text into a validated curve.
  * @param text Full CSV file contents.
+ * @param options Optional Gaussian smoothing for raw roller data.
  * @return Dyno curve, or null when no usable rpm + torque/power rows exist.
  */
-export const parseDynoCsv = (text: string): DynoCurve | null => {
+export const parseDynoCsv = (text: string, options?: DynoCsvOptions): DynoCurve | null => {
 	if (typeof text !== 'string' || text.trim() === '') {
 		return null;
 	}
@@ -98,7 +137,8 @@ export const parseDynoCsv = (text: string): DynoCurve | null => {
 	if (!sanitized) {
 		return null;
 	}
-	const capped = resampleTorquePoints(sanitized, MAX_CURVE_POINTS);
+	const conditioned = options?.smooth === true ? smoothTorquePoints(sanitized) : sanitized;
+	const capped = resampleTorquePoints(conditioned, MAX_CURVE_POINTS);
 	return { points: capped, ...anchorsFromPoints(capped) };
 };
 

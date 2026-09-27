@@ -67,6 +67,7 @@ export const applyPreset = (refs: ElementRefs, preset: GearPreset, render: () =>
 	refs.primaryTire.value = preset.tire;
 	refs.primaryFd.value = String(preset.fd);
 	refs.primaryRedline.value = String(preset.redline);
+	syncFdVariants(refs, preset.finalDrives, preset.fd);
 	syncRoadLoadInputs(refs);
 	syncEngineInputs(refs);
 	syncRunningGearInputs(refs);
@@ -150,6 +151,33 @@ const appendCustomOptions = (selector: HTMLSelectElement): void => {
 };
 
 /**
+ * @brief Populate the optional final-drive select for one preset.
+ * @brief Hidden when the preset ships fewer than two alternatives.
+ * @param refs Cached DOM handles.
+ * @param variants Optional final drives from the preset.
+ * @param fd Stock final drive receiving the selected mark.
+ * @return void
+ */
+export const syncFdVariants = (refs: ElementRefs, variants: number[] | undefined, fd: number): void => {
+	const select = refs.primaryFdVariant;
+	select.innerHTML = '';
+	if (!Array.isArray(variants) || variants.length < 2) {
+		select.classList.add('hidden');
+		return;
+	}
+	for (const v of variants) {
+		const option = document.createElement('option');
+		option.value = String(v);
+		option.textContent = `${v.toFixed(2)} : 1${v === fd ? ` (${t('primary.fdStock')})` : ''}`;
+		if (v === fd) {
+			option.selected = true;
+		}
+		select.appendChild(option);
+	}
+	select.classList.remove('hidden');
+};
+
+/**
  * @brief Bind the preset vehicle dropdown.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback.
@@ -165,5 +193,14 @@ export const bindPresetEvents = (refs: ElementRefs, render: () => void): void =>
 			return;
 		}
 		applyPreset(refs, preset, render);
+	});
+	refs.primaryFdVariant.addEventListener('change', (e) => {
+		const v = parseFloat((e.target as HTMLSelectElement).value);
+		if (!Number.isFinite(v) || v <= 0) {
+			return;
+		}
+		state.primaryFd = v;
+		refs.primaryFd.value = String(v);
+		render();
 	});
 };

@@ -5,6 +5,7 @@
   "preset": {
     "tire": "225/50R16",
     "fd": 4.1,
+    "finalDrives": [4.1, 4.3, 4.44],
     "redline": 9000,
     "gears": [
       3.133,

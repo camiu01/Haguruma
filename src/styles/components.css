@@ -12,7 +12,6 @@
 	font-size: 14px;
 	font-family: 'JetBrains Mono', monospace;
 	color: var(--text-output);
-	outline: none;
 }
 .input-precision:focus {
 	border-color: var(--accent-cyan);

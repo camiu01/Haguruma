@@ -7,6 +7,9 @@ import { defaultRunningGear } from '../state/app-state';
 
 const STORAGE_KEY = 'haguruma-custom-presets';
 
+/** Current envelope version for the custom preset store. */
+export const CUSTOM_STORE_VERSION = 1;
+
 /** Dropdown value prefix marking user presets. */
 export const CUSTOM_PREFIX = 'custom:';
 
@@ -68,6 +71,42 @@ export const isPreset = (value: unknown): value is GearPreset => {
 };
 
 /**
+ * @brief Migrate a raw stored value to the current preset map.
+ * @brief Accepts the v1 envelope, legacy bare maps and corrupt input.
+ * @param raw Parsed JSON from storage.
+ * @return Name-keyed valid presets, empty when nothing is usable.
+ */
+export const migrateCustomStore = (raw: unknown): Record<string, GearPreset> => {
+	if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+		return {};
+	}
+	const candidate = raw as Record<string, unknown>;
+	if (typeof candidate.schemaVersion === 'number') {
+		if (candidate.schemaVersion !== CUSTOM_STORE_VERSION || typeof candidate.presets !== 'object' || candidate.presets === null) {
+			return {};
+		}
+		return collectPresets(candidate.presets as Record<string, unknown>);
+	}
+	return collectPresets(candidate);
+};
+
+/**
+ * @brief Keep valid presets, backfilling the running gear on legacy rows.
+ * @param table Name-keyed candidate presets.
+ * @return Name-keyed valid presets.
+ */
+const collectPresets = (table: Record<string, unknown>): Record<string, GearPreset> => {
+	const out: Record<string, GearPreset> = {};
+	for (const name of Object.keys(table)) {
+		const candidate = table[name];
+		if (isPreset(candidate)) {
+			out[name] = candidate.runningGear ? candidate : { ...candidate, runningGear: { ...defaultRunningGear } };
+		}
+	}
+	return out;
+};
+
+/**
  * @brief Load user presets from storage.
  * @return Name-keyed presets, empty when storage is missing or corrupt.
  */
@@ -80,15 +119,7 @@ export const loadCustomPresets = (): Record<string, GearPreset> => {
 		if (!raw) {
 			return {};
 		}
-		const parsed = JSON.parse(raw) as Record<string, unknown>;
-		const out: Record<string, GearPreset> = {};
-		for (const name of Object.keys(parsed)) {
-			const candidate = parsed[name];
-			if (isPreset(candidate)) {
-				out[name] = candidate.runningGear ? candidate : { ...candidate, runningGear: { ...defaultRunningGear } };
-			}
-		}
-		return out;
+		return migrateCustomStore(JSON.parse(raw) as unknown);
 	} catch {
 		return {};
 	}
@@ -104,7 +135,7 @@ const storeCustomPresets = (customs: Record<string, GearPreset>): void => {
 		return;
 	}
 	try {
-		window.localStorage.setItem(STORAGE_KEY, JSON.stringify(customs));
+		window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ schemaVersion: CUSTOM_STORE_VERSION, presets: customs }));
 	} catch {
 		return;
 	}

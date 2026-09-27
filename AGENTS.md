@@ -28,24 +28,27 @@ src/
     state/engine-curve.ts         # active engine curve (anchors vs sanitized dyno points)
     units/unit-utils.ts           # getSpeedStep(), getUnitLabel(), getPowerUnitLabel(), formatPower(), getMaxRpm()
     i18n/                         # dictionary.en.ts + dictionary.it.ts + language.ts (applyI18n)
-    share/share-utils.ts          # URL hash encode/decode (incl. rg_, crg_, curve, rg_dm / rg_dc diff keys)
+    share/share-utils.ts          # URL hash encode/decode (verbose keys, compact `c` token, curve, rg_/crg_ running gear)
     share/running-gear-share.ts   # rg_/crg_ encode/decode block + numeric param helper
+    share/share-compact.ts        # Packed Base64URL full-state codec (v1) + legacy primary token, no dependencies
   config/
     presets.ts                    # preset maps built from the catalog loader
-    car-catalog.ts                # CarCatalogEntry model + import.meta.glob loader
-    cars/                         # one <id>.json per vehicle, drop-in to add
-    diff-presets.ts               # Extensible LSD catalog (open, 1/1.5/2-way, custom, Torsen, spool)
+    car-catalog.ts                # CarCatalogEntry model + import.meta.glob loader + validateCatalogEntry() contract
+    cars/                         # one <id>.json per vehicle, drop-in to add (optional finalDrives[] must contain stock fd)
+    diff-presets.ts               # Extensible LSD catalog (open, 1/1.5/2-way, custom, Torsen, spool, OS Giken, Cusco, KAAZ, Wavetrac, Quaife)
     drivetrain-eff.ts             # Default drivetrain efficiency lookup by FWD/RWD/AWD layout
     gear-colors.ts                # 8-color palette
     graph-constants.ts            # GRAPH_PADDING, GRAPH_STYLE_*, GRAPH_LIMITS
   services/
     dom/element-refs.ts           # Typed DOM handles (ElementRefs)
-    graph/                        # canvas-setup, graph-axes, graph-curves, graph-shift-drops, graph-renderer, graph-tooltip, graph-theme, graph-export
+    dom/focus-trap.ts             # Tab trap helper for drawer and modal overlays
+    graph/                        # canvas-setup, graph-axes, graph-curves, graph-shift-drops, graph-renderer, graph-tooltip, graph-theme, graph-export, graph-layers (static cache), graph-limits, drivetrain-export (sim INI/JSON)
     events/                       # One binder per control group
   components/
     gear-list.ts                  # Editable gear rows + add/remove
     gear-table.ts                 # Primary breakdown table + KPI strip + accel memo
     compare-table.ts              # Secondary comparison rows + tire-delta caption
+    preset-search.ts              # Searchable preset combobox (grouped dropdown)
     custom-car.ts                 # Save/load/export/import custom presets
     setup-guide.ts                # Setup shell injection + card assembly
     cruise-card.ts                # Highway cruising shell + render
@@ -65,7 +68,7 @@ src/
 index.html                        # Shell layout; feature shells inject into mount points
 capacitor.config.ts               # Native wrapper (webDir dist)
 android/                          # Committed Capacitor scaffold (generated outputs ignored)
-.github/workflows/build-apk.yml   # Manual workflow: web build + assembleDebug + APK artifact
+.github/workflows/build-apk.yml   # Manual + on-release workflow: web build + assembleDebug + versioned APK artifact/attachment
 ```
 
 ## Key conventions (must follow)
@@ -75,7 +78,8 @@ android/                          # Committed Capacitor scaffold (generated outp
 - Every file starts with `@file` + `@brief`.
 - Feature modules must stay **under 400 lines**, functions **under 50 lines**.
 - Exempt from the file cap: `index.html` (app shell), `styles/main.css` (import hub),
-  and the dictionary system (`src/core/i18n/dictionaries.ts` holds every language in one file).
+  and the dictionary system (`src/core/i18n/dictionaries.ts` wires the per-language
+  `dictionary.en.ts` / `dictionary.it.ts` files and owns the `DictKey` union).
   New static markup belongs in component-owned `inject*Shell()` builders, not in `index.html`.
 - Avoid nested conditionals deeper than 3 levels.
 - One component per file in `components/card/` (base `Card`, specialized cards, `index.ts` barrel). Cards receive data via props/options, render with `textContent` only, and cause no side effects.
@@ -95,11 +99,14 @@ android/                          # Committed Capacitor scaffold (generated outp
 - Graph has separate palettes per theme in `graph-theme.ts`.
 
 ## Graph layer order (must maintain in drawGraph)
+Static layer, cached in `graph-layers.ts` (repaint only when frame/unit/theme/redline change):
 1. Background (`graph-axes.ts: drawBackground`)
-2. Grid, redline band, labels (`graph-axes.ts: drawGrid, drawRedlineBand, drawLabels`)
+2. Grid, redline band, labels, titles (`graph-axes.ts: drawSpeedGrid, drawRpmGrid, drawRedlineBand, drawAxisTitles`)
+Dynamic layer, redrawn every render on top of the blitted bitmap:
 3. Primary curves + shift drops + markers (`graph-curves.ts`, `graph-shift-drops.ts`)
-4. Comparison curves + shift drops (if enabled, dashed style)
-5. Titles + legend (`graph-axes.ts`)
+4. Aero-wall shading + limits (`shadeAeroWall`, `drawAeroLimit`)
+5. Comparison curves + shift drops (if enabled, dashed style)
+6. Grip limits (`graph-limits.ts`)
 
 ## Important DOM patterns
 - `data-i18n` for text content → `applyI18n()` sets `el.textContent = t(key)`.
@@ -111,7 +118,7 @@ android/                          # Committed Capacitor scaffold (generated outp
 - **Do not put help-dot spans inside `data-i18n` elements** — `textContent` replacement strips children. Wrap the span in a separate parent.
 
 ## Custom car system
-- Saved in localStorage key `haguruma-custom-presets`.
+- Saved in localStorage key `haguruma-custom-presets` as a `{ schemaVersion, presets }` envelope (`CUSTOM_STORE_VERSION`, migrated by `migrateCustomStore()`).
 - Preset dropdown prefix: `custom:` (constant `CUSTOM_PREFIX`).
 - `custom-car.ts`: `readCustomForm()` validates 13 fields, returns `{name, preset}`.
 - `applyPreset()` already handles `peakTorqueRpm`, `peakTorqueNm`, `peakPowerRpm` from `GearPreset`.
@@ -122,9 +129,11 @@ android/                          # Committed Capacitor scaffold (generated outp
 - Run single file: `npx vitest run tests/tire-math.test.ts`.
 - Always run `npx tsc --noEmit` + `npm test` before committing.
 - Coverage for the chassis/aero pass: `tests/dynamics-math.test.ts` (load transfer, friction circle, dyno taper, coast lock), `tests/drivetrain-eff.test.ts`, `tests/dyno-csv.test.ts`, `tests/setup-matrix.test.ts`.
+- Coverage for the physics/share/sim passes: `tests/engine-curve-akima.test.ts`, `tests/graph-layers.test.ts`, `tests/share-compact.test.ts`, `tests/catalog-validation.test.ts`, `tests/drivetrain-export.test.ts`, `tests/presets.test.ts`.
 
 ## Share/URL
 - Full setup encoded in URL hash, restored on page load via `restoreFromUrl()`.
+- Primary encoding is the packed Base64URL `c` token (`share-compact.ts` v1: primary, compare, road/engine, both running-gear blocks); verbose keys and legacy hashes still decode, dyno curves always use verbose.
 - Uses `navigator.clipboard.writeText()` with textarea fallback.
 - Running gear keys: geometry + `rg_df` (type) + `rg_db` (accel lock) + `rg_dc` (coast lock) + `rg_dm` (catalog model id). Unknown model ids are ignored (legacy-safe).
 - Comparison keys are the `crg_` mirror of `rg_` (same ranges and enums).
@@ -142,8 +151,8 @@ android/                          # Committed Capacitor scaffold (generated outp
 
 ## Engine curve (anchors vs dyno CSV)
 - `core/state/engine-curve.ts` returns the active curve: anchors by default, sanitized dyno points once a CSV is imported.
-- `core/math/dyno-csv.ts` parses header / header-less torque or power rows. Supports `,`, `;`, `\t` delimiters and decimal commas; converts kgm → Nm and cv / hp → kW.
-- `core/math/engine-curve-core.ts` is the single source of truth for `engineTorqueAt`, `tractiveForceAt`, `optimalShift*`, and the dyno-tail taper past the last measured RPM.
+- `core/math/dyno-csv.ts` parses header / header-less torque or power rows. Supports `,`, `;`, `\t` delimiters and decimal commas; converts kgm → Nm and cv / hp → kW. Optional Gaussian pre-filter via `parseDynoCsv(text, { smooth: true })`.
+- `core/math/engine-curve-core.ts` is the single source of truth for `engineTorqueAt`, `tractiveForceAt`, `optimalShift*`, and the dyno-tail taper past the last measured RPM. Dyno points interpolate with Akima (exact at nodes, segment-clamped; linear fallback on 2 points).
 
 ## Powertrain efficiency
 - `config/drivetrain-eff.ts` maps FWD → 0.90, RWD → 0.85, AWD → 0.80. The layout selector and preset apply both write `state.drivetrainEff`.

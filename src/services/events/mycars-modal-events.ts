@@ -3,6 +3,7 @@
  * @brief Bottom-sheet modal for the My Cars custom presets.
  */
 import type { ElementRefs } from '../dom/element-refs';
+import { trapTabKey } from '../dom/focus-trap';
 
 /**
  * Wire open/close events for the My Cars bottom-sheet modal.
@@ -47,8 +48,15 @@ export const bindMyCarsModalEvents = (refs: ElementRefs): void => {
 	myCarsModalBackdrop.addEventListener('click', close);
 
 	document.addEventListener('keydown', (e) => {
-		if (e.key === 'Escape' && !myCarsModal.classList.contains('hidden')) {
+		if (myCarsModal.classList.contains('hidden')) {
+			return;
+		}
+		if (e.key === 'Escape') {
 			close();
+			return;
+		}
+		if (e.key === 'Tab') {
+			trapTabKey(myCarsModal, e);
 		}
 	});
 };

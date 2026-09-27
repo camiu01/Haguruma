@@ -4,12 +4,14 @@
  */
 import { describe, expect, it } from 'vitest';
 import { DIFF_PRESETS, LSD_MODEL_IDS, findDiffPreset, modelIdFromType } from '../src/config/diff-presets';
+import { applyDiffModelTo } from '../src/services/events/running-gear-events';
+import type { RunningGear } from '../src/core/models';
 import { t } from '../src/core/i18n/language';
 
 describe('diff-presets catalog', () => {
-	it('ships open, 1-way, 1.5-way, 2-way, custom, torsen and spool', () => {
+	it('ships open, generic LSDs, aftermarket clutch models, torsen ATBs and spool', () => {
 		const ids = DIFF_PRESETS.map((p) => p.id);
-		expect(ids).toEqual(['open', 'lsd_1way', 'lsd_1_5way', 'lsd_2way', 'lsd_custom', 'torsen', 'spool']);
+		expect(ids).toEqual(['open', 'lsd_1way', 'lsd_1_5way', 'lsd_2way', 'lsd_custom', 'torsen', 'spool', 'lsd_osgiken', 'lsd_cusco', 'lsd_kaaz', 'torsen_wavetrac', 'torsen_quaife']);
 	});
 	it('keeps lock percentages inside [0, 1] and ordered by aggressiveness', () => {
 		for (const p of DIFF_PRESETS) {
@@ -44,8 +46,22 @@ describe('diff-presets catalog', () => {
 	});
 	it('flags only clutch-lsd rows as showing lock inputs', () => {
 		expect(LSD_MODEL_IDS.has('lsd_1_5way')).toBe(true);
+		expect(LSD_MODEL_IDS.has('lsd_osgiken')).toBe(true);
+		expect(LSD_MODEL_IDS.has('lsd_cusco')).toBe(true);
+		expect(LSD_MODEL_IDS.has('lsd_kaaz')).toBe(true);
+		expect(LSD_MODEL_IDS.has('torsen_wavetrac')).toBe(false);
 		expect(LSD_MODEL_IDS.has('open')).toBe(false);
 		expect(LSD_MODEL_IDS.has('torsen')).toBe(false);
 		expect(LSD_MODEL_IDS.has('spool')).toBe(false);
+	});
+	it('applies aftermarket locks through the shared applier', () => {
+		const rg = { differentialBias: 0, differentialCoastBias: 0 } as unknown as RunningGear;
+		applyDiffModelTo(rg, 'lsd_osgiken');
+		expect(rg.differentialType).toBe('clutch_lsd');
+		expect(rg.differentialBias).toBeCloseTo(0.55, 5);
+		expect(rg.differentialCoastBias).toBeCloseTo(0.3, 5);
+		applyDiffModelTo(rg, 'torsen_wavetrac');
+		expect(rg.differentialType).toBe('torsen');
+		expect(rg.differentialCoastBias).toBe(0);
 	});
 });
