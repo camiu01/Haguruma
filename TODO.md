@@ -161,6 +161,7 @@ Docs consolidation, physics polish, chassis convergence and trackside utilities 
 - [x] Catalog labels unified: all 26 preset labels follow `<Model> (<N>-Speed[, <Type>], <FD> FD)` — scenario descriptors and bare years dropped `#presets` `#i18n`
 - [x] README refresh: features (setup levels, QR share, sim/telemetry export, brake/recovery math, tire tools), physics table (`tire-math`, `engine-curve-core`), structure tree and preset labels `#docs`
 - [x] AGENTS refresh: shared running-gear block, Tools card, drawer nav, setup levels, catalog label convention, unit-aware KPIs `#docs`
+- [x] Fix clipped Main Setup body on large-font devices: open accordions are unbounded (`max-height: none`) and re-measured via `accordion-height.ts` sync on render/level/toggle/resize instead of a fixed 1600px cap `#bug` `#ux`
 
 ---
 

@@ -107,7 +107,7 @@
 	opacity: 0;
 }
 .section-content.open {
-	max-height: 1600px;
+	max-height: none;
 	opacity: 1;
 }
 .merged-card > * + * {

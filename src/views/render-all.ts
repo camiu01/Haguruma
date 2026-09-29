@@ -11,10 +11,13 @@ import { updateTireSize } from '../components/tire-size-tool';
 import { applySetupLevel } from '../services/events/setup-level-events';
 import { updateRunningGearReadouts } from '../components/running-gear-readouts';
 import { syncEngineCsvStatus } from '../services/events/engine-events';
+import { syncOpenAccordionHeights } from '../services/dom/accordion-height';
 
 /**
  * Refresh canvas, table and readouts from current state.
  * @brief Single refresh entry used by every input handler.
+ * @brief Open accordions are re-measured last so content injected by the
+ * @brief render pass never stays clipped under a stale inline max-height.
  * @param refs Cached DOM handles.
  * @return void
  */
@@ -27,4 +30,5 @@ export const renderAll = (refs: ElementRefs): void => {
 	updateTireSize();
 	updateRunningGearReadouts();
 	syncEngineCsvStatus(refs);
+	syncOpenAccordionHeights();
 };

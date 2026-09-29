@@ -3,6 +3,7 @@
  * @brief Abstract reusable card with mount/unmount lifecycle and DOM helpers.
  */
 import type { DictKey } from '../../core/i18n/dictionaries';
+import { syncOpenAccordionHeights } from '../../services/dom/accordion-height';
 
 /**
  * @brief Create an element with classes and an optional i18n key.
@@ -115,5 +116,6 @@ export abstract class Card<TOptions extends CardOptions = CardOptions> {
 		this.node.querySelectorAll('[data-accordion-content], [data-chevron]').forEach((part) => {
 			part.classList.toggle('open', open);
 		});
+		syncOpenAccordionHeights(this.node);
 	}
 }
