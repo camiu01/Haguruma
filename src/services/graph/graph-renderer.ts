@@ -50,7 +50,7 @@ export const drawGraph = (refs: ElementRefs): void => {
 	drawCompareRedline(ctx, frame);
 	drawOptionalComparison(ctx, frame);
 	drawOptionalCompAeroLimit(ctx, frame);
-	drawOptionalGripLimit(ctx, frame);
+	drawOptionalGripLimit(ctx, frame, circM);
 };
 
 /**
@@ -130,13 +130,14 @@ export const drawOptionalCompAeroLimit = (
  * @brief Grip after aero limits, before titles to keep legend on top.
  * @param ctx Rendering context.
  * @param frame Plot geometry and limits.
+ * @param circM Primary rolling circumference (avoids re-parsing the tire).
  * @return void
  */
-export const drawOptionalGripLimit = (ctx: CanvasRenderingContext2D, frame: PlotFrame): void => {
+export const drawOptionalGripLimit = (ctx: CanvasRenderingContext2D, frame: PlotFrame, circM: number): void => {
 	const rg = state.runningGear ?? defaultRunningGear;
 	const gripFn = (vKmh: number): number => maxDriveForceAtSpeed(rg, state.vehicleMassKg, vKmh, 0, 0).limitN;
 	drawGripCurve(ctx, frame, gripFn, '#f59e0b');
-	shadePrimarySpin(ctx, frame, gripFn);
+	shadePrimarySpin(ctx, frame, gripFn, circM);
 	drawOptionalCompGrip(ctx, frame);
 };
 
@@ -146,14 +147,13 @@ export const drawOptionalGripLimit = (ctx: CanvasRenderingContext2D, frame: Plot
  * @param ctx Rendering context.
  * @param frame Plot geometry and limits.
  * @param gripFn Grip limit in newtons from speed in km/h.
+ * @param circM Primary rolling circumference from the caller.
  * @return void
  */
-const shadePrimarySpin = (ctx: CanvasRenderingContext2D, frame: PlotFrame, gripFn: (v: number) => number): void => {
-	const primaryTire = parseTire(state.primaryTire);
-	if (!primaryTire || state.gears.length === 0) {
+const shadePrimarySpin = (ctx: CanvasRenderingContext2D, frame: PlotFrame, gripFn: (v: number) => number, circM: number): void => {
+	if (state.gears.length === 0) {
 		return;
 	}
-	const circM = effectiveCircumferenceM(primaryTire, state.rollingFactor);
 	const curve = activeEngineCurve();
 	if (!curve) {
 		return;

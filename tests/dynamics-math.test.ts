@@ -182,3 +182,21 @@ describe('engine braking and coast lockup', () => {
 		expect(maxCoastForceAtSpeed(rg, 1200, 30, half.limitN + 1, 1).isLockup).toBe(true);
 	});
 });
+
+describe('tire compound grip gain', () => {
+	it('scales the friction limit by the compound gain', () => {
+		const base = mildGear();
+		const slick = maxDriveForceAtSpeed({ ...base, tireCompoundId: 'slick' }, 1200, 30, 1e6, 0);
+		const touring = maxDriveForceAtSpeed({ ...base, tireCompoundId: 'touring_300' }, 1200, 30, 1e6, 0);
+		const eco = maxDriveForceAtSpeed({ ...base, tireCompoundId: 'eco_400' }, 1200, 30, 1e6, 0);
+		expect(touring.limitN).toBeGreaterThan(0);
+		expect(slick.limitN).toBeCloseTo(touring.limitN * 1.22, 6);
+		expect(eco.limitN).toBeCloseTo(touring.limitN * 0.92, 6);
+	});
+	it('ignores unknown compound ids like legacy setups', () => {
+		const base = mildGear();
+		const known = maxDriveForceAtSpeed(base, 1200, 30, 1e6, 0);
+		const unknown = maxDriveForceAtSpeed({ ...base, tireCompoundId: 'nope' }, 1200, 30, 1e6, 0);
+		expect(unknown.limitN).toBeCloseTo(known.limitN, 6);
+	});
+});

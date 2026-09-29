@@ -10,7 +10,9 @@ import type { ElementRefs } from '../dom/element-refs';
 import { exportGraphPng, exportGraphSvg } from '../graph/graph-export';
 import {
 	buildAssettoCorsaIni,
+	buildBeamngJbeam,
 	buildDrivetrainJson,
+	buildTelemCsv,
 	downloadTextFile,
 	parseAssettoCorsaIni,
 } from '../graph/drivetrain-export';
@@ -25,11 +27,8 @@ export const bindExportEvents = (refs: ElementRefs, render: () => void): void =>
 	refs.btnExportPng.addEventListener('click', () => exportGraphPng(refs.canvas));
 	refs.btnExportSvg.addEventListener('click', () => exportGraphSvg(refs.canvas));
 	refs.btnPrint.addEventListener('click', () => window.print());
-	refs.btnExportIni.addEventListener('click', () => {
-		downloadTextFile(buildAssettoCorsaIni(currentDrivetrain()), 'haguruma-drivetrain.ini', 'text/plain');
-	});
-	refs.btnExportGearJson.addEventListener('click', () => {
-		downloadTextFile(buildDrivetrainJson(currentDrivetrain()), 'haguruma-drivetrain.json', 'application/json');
+	refs.btnExportGo.addEventListener('click', () => {
+		exportDrivetrainAs(refs.exportFormat.value);
 	});
 	refs.btnImportIni.addEventListener('click', () => {
 		refs.drivetrainImportInput.click();
@@ -53,6 +52,32 @@ export const bindExportEvents = (refs: ElementRefs, render: () => void): void =>
  */
 const currentDrivetrain = () => {
 	return { gears: [...state.gears], fd: state.primaryFd, reverseRatio: state.reverseRatio, label: 'Haguruma setup' };
+};
+
+/**
+ * @brief Download the drivetrain exchange payload in the selected format.
+ * @param format Select value: ini, json, jbeam, motec or aim.
+ * @return void
+ */
+const exportDrivetrainAs = (format: string): void => {
+	const input = currentDrivetrain();
+	if (format === 'json') {
+		downloadTextFile(buildDrivetrainJson(input), 'haguruma-drivetrain.json', 'application/json');
+		return;
+	}
+	if (format === 'jbeam') {
+		downloadTextFile(buildBeamngJbeam(input), 'haguruma-transmission.jbeam', 'application/json');
+		return;
+	}
+	if (format === 'motec') {
+		downloadTextFile(buildTelemCsv(input, 'motec'), 'haguruma-gears-motec.csv', 'text/csv');
+		return;
+	}
+	if (format === 'aim') {
+		downloadTextFile(buildTelemCsv(input, 'aim'), 'haguruma-gears-aim.csv', 'text/csv');
+		return;
+	}
+	downloadTextFile(buildAssettoCorsaIni(input), 'haguruma-drivetrain.ini', 'text/plain');
 };
 
 /**

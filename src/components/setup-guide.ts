@@ -2,7 +2,7 @@
  * @file setup-guide.ts
  * @brief Assemble setup guide cards into shell mount points.
  */
-import { getLang } from '../core/i18n/language';
+import { getLang, t } from '../core/i18n/language';
 import { state } from '../core/state/app-state';
 import type { ElementRefs } from '../services/dom/element-refs';
 import { getFixes } from '../core/setup/setup-matrix';
@@ -13,6 +13,7 @@ import { MidCornerCard } from './card/mid-corner-card';
 import { PyrometerGuideCard } from './card/pyrometer-guide-card';
 import { SetupFixCard } from './card/fix-card';
 import { SetupGuideShellCard } from './card/setup-shell-card';
+import { HandbookShellCard } from './card/handbook-shell-card';
 import { SetupProcedureCard } from './card/procedure-card';
 
 /**
@@ -77,12 +78,21 @@ export const renderProcedure = (refs: ElementRefs): void => {
 };
 
 /**
- * @brief Inject the setup card shell into its index.html mount point.
+ * @brief Inject the merged Assetto card with wizard and handbook accordions.
  * @brief Runs in bootstrap before refs resolve so ids and accordions exist.
  * @param host Mount element hosting the card.
  * @return void
  */
 export const injectSetupGuideShell = (host: HTMLElement): void => {
 	host.replaceChildren();
-	new SetupGuideShellCard().mount(host);
+	const card = document.createElement('div');
+	card.className = 'card border border-border rounded-xl p-4 merged-card';
+	const title = document.createElement('h2');
+	title.className = 'text-sm font-semibold text-text-main pb-3 border-b border-border';
+	title.setAttribute('data-i18n', 'setup.title');
+	title.textContent = t('setup.title');
+	card.appendChild(title);
+	new SetupGuideShellCard().mount(card);
+	new HandbookShellCard().mount(card);
+	host.appendChild(card);
 };

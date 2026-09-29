@@ -1,4 +1,4 @@
-# Math
+# MATH
 
 Physics and unit model behind HAGURUMA. Every relation below is implemented in
 `src/core/math/` (plus `src/core/units/unit-utils.ts` and
@@ -104,6 +104,21 @@ traction and dynamics modules:
 $$
 r_{\text{dyn}} = \frac{C_{\text{dyn}}}{2\pi} \qquad(\text{`dynamicRadiusM` in traction-math.ts})
 $$
+
+### 3.4 Load-sensitive radius (v0.5.0)
+
+Static squash from the per-tire vertical load $F$ (static share plus
+downforce share) over the sidewall stiffness $k$ shrinks the geometric radius
+before growth expands it (`loadedDynamicRadiusM`):
+
+$$
+r(v, F) = \max\!\left(\frac{r_{\text{geo}}}{2},\; r_{\text{geo}} - \frac{F}{k}\right) \cdot k_g(v),
+\qquad r_{\text{geo}} = \frac{C_{\text{geo}}}{2\pi}
+$$
+
+Default $k = 450000$ N/m reproduces the 0.975 ISO factor at typical corner
+loads ($\approx$ 3433 N per tire on a 1400 kg car); the half-radius floor
+reads extreme overload as a flat tire instead of `NaN`.
 
 ## 4. Speed conversion — `speed-math.ts`
 
@@ -224,6 +239,13 @@ scanning the interpolated curve in 25-rpm steps.
 - Power-only rows convert to torque with $T = P \cdot KW\_TO\_NM / n$.
 - Optional Gaussian pre-filter `smoothTorquePoints`, kernel $[1,4,6,4,1]/16$,
   clamped-index edges.
+- Savitzky-Golay pre-filter `smoothTorquePointsSG` (v0.5.0): quadratic fit
+  over a 5-point window, kernel $[-3,12,17,12,-3]/35$, exact on smooth
+  quadratics at interior nodes, clamped-index edges.
+- Median pre-filter `smoothTorquePointsMedian` (v0.5.0): 5-sample median that
+  kills single-sample roller-slip spikes averaging kernels only smear.
+- Selector `smooth` accepts `true` (legacy Gaussian), `'gauss'`, `'sg'`,
+  `'median'` or falsy (off).
 - `resampleTorquePoints` caps the curve at `MAX_CURVE_POINTS = 64` by sampling
   `torqueAtRpm` on an even RPM grid (keeps share URLs compact).
 
@@ -394,6 +416,17 @@ F_{x,\max} = \sqrt{(\mu F_z)^2 - F_y^2}
 \quad\text{for } |F_y| < \mu F_z, \text{ else } 0
 $$
 
+The usable coefficient (v0.5.0) scales the road value by the tire-compound
+grip gain from `tire-compounds.ts`:
+
+$$
+\mu = \mu_{\text{road}} \cdot g_{\text{compound}},\qquad
+g \in \{0.92,\; 1.00,\; 1.08,\; 1.15,\; 1.22\}
+$$
+
+for Eco 400TW, Touring 300TW (neutral default), Sport 200TW, Semislick 100TW
+and Slick. Unknown compound ids fall back to 1.0 (legacy-safe).
+
 ### 10.4 Differential limit
 
 Total transmittable drive force by differential type:
@@ -466,6 +499,10 @@ $$
 - 0–100 km/h and the 1/4 mile ($402.33928$ m) crossing times are interpolated
   within the step by linear fraction; trap speed is interpolated at the
   distance crossing.
+- Intermediate splits (v0.5.0): 60 ft ($18.288$ m), 60 mph ($96.56064$ km/h)
+  and 160 km/h crossing times via the same interpolation, plus an optional
+  `reactionS` (clamped to [0, 5] s) added to every reported time without
+  touching the physics; trap speed is reaction-free.
 - Guards: 60 s time cap, 500 km/h divergence cap, null-result object on
   invalid inputs.
 
@@ -485,6 +522,49 @@ $$
 
 Verdict: `over` when $\text{load\%} > 100$, `high` when
 $n > 0.85\,n_{\text{red}}$, else `ok`.
+
+## 13bis. Braking and shift recovery — `brake-math.ts`, `recovery-math.ts` (v0.5.0)
+
+### Ideal brake bias
+
+Under deceleration $a_x = \text{decelG} \cdot g$ the load transfer
+$\Delta F = m\,a_x\,h/L$ moves forward, so the ideal front bias equals the
+dynamic front share:
+
+$$
+\beta_{\text{front}} = \frac{F_{z,\text{front}} + \Delta F}{F_{z,\text{front}} + F_{z,\text{rear}}},
+\qquad F_{z,\text{rear,dyn}} = \max(0,\, F_{z,\text{rear}} - \Delta F)
+$$
+
+`idealBrakeBiasFront` returns the bias plus both dynamic loads and flags
+`rearLockRisk` when the rear share drops below `REAR_LOCK_SHARE = 0.20`
+(trail-braking instability); too far forward means early front lock and entry
+understeer.
+
+### Stopping distance
+
+$$
+d = \frac{v_{\text{ms}}^2}{2\,a},\qquad
+a = \mu\,g + \frac{F_{\text{drag}} + F_{\text{grade}}}{m}
+$$
+
+Aero drag shortens the stop, downhill grade lengthens it; `stoppingDistanceM`
+returns `Infinity` when the net deceleration is not positive.
+
+### Gear-drop recovery time
+
+After an upshift the engine lands at $n_{\text{land}}$ and must climb back to
+$n_{\text{target}}$; with equivalent mass $m_{\text{eq}}$ and residual wheel
+force $F$ held constant over the short window:
+
+$$
+t = \frac{\Delta v}{a},\qquad
+a = \frac{F}{m_{\text{eq}}},\qquad
+\Delta v = (n_{\text{target}} - n_{\text{land}}) \cdot \frac{C \cdot 60}{1000 \cdot i_g i_d} \cdot \frac{1}{3.6}
+$$
+
+`gearDropRecoveryMs` returns milliseconds (first-order estimate, no turbo
+spool); 0 when already at target, `Infinity` with no residual force.
 
 ## 14. Units and axes — `unit-utils.ts`
 
@@ -514,12 +594,14 @@ layers above it):
 ```
 leaf modules (no math imports, only ../models):
   tire-math.ts   speed-math.ts   engine-curve-core.ts   inertia-math.ts   aero-math.ts
+  recovery-math.ts
 
 dyno-csv.ts      -> engine-curve-core.ts, aero-math.ts
 traction-math.ts -> speed-math.ts, engine-curve-core.ts
 shift-math.ts    -> speed-math.ts
-dynamics-math.ts -> speed-math.ts, traction-math.ts, aero-math.ts
+dynamics-math.ts -> speed-math.ts, traction-math.ts, aero-math.ts, tire-compounds (grip gain)
 cruise-math.ts   -> aero-math.ts, speed-math.ts, traction-math.ts
+brake-math.ts    -> dynamics-math.ts (GRAVITY)
 
 accel-math.ts    -> aero-math.ts, dynamics-math.ts, inertia-math.ts,
                     speed-math.ts, traction-math.ts
@@ -546,16 +628,18 @@ state -> validateCurve() -> tractiveForceAt() -> optimalShiftFor()
 
 | Module | Exports |
 |:--|:--|
-| `tire-math.ts` | `parseTire`, `clampRollingFactor`, `effectiveCircumferenceM`, `tireGrowthFactorAtSpeed`, `dynamicCircumferenceM`, `ROLLING_FACTOR_DEFAULT/MIN/MAX`, `TIRE_GROWTH_REF_KMH/MAX` |
+| `tire-math.ts` | `parseTire`, `clampRollingFactor`, `effectiveCircumferenceM`, `tireGrowthFactorAtSpeed`, `dynamicCircumferenceM`, `loadedDynamicRadiusM`, `ROLLING_FACTOR_DEFAULT/MIN/MAX`, `TIRE_GROWTH_REF_KMH/MAX`, `SIDEWALL_STIFFNESS_DEFAULT_NPM` |
 | `speed-math.ts` | `speedKmh`, `rpmFromKmh`, `toDisplaySpeed`, `fromDisplaySpeed`, `calculateSpeed`, `calculateRpm`, `KMH_PER_MPH`, `MPH_PER_KMH` |
 | `engine-curve-core.ts` | `validateCurve`, `enginePowerAt`, `engineTorqueAt`, `torqueAtRpm`, `anchorsFromPoints`, `sanitizeTorquePoints`, `torqueFromPower`, `powerFromTorque`, `clamp`, `KW_TO_NM`, `CURVE_MIN_RPM`, `POINTS_*` |
-| `dyno-csv.ts` | `parseDynoCsv`, `smoothTorquePoints`, `resampleTorquePoints`, `MAX_CURVE_POINTS` |
+| `dyno-csv.ts` | `parseDynoCsv`, `smoothTorquePoints`, `smoothTorquePointsSG`, `smoothTorquePointsMedian`, `resampleTorquePoints`, `MAX_CURVE_POINTS` |
 | `traction-math.ts` | `tractiveForceAt`, `dynamicRadiusM`, `optimalShiftFor`, `optimalShiftsForAll` (+ all `engine-curve-core` exports) |
 | `shift-math.ts` | `describeUpshift`, `describeAllUpshifts`, `judgeShifts`, `speedForLandingRpm` |
 | `aero-math.ts` | `dragForce`, `rollingForce`, `rollingForceAtSpeed`, `rollingCrrAtSpeed`, `gradeForce`, `roadLoadPowerKw`, `dragLimitedSpeedKmh`, `availableWheelKw`, `kwToHp`, `hpToKw`, `kmhToMs`, `clampGrade` |
 | `dynamics-math.ts` | `staticAxleLoads`, `longitudinalTransfer`, `lateralTransfer`, `wheelLoads`, `drivenWheelsLoad`, `downforceN`, `compressionMm`, `kammLimit`, `diffLimit`, `maxDriveForceAtSpeed`, `maxCoastForceAtSpeed`, `engineBrakeForceAt`, `criticalWheelspinSpeed`, `criticalCoastLockupSpeed`, `GRAVITY`, `TORSEN_TBR`, `ENGINE_BRAKE_FRACTION` |
 | `inertia-math.ts` | `equivalentRotatingMassKg`, `launchRotatingMassKg` |
-| `accel-math.ts` | `simulateAcceleration`, `QUARTER_MILE_M` |
+| `brake-math.ts` | `idealBrakeBiasFront`, `stoppingDistanceM`, `REAR_LOCK_SHARE` |
+| `recovery-math.ts` | `gearDropRecoveryMs` |
+| `accel-math.ts` | `simulateAcceleration`, `QUARTER_MILE_M`, `SIXTY_FT_M`, `SIXTY_MPH_KMH` |
 | `cruise-math.ts` | `cruiseCheck`, `CRUISE_MIN_RPM`, `CRUISE_HIGH_RPM_FRACTION` |
 | `unit-utils.ts` | `getSpeedStep`, `getUnitLabel`, `getMaxRpm`, `formatPower`, `toDisplayPower`, `fromDisplayPower`, `initUnit`/`storeUnit`, `initPowerUnit`/`storePowerUnit` |
 | `drivetrain-eff.ts` | `DEFAULT_DRIVETRAIN_EFF`, `efficiencyForLayout` |
@@ -671,6 +755,8 @@ Cross-checks that pin the model to reality:
 | Eclipse 1G reverse top speed | ≈ 61 km/h | 7000 rpm, $i$ 3.083, $i_d$ 4.322 |
 | Eclipse 1G 5th-gear Vmax | 215–220 km/h @ ≈ 5900–6100 rpm | drag-limited, README anchor |
 | Tire growth at 250 km/h | exactly ×1.03 | `tireGrowthFactorAtSpeed` cap |
+| Loaded radius at 3433 N | $r \cdot 2\pi \approx 0.976\,C_{\text{geo}}$ | default 450000 N/m stiffness |
+| 100-0 km/h stop on μ 1.0 | ≈ 39.3 m | $v^2/2a$ anchor |
 | Torque peak on the anchor ramp | ≥ 50 % of peak at 1000 rpm, 100 % at `peakTorqueRpm` | piecewise model |
 | Dyno tail at redline | 90 % of last measured power | `POINT_TAIL_TAPER` |
 
@@ -697,6 +783,12 @@ state's `maxGraphSpeed`. HiDPI: the backing store is `round(cssSize × dpr)` wit
 `dpr = min(devicePixelRatio, 2)`, and the context transform is set so all
 mapping stays in CSS pixels.
 
+Ghost-delta readout (v0.5.0, `describeAllShiftDeltas` in `shift-math.ts`,
+rendered as DOM rows in `#comp-shift-deltas`): at each primary up-shift
+point, $\Delta n$ compares the next-gear landing RPM of both setups at the
+same road speed and $\Delta v$ compares the same-gear shift-point speeds; the
+canvas stays curve-only.
+
 ## 24. Extending the model
 
 When adding physics:
@@ -713,16 +805,19 @@ When adding physics:
 
 | Suite | Covers |
 |:--|:--|
-| `tests/tire-math.test.ts` | parsing, rolling factor, centrifugal growth |
+| `tests/tire-math.test.ts` | parsing, rolling factor, centrifugal growth, load-sensitive radius |
+| `tests/tire-compounds.test.ts` | compound catalog order, gains, i18n labels, legacy fallback |
 | `tests/speed-math.test.ts` | SI conversions, mph boundary |
 | `tests/aero-math.test.ts` | drag, speed-sensitive rolling, grade, top-speed bisection |
 | `tests/traction-math.test.ts` | tractive force, optimal shift, curve model |
 | `tests/engine-curve-akima.test.ts` | Akima interpolation, node exactness |
-| `tests/dyno-csv.test.ts` | delimiters, units, smoothing, resampling |
-| `tests/shift-drops.test.ts` | landing RPM, drops, verdicts |
+| `tests/dyno-csv.test.ts` | delimiters, units, smoothing (gauss/SG/median), resampling |
+| `tests/shift-drops.test.ts` | landing RPM, drops, verdicts, shift-point deltas |
 | `tests/dynamics-math.test.ts` | load transfer, friction circle, dyno taper, coast lock |
 | `tests/inertia-math.test.ts` | equivalent rotating mass |
-| `tests/accel-math.test.ts` | 0–100 / 1/4 mile solver |
+| `tests/brake-math.test.ts` | bias transfer, rear-lock flag, stopping distance |
+| `tests/recovery-math.test.ts` | recovery time monotonicity and guards |
+| `tests/accel-math.test.ts` | 0–100 / 1/4 mile solver, splits, reaction offset |
 | `tests/cruise-math.test.ts` | gear pick, load, verdict |
 | `tests/drivetrain-eff.test.ts` | layout efficiency map |
 | `tests/unit-utils.test.ts` | axes, unit persistence, power formatting |

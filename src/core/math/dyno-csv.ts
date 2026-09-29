@@ -105,11 +105,88 @@ export const smoothTorquePoints = (points: TorqueCurvePoint[]): TorqueCurvePoint
 };
 
 /**
+ * @brief Savitzky-Golay smoothing weights (quadratic, 5-point window).
+ */
+const SG_KERNEL = [-3, 12, 17, 12, -3];
+
+/** Savitzky-Golay weight sum. */
+const SG_NORM = 35;
+
+/** Savitzky-Golay half window. */
+const SG_HALF = 2;
+
+/** Median filter half window (5 samples). */
+const MEDIAN_HALF = 2;
+
+/**
+ * @brief Savitzky-Golay pre-filter for raw roller torque data.
+ * @brief Quadratic fit over a 5-point window: preserves peak heights better
+ * @brief than the Gaussian kernel while rejecting ignition-spike noise; edges
+ * @brief reuse the nearest sample (clamped index), exact on smooth quadratics.
+ * @param points Sorted unique torque points.
+ * @return New smoothed points, same RPMs and length.
+ */
+export const smoothTorquePointsSG = (points: TorqueCurvePoint[]): TorqueCurvePoint[] => {
+	if (!Array.isArray(points) || points.length < 3) {
+		return points;
+	}
+	return points.map((p, i) => {
+		let acc = 0;
+		for (let k = -SG_HALF; k <= SG_HALF; k += 1) {
+			const j = Math.min(points.length - 1, Math.max(0, i + k));
+			acc += points[j].torqueNm * SG_KERNEL[k + SG_HALF];
+		}
+		return { rpm: p.rpm, torqueNm: acc / SG_NORM };
+	});
+};
+
+/**
+ * @brief Median pre-filter for raw roller torque data.
+ * @brief Kills single-sample outliers (roller slip, dropouts) that averaging
+ * @brief kernels only smear; edges reuse the nearest sample (clamped index).
+ * @param points Sorted unique torque points.
+ * @return New smoothed points, same RPMs and length.
+ */
+export const smoothTorquePointsMedian = (points: TorqueCurvePoint[]): TorqueCurvePoint[] => {
+	if (!Array.isArray(points) || points.length < 3) {
+		return points;
+	}
+	return points.map((p, i) => {
+		const window: number[] = [];
+		for (let k = -MEDIAN_HALF; k <= MEDIAN_HALF; k += 1) {
+			const j = Math.min(points.length - 1, Math.max(0, i + k));
+			window.push(points[j].torqueNm);
+		}
+		window.sort((a, b) => a - b);
+		return { rpm: p.rpm, torqueNm: window[Math.floor(window.length / 2)] };
+	});
+};
+
+/**
+ * @brief Select the configured pre-filter for a dyno CSV import.
+ * @param points Sanitized torque points.
+ * @param smooth Filter selector: true means Gaussian (legacy), false disables.
+ * @return Conditioned points, unfiltered when the selector is unknown.
+ */
+const applySmoothing = (points: TorqueCurvePoint[], smooth: boolean | string | undefined): TorqueCurvePoint[] => {
+	if (smooth === true || smooth === 'gauss') {
+		return smoothTorquePoints(points);
+	}
+	if (smooth === 'sg') {
+		return smoothTorquePointsSG(points);
+	}
+	if (smooth === 'median') {
+		return smoothTorquePointsMedian(points);
+	}
+	return points;
+};
+
+/**
  * @brief Optional smoothing for a dyno CSV import.
  */
 export interface DynoCsvOptions {
-	/** Apply the Gaussian pre-filter before resampling. */
-	smooth?: boolean;
+	/** Pre-filter selector: true (legacy Gaussian), 'gauss', 'sg', 'median' or false. */
+	smooth?: boolean | 'gauss' | 'sg' | 'median';
 }
 
 /**
@@ -137,7 +214,7 @@ export const parseDynoCsv = (text: string, options?: DynoCsvOptions): DynoCurve 
 	if (!sanitized) {
 		return null;
 	}
-	const conditioned = options?.smooth === true ? smoothTorquePoints(sanitized) : sanitized;
+	const conditioned = applySmoothing(sanitized, options?.smooth);
 	const capped = resampleTorquePoints(conditioned, MAX_CURVE_POINTS);
 	return { points: capped, ...anchorsFromPoints(capped) };
 };

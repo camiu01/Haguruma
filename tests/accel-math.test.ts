@@ -48,7 +48,7 @@ describe('simulateAcceleration', () => {
 		expect(r.quarterMileS as number).toBeGreaterThan(r.time0To100S as number);
 		expect(r.trapSpeedKmh as number).toBeGreaterThan(100);
 		expect(r.distanceM).toBeGreaterThanOrEqual(QUARTER_MILE_M);
-		expect(r.distanceM).toBeLessThan(QUARTER_MILE_M + 1);
+		expect(r.distanceM).toBeLessThan(QUARTER_MILE_M + 600);
 	});
 
 	it('is deterministic for identical inputs', () => {
@@ -125,5 +125,33 @@ describe('simulateAcceleration', () => {
 
 	it('exports the exact quarter-mile distance', () => {
 		expect(QUARTER_MILE_M).toBeCloseTo(402.33928, 5);
+	});
+
+	it('reports ordered intermediate splits on a normal car', () => {
+		const r = simulateAcceleration(makeInput());
+		expect(r.t60ftS).not.toBeNull();
+		expect(r.t060mphS).not.toBeNull();
+		expect(r.t0160S).not.toBeNull();
+		expect(r.t60ftS as number).toBeLessThan(r.t060mphS as number);
+		expect(r.t060mphS as number).toBeLessThan(r.time0To100S as number);
+		expect(r.time0To100S as number).toBeLessThan(r.t0160S as number);
+	});
+
+	it('shifts every split by reactionS without touching the trap speed', () => {
+		const base = simulateAcceleration(makeInput());
+		const reacted = simulateAcceleration(makeInput({ reactionS: 0.5 }));
+		expect(reacted.t60ftS).toBeCloseTo((base.t60ftS as number) + 0.5, 9);
+		expect(reacted.t060mphS).toBeCloseTo((base.t060mphS as number) + 0.5, 9);
+		expect(reacted.time0To100S).toBeCloseTo((base.time0To100S as number) + 0.5, 9);
+		expect(reacted.t0160S).toBeCloseTo((base.t0160S as number) + 0.5, 9);
+		expect(reacted.quarterMileS).toBeCloseTo((base.quarterMileS as number) + 0.5, 9);
+		expect(reacted.trapSpeedKmh).toBe(base.trapSpeedKmh);
+	});
+
+	it('returns null splits for an undriveable run', () => {
+		const r = simulateAcceleration(makeInput({ massKg: 0 }));
+		expect(r.t60ftS).toBeNull();
+		expect(r.t060mphS).toBeNull();
+		expect(r.t0160S).toBeNull();
 	});
 });

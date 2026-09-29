@@ -1,6 +1,6 @@
 {
   "id": "nissan_350z_base",
-  "label": "Nissan 350Z Base (6-Speed)",
+  "label": "Nissan 350Z Base (6-Speed, 3.79 FD)",
   "group": "factory",
   "preset": {
     "tire": "225/45R18",

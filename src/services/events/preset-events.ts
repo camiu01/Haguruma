@@ -11,9 +11,10 @@ import { renderGearsList } from '../../components/gear-list';
 import { enhancePresetSearch } from '../../components/preset-search';
 import { t } from '../../core/i18n/language';
 import { efficiencyForLayout } from '../../config/drivetrain-eff';
+import { DIFF_PRESETS, findDiffPreset } from '../../config/diff-presets';
 import { syncEngineInputs } from './engine-events';
 import { syncRoadLoadInputs } from './road-load-events';
-import { syncRunningGearInputs } from './running-gear-events';
+import { applyDiffModelTo, syncRunningGearInputs } from './running-gear-events';
 
 /** Catalog group to i18n group label key. */
 const GROUP_LABEL_KEYS: Record<string, 'preset.groupFactory' | 'preset.groupCommunity'> = {
@@ -68,6 +69,7 @@ export const applyPreset = (refs: ElementRefs, preset: GearPreset, render: () =>
 	refs.primaryFd.value = String(preset.fd);
 	refs.primaryRedline.value = String(preset.redline);
 	syncFdVariants(refs, preset.finalDrives, preset.fd);
+	syncDrivetrainOptions(refs, preset);
 	syncRoadLoadInputs(refs);
 	syncEngineInputs(refs);
 	syncRunningGearInputs(refs);
@@ -178,6 +180,98 @@ export const syncFdVariants = (refs: ElementRefs, variants: number[] | undefined
 };
 
 /**
+ * @brief Append one labeled option to a select.
+ * @param select Target dropdown element.
+ * @param value Option value.
+ * @param label Visible option text.
+ * @return void
+ */
+const addDrivOpt = (select: HTMLSelectElement, value: string, label: string): void => {
+	const option = document.createElement('option');
+	option.value = value;
+	option.textContent = label;
+	select.appendChild(option);
+};
+
+/**
+ * @brief Populate the aftermarket drivetrain-option select for one preset.
+ * @brief Hidden when the preset ships no drivetrain_options block.
+ * @param refs Cached DOM handles.
+ * @param preset Preset data, built-in or user-defined.
+ * @return void
+ */
+export const syncDrivetrainOptions = (refs: ElementRefs, preset: GearPreset): void => {
+	const select = refs.drivetrainOptVariant;
+	select.innerHTML = '';
+	const opts = preset.drivetrainOptions;
+	const fds = opts?.finalDrives && opts.finalDrives.length >= 2 ? opts.finalDrives : [];
+	const sets = opts?.gearsets ?? [];
+	const lsds = opts?.lsds ?? [];
+	if (fds.length === 0 && sets.length === 0 && lsds.length === 0) {
+		select.classList.add('hidden');
+		return;
+	}
+	addDrivOpt(select, 'stock', t('primary.drivOptStock'));
+	for (const v of fds) {
+		addDrivOpt(select, `fd:${v}`, `FD ${v.toFixed(2)} : 1`);
+	}
+	sets.forEach((g, i) => {
+		addDrivOpt(select, `gear:${i}`, g.label);
+	});
+	for (const id of lsds) {
+		const found = findDiffPreset(id);
+		if (found) {
+			addDrivOpt(select, `lsd:${id}`, t(found.labelKey));
+		}
+	}
+	select.value = 'stock';
+	select.classList.remove('hidden');
+};
+
+/**
+ * @brief Apply one aftermarket drivetrain option without touching the base preset.
+ * @param refs Cached DOM handles.
+ * @param value Selected option value (stock, fd:, gear: or lsd:).
+ * @param render Full refresh callback.
+ * @return void
+ */
+const applyDrivetrainOption = (refs: ElementRefs, value: string, render: () => void): void => {
+	const preset = resolvePreset(refs.presetSelector.value);
+	if (value === 'stock') {
+		if (preset) {
+			applyPreset(refs, preset, render);
+		}
+		return;
+	}
+	if (value.startsWith('fd:')) {
+		const v = parseFloat(value.slice(3));
+		if (Number.isFinite(v) && v > 0) {
+			state.primaryFd = v;
+			refs.primaryFd.value = String(v);
+			render();
+		}
+		return;
+	}
+	if (value.startsWith('gear:') && preset?.drivetrainOptions?.gearsets) {
+		const set = preset.drivetrainOptions.gearsets[Number(value.slice(5))];
+		if (set && Array.isArray(set.ratios) && set.ratios.length > 0) {
+			state.gears = [...set.ratios];
+			renderGearsList(refs, () => render());
+			render();
+		}
+		return;
+	}
+	if (value.startsWith('lsd:')) {
+		const id = value.slice(4);
+		if (DIFF_PRESETS.some((p) => p.id === id)) {
+			applyDiffModelTo(state.runningGear, id);
+			syncRunningGearInputs(refs);
+			render();
+		}
+	}
+};
+
+/**
  * @brief Bind the preset vehicle dropdown.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback.
@@ -186,7 +280,8 @@ export const syncFdVariants = (refs: ElementRefs, variants: number[] | undefined
 export const bindPresetEvents = (refs: ElementRefs, render: () => void): void => {
 	buildPresetOptions(refs.presetSelector);
 	buildPresetOptions(refs.btnLoadPresetComp);
-	enhancePresetSearch(refs.presetSelector);
+	enhancePresetSearch(refs.presetSelector, { fullWidth: true });
+	enhancePresetSearch(refs.btnLoadPresetComp, { fullWidth: true });
 	refs.presetSelector.addEventListener('change', (e) => {
 		const preset = resolvePreset((e.target as HTMLSelectElement).value);
 		if (!preset) {
@@ -202,5 +297,8 @@ export const bindPresetEvents = (refs: ElementRefs, render: () => void): void =>
 		state.primaryFd = v;
 		refs.primaryFd.value = String(v);
 		render();
+	});
+	refs.drivetrainOptVariant.addEventListener('change', (e) => {
+		applyDrivetrainOption(refs, (e.target as HTMLSelectElement).value, render);
 	});
 };

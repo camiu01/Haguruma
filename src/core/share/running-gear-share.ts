@@ -5,6 +5,7 @@
 import type { AppState, DifferentialType, DrivetrainLayout, RunningGear } from '../models';
 import { defaultRunningGear } from '../state/app-state';
 import { findDiffPreset } from '../../config/diff-presets';
+import { findTireCompound } from '../../config/tire-compounds';
 
 /**
  * @brief Serialize a running-gear setup with a key prefix.
@@ -21,6 +22,9 @@ export const encodeRunningGear = (p: URLSearchParams, rg: RunningGear, prefix: s
 	p.set(`${prefix}db`, n2(rg.differentialBias)); p.set(`${prefix}dc`, n2(rg.differentialCoastBias ?? 0));
 	if (rg.differentialModelId) {
 		p.set(`${prefix}dm`, rg.differentialModelId);
+	}
+	if (rg.tireCompoundId) {
+		p.set(`${prefix}tc`, rg.tireCompoundId);
 	}
 	p.set(`${prefix}sf`, String(Math.round(rg.springRateFrontNmm)));
 	p.set(`${prefix}sr`, String(Math.round(rg.springRateRearNmm))); p.set(`${prefix}lat`, n2(rg.lateralG));
@@ -92,6 +96,10 @@ export const decodeRunningGearParams = (params: URLSearchParams, prefix: string)
 	const dm = params.get(`${prefix}dm`);
 	if (dm && findDiffPreset(dm)) {
 		out.differentialModelId = dm;
+	}
+	const tc = params.get(`${prefix}tc`);
+	if (tc && findTireCompound(tc)) {
+		out.tireCompoundId = tc;
 	}
 	return out;
 };

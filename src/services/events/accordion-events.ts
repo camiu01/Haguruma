@@ -42,6 +42,25 @@ export const bindAccordionEvents = (_refs: ElementRefs): void => {
 };
 
 /**
+ * @brief Open every collapsed accordion ancestor of an element.
+ * @brief Keeps nav scrolling useful when a parent card is collapsed.
+ * @param el Target element inside nested accordions.
+ * @return void
+ */
+export const openAccordionTree = (el: HTMLElement): void => {
+	let node: HTMLElement | null = el.parentElement;
+	while (node) {
+		if (node.hasAttribute('data-accordion-content') && !node.classList.contains('open')) {
+			node.classList.add('open');
+			const section = node.parentElement;
+			section?.querySelector('[data-accordion-header]')?.setAttribute('aria-expanded', 'true');
+			section?.querySelector('[data-chevron]')?.classList.add('open');
+		}
+		node = node.parentElement;
+	}
+};
+
+/**
  * @brief Toggle one accordion section and its expanded state.
  * @param header Section header acting as the button.
  * @param content Collapsible section body.

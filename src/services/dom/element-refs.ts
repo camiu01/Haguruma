@@ -6,6 +6,7 @@ export interface ElementRefs {
 	primaryTire: HTMLInputElement;
 	primaryFd: HTMLInputElement;
 	primaryFdVariant: HTMLSelectElement;
+	drivetrainOptVariant: HTMLSelectElement;
 	primaryRedline: HTMLInputElement;
 	graphMaxSpeed: HTMLInputElement;
 	gearsContainer: HTMLElement;
@@ -15,19 +16,17 @@ export interface ElementRefs {
 	powerUnitGroup: HTMLElement;
 	powerUnitKw: HTMLButtonElement;
 	powerUnitCv: HTMLButtonElement;
-	themeToggle: HTMLButtonElement;
 	btnMenu: HTMLButtonElement;
 	mobileDrawer: HTMLElement;
 	mobileDrawerBackdrop: HTMLElement;
 	mobileDrawerClose: HTMLButtonElement;
-	drawerLangHost: HTMLElement;
-	drawerUnitHost: HTMLElement;
-	drawerPresetHost: HTMLElement;
 	langGroup: HTMLElement;
 	unitGroup: HTMLElement;
 	langEn: HTMLButtonElement;
 	langIt: HTMLButtonElement;
 	presetSelector: HTMLSelectElement;
+	setupLevel: HTMLSelectElement;
+	compLevel: HTMLSelectElement;
 	primaryCirc: HTMLElement;
 	tireDot: HTMLElement;
 	tireError: HTMLElement;
@@ -98,6 +97,11 @@ export interface ElementRefs {
 	compareWrap: HTMLElement;
 	btnShare: HTMLButtonElement;
 	shareFab: HTMLButtonElement;
+	btnQr: HTMLButtonElement;
+	qrModal: HTMLElement;
+	qrModalBackdrop: HTMLElement;
+	qrModalClose: HTMLButtonElement;
+	qrImage: HTMLElement;
 	shareFeedback: HTMLElement;
 	unitLabels: NodeListOf<HTMLElement>;
 	powerUnitLabels: NodeListOf<HTMLElement>;
@@ -107,6 +111,7 @@ export interface ElementRefs {
 	myCarsModalClose: HTMLButtonElement;
 	rgLayout: HTMLSelectElement;
 	rgDiff: HTMLSelectElement;
+	rgTire: HTMLSelectElement;
 	rgBias: HTMLInputElement;
 	rgCoast: HTMLInputElement;
 	rgWeight: HTMLInputElement;
@@ -130,8 +135,8 @@ export interface ElementRefs {
 	btnExpandGraph: HTMLButtonElement;
 	btnExportSvg: HTMLButtonElement;
 	btnPrint: HTMLButtonElement;
-	btnExportIni: HTMLButtonElement;
-	btnExportGearJson: HTMLButtonElement;
+	exportFormat: HTMLSelectElement;
+	btnExportGo: HTMLButtonElement;
 	btnImportIni: HTMLButtonElement;
 	drivetrainImportInput: HTMLInputElement;
 	drivetrainStatus: HTMLElement;
@@ -162,6 +167,7 @@ export const getElementRefs = (): ElementRefs => {
 		primaryTire: get<HTMLInputElement>('primary-tire'),
 		primaryFd: get<HTMLInputElement>('primary-fd'),
 		primaryFdVariant: get<HTMLSelectElement>('primary-fd-variant'),
+		drivetrainOptVariant: get<HTMLSelectElement>('drivetrain-opt-variant'),
 		primaryRedline: get<HTMLInputElement>('primary-redline'),
 		graphMaxSpeed: get<HTMLInputElement>('graph-max-speed'),
 		gearsContainer: get<HTMLElement>('gears-container'),
@@ -171,19 +177,17 @@ export const getElementRefs = (): ElementRefs => {
 		powerUnitGroup: get<HTMLElement>('power-unit-group'),
 		powerUnitKw: get<HTMLButtonElement>('power-unit-kw'),
 		powerUnitCv: get<HTMLButtonElement>('power-unit-cv'),
-		themeToggle: get<HTMLButtonElement>('theme-toggle'),
 		btnMenu: get<HTMLButtonElement>('btn-menu'),
 		mobileDrawer: get<HTMLElement>('mobile-drawer'),
 		mobileDrawerBackdrop: get<HTMLElement>('mobile-drawer-backdrop'),
 		mobileDrawerClose: get<HTMLButtonElement>('mobile-drawer-close'),
-		drawerLangHost: get<HTMLElement>('drawer-lang-host'),
-		drawerUnitHost: get<HTMLElement>('drawer-unit-host'),
-		drawerPresetHost: get<HTMLElement>('drawer-preset-host'),
 		langGroup: get<HTMLElement>('lang-group'),
 		unitGroup: get<HTMLElement>('unit-group'),
 		langEn: get<HTMLButtonElement>('lang-en'),
 		langIt: get<HTMLButtonElement>('lang-it'),
 		presetSelector: get<HTMLSelectElement>('preset-selector'),
+		setupLevel: get<HTMLSelectElement>('setup-level'),
+		compLevel: get<HTMLSelectElement>('comp-level'),
 		primaryCirc: get<HTMLElement>('primary-circ-display'),
 		tireDot: get<HTMLElement>('tire-valid-indicator'),
 		tireError: get<HTMLElement>('tire-error'),
@@ -254,6 +258,11 @@ export const getElementRefs = (): ElementRefs => {
 		compareWrap: get<HTMLElement>('compare-table-wrap'),
 		btnShare: get<HTMLButtonElement>('btn-share'),
 		shareFab: get<HTMLButtonElement>('share-fab'),
+		btnQr: get<HTMLButtonElement>('btn-qr'),
+		qrModal: get<HTMLElement>('qr-modal'),
+		qrModalBackdrop: get<HTMLElement>('qr-modal-backdrop'),
+		qrModalClose: get<HTMLButtonElement>('qr-modal-close'),
+		qrImage: get<HTMLElement>('qr-image'),
 		shareFeedback: get<HTMLElement>('share-feedback'),
 		unitLabels: document.querySelectorAll('.unit-label'),
 		powerUnitLabels: document.querySelectorAll('.power-unit-label'),
@@ -263,6 +272,7 @@ export const getElementRefs = (): ElementRefs => {
 		myCarsModalClose: get<HTMLButtonElement>('mycars-modal-close'),
 		rgLayout: get<HTMLSelectElement>('rg-layout'),
 		rgDiff: get<HTMLSelectElement>('rg-diff'),
+		rgTire: get<HTMLSelectElement>('rg-tire'),
 		rgBias: get<HTMLInputElement>('rg-bias'),
 		rgCoast: get<HTMLInputElement>('rg-coast'),
 		rgWeight: get<HTMLInputElement>('rg-weight'),
@@ -286,8 +296,8 @@ export const getElementRefs = (): ElementRefs => {
 		btnExpandGraph: get<HTMLButtonElement>('btn-expand-graph'),
 		btnExportSvg: get<HTMLButtonElement>('btn-export-svg'),
 		btnPrint: get<HTMLButtonElement>('btn-print'),
-		btnExportIni: get<HTMLButtonElement>('btn-export-ini'),
-		btnExportGearJson: get<HTMLButtonElement>('btn-export-gear-json'),
+		exportFormat: get<HTMLSelectElement>('export-format'),
+		btnExportGo: get<HTMLButtonElement>('btn-export-go'),
 		btnImportIni: get<HTMLButtonElement>('btn-import-ini'),
 		drivetrainImportInput: get<HTMLInputElement>('drivetrain-import-input'),
 		drivetrainStatus: get<HTMLElement>('drivetrain-status'),

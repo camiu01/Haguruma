@@ -55,9 +55,10 @@ const repositionListbox = (input: HTMLInputElement, listbox: HTMLElement): void 
 /**
  * @brief Enhance a preset select with a searchable combobox.
  * @param select Native select to wrap, kept for form/change contract.
+ * @param options Full-width wrapper for selects that span their container.
  * @return void
  */
-export const enhancePresetSearch = (select: HTMLSelectElement): void => {
+export const enhancePresetSearch = (select: HTMLSelectElement, options?: { fullWidth?: boolean }): void => {
 	if (select.parentElement?.classList.contains('preset-search')) {
 		return;
 	}
@@ -69,7 +70,9 @@ export const enhancePresetSearch = (select: HTMLSelectElement): void => {
 	if (select.classList.contains('md:block')) {
 		wrapper.classList.add('md:block');
 	}
-	wrapper.classList.add('max-w-[170px]');
+	if (!options?.fullWidth) {
+		wrapper.classList.add('max-w-[170px]');
+	}
 	const parent = select.parentElement;
 	if (parent) {
 		parent.insertBefore(wrapper, select);

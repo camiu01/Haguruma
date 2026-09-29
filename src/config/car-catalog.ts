@@ -3,6 +3,8 @@
  * @brief Vehicle catalog assembled from per-car files via Vite glob.
  */
 import type { GearPreset } from '../core/models';
+import { TIRE_COMPOUND_IDS } from './tire-compounds';
+import { DIFF_PRESETS } from './diff-presets';
 
 /**
  * @brief Strict shared model for every vehicle configuration file.
@@ -87,6 +89,7 @@ const validatePresetBody = (preset: unknown): string[] => {
 	}
 	errors.push(...validateGearRatios(p.gears));
 	errors.push(...validateFinalDrives(p.finalDrives, p.fd));
+	errors.push(...validateDrivetrainOptions(p.drivetrainOptions, p.fd));
 	errors.push(...validateRunningGearBody(p.runningGear));
 	return errors;
 };
@@ -134,6 +137,60 @@ const validateFinalDrives = (drives: unknown, fd: unknown): string[] => {
 	return [];
 };
 
+/** Maximum aftermarket gearsets per preset. */
+const MAX_GEARSETS = 8;
+
+/**
+ * @brief Validate optional aftermarket drivetrain variants.
+ * @param options Unknown drivetrainOptions value.
+ * @param fd Stock final drive that alternate lists must contain.
+ * @return Error list, empty when absent or valid.
+ */
+const validateDrivetrainOptions = (options: unknown, fd: unknown): string[] => {
+	if (options === undefined) {
+		return [];
+	}
+	if (typeof options !== 'object' || options === null) {
+		return ['preset.drivetrainOptions must be an object'];
+	}
+	const o = options as Record<string, unknown>;
+	if (o.finalDrives !== undefined) {
+		const errs = validateFinalDrives(o.finalDrives, fd);
+		if (errs.length > 0) {
+			return errs.map((e) => e.replace('preset.finalDrives', 'preset.drivetrainOptions.finalDrives'));
+		}
+	}
+	if (o.gearsets !== undefined) {
+		if (!Array.isArray(o.gearsets) || o.gearsets.length === 0 || o.gearsets.length > MAX_GEARSETS) {
+			return ['preset.drivetrainOptions.gearsets must hold 1-8 entries'];
+		}
+		for (const g of o.gearsets) {
+			if (typeof g !== 'object' || g === null) {
+				return ['preset.drivetrainOptions.gearsets entries must be objects'];
+			}
+			const set = g as Record<string, unknown>;
+			if (typeof set.label !== 'string' || set.label.length === 0 || set.label.length > 40) {
+				return ['preset.drivetrainOptions.gearsets labels must be 1-40 chars'];
+			}
+			const ratios = set.ratios as unknown;
+			if (!Array.isArray(ratios) || ratios.length === 0 || !(ratios as unknown[]).every((r) => typeof r === 'number' && r >= 0.4 && r <= 6)) {
+				return ['preset.drivetrainOptions.gearsets ratios must be within 0.4-6.0'];
+			}
+			for (let i = 1; i < (ratios as number[]).length; i += 1) {
+				if (!((ratios as number[])[i] < (ratios as number[])[i - 1])) {
+					return ['preset.drivetrainOptions.gearsets ratios must be strictly decreasing'];
+				}
+			}
+		}
+	}
+	if (o.lsds !== undefined) {
+		if (!Array.isArray(o.lsds) || !(o.lsds as unknown[]).every((id) => typeof id === 'string' && DIFF_PRESETS.some((p) => p.id === id))) {
+			return ['preset.drivetrainOptions.lsds must hold catalog differential ids'];
+		}
+	}
+	return [];
+};
+
 /**
  * @brief Validate the runningGear block when present.
  * @param rg Unknown runningGear value.
@@ -154,6 +211,9 @@ const validateRunningGearBody = (rg: unknown): string[] => {
 	}
 	if (!diffs.includes(g.differentialType as string)) {
 		return ['preset.runningGear.differentialType has an unknown type'];
+	}
+	if (g.tireCompoundId !== undefined && !TIRE_COMPOUND_IDS.has(g.tireCompoundId as string)) {
+		return ['preset.runningGear.tireCompoundId has an unknown compound'];
 	}
 	return [];
 };

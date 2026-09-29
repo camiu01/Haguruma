@@ -20,7 +20,9 @@ import { applyUnitLabels, syncPowerUnitToggle, syncUnitToggle } from './services
 import { renderGearsList } from './components/gear-list';
 import { injectSetupGuideShell, renderSetupGuide } from './components/setup-guide';
 import { injectCruiseShell, renderCruise } from './components/cruise-card';
+import { injectTireSizeShell } from './components/tire-size-tool';
 import { renderAll } from './views/render-all';
+import { initSetupLevel, syncSetupLevel } from './services/events/setup-level-events';
 import { state } from './core/state/app-state';
 import { resizeCanvas } from './services/graph/canvas-setup';
 
@@ -40,11 +42,17 @@ const bootstrap = (): void => {
 		throw new Error('Missing required element: cruise-mount');
 	}
 	injectCruiseShell(cruiseMount);
+	const tireMount = document.getElementById('tire-size-mount');
+	if (!tireMount) {
+		throw new Error('Missing required element: tire-size-mount');
+	}
+	injectTireSizeShell(tireMount);
 	const refs = getElementRefs();
 	const render = (): void => renderAll(refs);
 	initLang();
 	state.unit = initUnit();
 	state.powerUnit = initPowerUnit();
+	initSetupLevel();
 	initTheme();
 	bindAllEvents(refs, render);
 	syncLangToggle(refs);
@@ -54,6 +62,7 @@ const bootstrap = (): void => {
 	applyUnitLabels(refs);
 	syncRoadLoadInputs(refs);
 	syncEngineInputs(refs);
+	syncSetupLevel(refs);
 	syncRunningGearInputs(refs);
 	syncComparisonInputs(refs);
 	syncCustomPowerField(refs);

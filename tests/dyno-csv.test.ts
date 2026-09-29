@@ -3,7 +3,7 @@
  * @brief Unit tests for dyno CSV parsing, resampling and derived anchors.
  */
 import { describe, expect, it } from 'vitest';
-import { MAX_CURVE_POINTS, parseDynoCsv, smoothTorquePoints } from '../src/core/math/dyno-csv';
+import { MAX_CURVE_POINTS, parseDynoCsv, smoothTorquePoints, smoothTorquePointsMedian, smoothTorquePointsSG } from '../src/core/math/dyno-csv';
 import { KW_TO_NM, powerFromTorque, sanitizeTorquePoints, torqueAtRpm, validateCurve } from '../src/core/math/traction-math';
 import type { TorqueCurvePoint } from '../src/core/models';
 
@@ -159,5 +159,40 @@ describe('smoothTorquePoints', () => {
 		expect(soft).not.toBeNull();
 		expect(raw!.peakTorqueNm).toBe(260);
 		expect(soft!.peakTorqueNm).toBeLessThan(260);
+	});
+});
+
+describe('dyno smoothing upgrades', () => {
+	it('keeps smooth quadratics exact through the Savitzky-Golay filter', () => {
+		const quad: TorqueCurvePoint[] = [1000, 2000, 3000, 4000, 5000, 6000, 7000].map((rpm) => ({
+			rpm,
+			torqueNm: (rpm / 1000) * (rpm / 1000) * 10,
+		}));
+		const smoothed = smoothTorquePointsSG(quad);
+		for (let i = 2; i < smoothed.length - 2; i += 1) {
+			expect(smoothed[i].torqueNm).toBeCloseTo(quad[i].torqueNm, 6);
+		}
+		for (const p of smoothed) {
+			expect(Number.isFinite(p.torqueNm)).toBe(true);
+		}
+		expect(smoothTorquePointsSG(quad.slice(0, 2))).toEqual(quad.slice(0, 2));
+	});
+	it('rejects single-sample spikes with the median filter', () => {
+		const base: TorqueCurvePoint[] = [1000, 2000, 3000, 4000, 5000].map((rpm) => ({ rpm, torqueNm: 150 }));
+		const spiky = base.map((p, i) => (i === 2 ? { ...p, torqueNm: 500 } : p));
+		for (const p of smoothTorquePointsMedian(spiky)) {
+			expect(p.torqueNm).toBe(150);
+		}
+	});
+	it('parses CSV imports with every smoothing selector', () => {
+		const csv = '1000,150\n2000,160\n3000,260\n4000,165\n5000,155';
+		for (const smooth of [true, false, 'gauss', 'sg', 'median'] as const) {
+			const curve = parseDynoCsv(csv, { smooth });
+			expect(curve).not.toBeNull();
+			expect(curve!.points.length).toBe(5);
+		}
+		const legacy = parseDynoCsv(csv, { smooth: true });
+		const gauss = parseDynoCsv(csv, { smooth: 'gauss' });
+		expect(gauss!.points).toEqual(legacy!.points);
 	});
 });

@@ -26,20 +26,26 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 - **Coast / engine-braking model** — closed-throttle drag through the coast-side differential lock, with a per-gear coast lock-up speed readout (inside-wheel lockup under engine braking).
 - **Dyno CSV import** — load a measured torque or power curve (comma/semicolon/tab, decimal comma, Nm/kgm, kW/cv/hp, header or header-less); the anchor model is replaced until you switch back.
 - **Layout-mapped efficiency** — picking FWD/RWD/AWD in the running-gear card also sets the default drivetrain efficiency (0.90 / 0.85 / 0.80).
-- **Acceleration solver** — fixed-step Euler simulation of 0-100 km/h and the quarter mile, including optional rotating inertia (per-gear when `I` values are set), shift torque cut, and launch clutch-slip `launchRpm`.
+- **Acceleration solver** — fixed-step Euler simulation of 0-100 km/h and the quarter mile, including optional rotating inertia (per-gear when `I` values are set), shift torque cut, and launch clutch-slip `launchRpm`. Splits follow the display unit: 0-400 m / 0-160 in km/h mode, 60 ft / 0-60 mph / 1/4-mile trap speed in mph mode.
 - **Highway cruising check** — required vs available wheel power and gear RPM at a chosen cruise speed.
 - **Graph export** — PNG (canvas) and SVG (vector) downloads; print stylesheet for PDF via the browser print dialog.
-- **KPI strip** — live redline, top speed, aero wall, grip limit, 0-100 and 1/4 mile cells.
+- **Sim & telemetry export** — one dropdown for Assetto Corsa `.ini`, drivetrain `.json`, BeamNG `.jbeam`, and tabular CSV for MoTeC / AiM Race Studio.
+- **KPI strip** — live redline, top speed, aero wall, grip limit, and unit-aware acceleration cells.
+- **Brake bias & stopping distance** — ideal front/rear bias from deceleration load transfer with a rear-lock flag, plus `v²/2a` stopping distance with aero/grade correction (`brake-math.ts`).
+- **Gear-drop recovery** — milliseconds to climb back to peak torque after each upshift from equivalent inertia (`recovery-math.ts`).
+- **Tire size comparator** — stock vs plus-size diameters, speedometer error at 50/100/130 km/h, and gearing shift deltas, live-synced from primary/secondary state.
+- **Tire compounds** — treadwear catalog (Eco 400TW → Slick) scaling road mu via grip gain.
 - **Downforce integration** — aerodynamic downforce from lift coefficient and reference area, split front/rear, adds to vertical load for friction-limited grip.
 - **Translation** — English and Italian, persisted. Uses `data-i18n` (text), `data-i18n-tip` (tooltip), `data-i18n-ph` (placeholder). All English copy lives in `dictionary.en.ts`, all Italian in `dictionary.it.ts`.
 - **Setup troubleshooting wizard** — entry/mid/exit × understeer/oversteer/transfer/bottoming decision tree with ranked adjustments, severity badges and trade-off warnings.
 - **Setup handbook** — offline feel-the-car cues (braking, mid-corner, exit, pyrometer reading) plus the 8-step systematic setup procedure, rendered from reusable `Card` components.
 - **Android APK** — Capacitor wrapper; manual **Build APK** workflow assembles a debug APK artifact on demand.
 - **Custom cars** — save/load complete setups (tire, FD, redline, gears, reverse, mass, Cd, area, power, torque curve anchors) to localStorage. Export/import JSON files.
-- **Share via URL** — encodes all setup parameters into the URL hash. One-click copy, paste to share.
+- **Share via URL** — encodes all setup parameters into the URL hash (packed Base64URL `c` token with verbose fallback). One-click copy, plus an offline **QR code** modal for laptop-to-phone transfer.
+- **Setup levels** — Easy / Medium / Full gating of setup inputs, persisted in localStorage; the comparison card follows the primary level and can be lowered independently.
 - **PWA** — `manifest.webmanifest` with standalone display, maskable icons; service worker for offline asset caching.
 - **Theme system** — three-way toggle: dark (default) → oled (pure black) → light (white). Persisted in localStorage. Graph canvas palette follows the theme.
-- **Mobile-first layout** — slide-over drawer (lang/unit/power-unit/presets/settings), compact header, 16/9 graph canvas, horizontal-scroll tables with sticky first column, 44px touch targets, `visualViewport` keyboard-avoidance.
+- **Mobile-first layout** — slide-over drawer (nav, garage, units/theme, share/QR), compact header, 16/9 graph canvas, horizontal-scroll tables with sticky first column, 44px touch targets, `visualViewport` keyboard-avoidance.
 
 ## Physics engine
 
@@ -47,13 +53,17 @@ HAGURUMA uses strict SI discipline internally:
 
 | Module | Key physics |
 |---|---|
-| `traction-math.ts` | Engine torque from power anchors (`KW_TO_NM = 30000/π` ≈ 9549.3); linear torque interpolation below peak torque; tractive force `F = T × i × η / r_dyn`; optimal shift via force-curve crossing with backward scan; custom dyno point curves with linear interpolation |
-| `dyno-csv.ts` | Dyno CSV parsing (header/header-less, `;`/`,`/tab, decimal comma, Nm/kgm, kW/cv/hp), resampling to 64 points, derived peak-torque/power anchors |
+| `tire-math.ts` | `205/55R16` parsing, loaded rolling circumference, centrifugal growth, load-sensitive dynamic radius |
+| `engine-curve-core.ts` | Single source of truth for `engineTorqueAt` / `tractiveForceAt` / optimal shift; Akima interpolation over measured dyno nodes with linear fallback, dyno-tail taper |
+| `traction-math.ts` | Engine torque from power anchors (`KW_TO_NM = 30000/π` ≈ 9549.3); linear torque interpolation below peak torque; tractive force `F = T × i × η / r_dyn`; optimal shift via force-curve crossing with backward scan |
+| `dyno-csv.ts` | Dyno CSV parsing (header/header-less, `;`/`,`/tab, decimal comma, Nm/kgm, kW/cv/hp), resampling to 64 points, derived peak-torque/power anchors, Gaussian / Savitzky-Golay / median pre-filters |
 | `speed-math.ts` | SI core `speedKmh` / `rpmFromKmh`; mph applied only at display boundary (`KMH_PER_MPH = 1.609344`) |
 | `aero-math.ts` | Drag, rolling resistance, grade forces; drag-limited top-speed bisection; handles negative-grade power |
-| `dynamics-math.ts` | Longitudinal & lateral load transfer (full per-axle lateral transfer, no 50% undercount); Kamm friction circle; differential torque bias; downforce from lift coefficients; proportional lateral force distribution (`Fy ∝ Fz`); coast/engine-braking force with coast-lock lockup scan |
+| `dynamics-math.ts` | Longitudinal & lateral load transfer (full per-axle lateral transfer, no 50% undercount); Kamm friction circle; differential torque bias; downforce from lift coefficients; proportional lateral force distribution (`Fy ∝ Fz`); coast/engine-braking force with coast-lock lockup scan; tire-compound grip gain (Eco 400TW → Slick) |
+| `brake-math.ts` | Ideal front brake bias from deceleration load transfer with rear-lock flag; `v²/2a` stopping distance with aero/grade correction |
+| `recovery-math.ts` | Gear-drop recovery time in ms from equivalent mass and residual wheel force |
 | `shift-math.ts` | Kinematic landing RPM (`n_land = n_shift × i_next / i_curr`); direct ratio calculation eliminates conversion drift |
-| `accel-math.ts` | Forward-Euler time-step solver for 0-100 and 1/4 mile; shift window; optional rotating mass and launch RPM |
+| `accel-math.ts` | Forward-Euler time-step solver for 0-100 and 1/4 mile; 60 ft / 0-60 mph / 0-160 splits plus trap speed and reaction offset; shift window; optional rotating mass and launch RPM |
 | `inertia-math.ts` | Reflects engine/wheel moments of inertia through the current gear into an equivalent translational mass |
 | `cruise-math.ts` | Highest gear with RPM ≥ floor, required/available wheel power, OK / high / over verdict |
 
@@ -61,16 +71,16 @@ HAGURUMA uses strict SI discipline internally:
 
 | Preset | Tire | FD | Redline | Forward gears | Reverse | Power |
 |:---|---|---|---|---|---|---|
-| Mitsubishi Eclipse 1G GS (5MT) | `195/60R15` | `4.322` | `7000` | 3.363 / 1.947 / 1.285 / 0.939 / 0.756 | 3.083 | 110 kW |
-| Mazda Miata NA (5MT) | `185/60R14` | `4.30` | `7200` | 3.136 / 1.888 / 1.330 / 1.000 / 0.814 | 3.758 | 85 kW |
-| Honda S2000 AP1 (6MT) | `225/50R16` | `4.10` | `9000` | 3.133 / 2.045 / 1.481 / 1.161 / 0.971 / 0.811 | 2.800 | 177 kW |
-| BMW M3 E46 (6MT) | `255/40R18` | `3.62` | `8000` | 4.23 / 2.53 / 1.67 / 1.23 / 1.00 / 0.83 | 3.75 | 252 kW |
-| BMW M3 E36 3.2 (5MT) | `225/45R17` | `3.15` | `7600` | 4.23 / 2.53 / 1.67 / 1.23 / 1.00 | 3.68 | 236 kW |
-| Volvo 240 Turbo (5MT) | `195/65R15` | `4.10` | `6000` | 3.67 / 2.17 / 1.37 / 1.00 / 0.79 | 3.55 | 114 kW |
-| Toyota GR86 / BRZ (6MT) | `215/40R18` | `4.10` | `7500` | 3.626 / 2.188 / 1.541 / 1.213 / 1.000 / 0.767 | 3.438 | 168 kW |
-| Porsche 911 GT3 991 (6MT) | `305/30R20` | `3.97` | `9000` | 3.75 / 2.38 / 1.72 / 1.34 / 1.11 / 0.96 | 3.42 | 349 kW |
+| Mitsubishi Eclipse 1G GS (5-Speed) | `195/60R15` | `4.322` | `7000` | 3.363 / 1.947 / 1.285 / 0.939 / 0.756 | 3.083 | 110 kW |
+| Mazda Miata NA (5-Speed) | `185/60R14` | `4.30` | `7200` | 3.136 / 1.888 / 1.330 / 1.000 / 0.814 | 3.758 | 85 kW |
+| Honda S2000 AP1 (6-Speed) | `225/50R16` | `4.10` | `9000` | 3.133 / 2.045 / 1.481 / 1.161 / 0.971 / 0.811 | 2.800 | 177 kW |
+| BMW M3 E46 (6-Speed) | `255/40R18` | `3.62` | `8000` | 4.23 / 2.53 / 1.67 / 1.23 / 1.00 / 0.83 | 3.75 | 252 kW |
+| BMW M3 E36 3.2 (5-Speed) | `225/45R17` | `3.15` | `7600` | 4.23 / 2.53 / 1.67 / 1.23 / 1.00 | 3.68 | 236 kW |
+| Volvo 240 Turbo (5-Speed) | `195/65R15` | `4.10` | `6000` | 3.67 / 2.17 / 1.37 / 1.00 / 0.79 | 3.55 | 114 kW |
+| Toyota GR86 / BRZ (6-Speed) | `215/40R18` | `4.10` | `7500` | 3.626 / 2.188 / 1.541 / 1.213 / 1.000 / 0.767 | 3.438 | 168 kW |
+| Porsche 911 GT3 991 (6-Speed) | `305/30R20` | `3.97` | `9000` | 3.75 / 2.38 / 1.72 / 1.34 / 1.11 / 0.96 | 3.42 | 349 kW |
 
-The full catalog holds **26** factory/community vehicles under `src/config/cars/` (drop-in JSON; no registry edit).
+The full catalog holds **26** factory/community vehicles under `src/config/cars/` (drop-in JSON; no registry edit). Labels follow a single convention — `<Model> (<N>-Speed[, <Type>], <FD> FD)` — so the gearbox and final drive are visible in the preset dropdown.
 
 ### Real-world anchor (Eclipse 1G GS)
 
@@ -105,23 +115,31 @@ src/
   main.ts                        # bootstrap
   core/
     models.ts                    # shared types
-    math/                        # tire, speed, aero, traction, shift, dynamics, accel, inertia, cruise, dyno-csv
+    math/                        # tire, speed, aero, traction, shift, dynamics, accel, inertia, cruise,
+                                 # brake, recovery, dyno-csv, engine-curve-core
     state/app-state.ts           # mutable singleton store
+    state/engine-curve.ts        # active curve (anchors vs sanitized dyno points)
     units/unit-utils.ts          # kmh/mph + kW/cv helpers
     i18n/                        # dictionary.en.ts + dictionary.it.ts + language state
     setup/                       # wizard matrix + handbook copy (DictKey refs only)
     theme/theme.ts               # dark/oled/light toggle
     presets/custom-store.ts      # localStorage custom cars
-    share/share-utils.ts         # URL hash encode/decode
-  config/                        # presets, glob catalog loader, cars/, diff-presets, gear colors, graph constants
+    share/share-utils.ts         # verbose URL hash encode/decode
+    share/share-compact.ts       # packed Base64URL full-state codec
+    share/running-gear-share.ts  # rg_/crg_ block + numeric range table
+  config/                        # presets, glob catalog loader, cars/, diff-presets,
+                                 # tire-compounds, drivetrain-eff, gear colors, graph constants
   services/
     dom/element-refs.ts          # typed DOM handles
-    graph/                       # canvas setup, axes, curves, drops, renderer, tooltip, theme, export
+    graph/                       # canvas setup, axes, curves, drops, renderer, tooltip,
+                                 # theme, export, layers, limits, drivetrain-export
     events/                      # one binder per control group
-  components/                    # gear list, breakdown table, custom car, cruise card
+  components/                    # gear list, breakdown table, compare table, running-gear-block,
+                                 # tire-size tool, custom car, cruise card, preset search
   components/card/               # base Card + one file per specialized card + barrel
   views/render-all.ts            # single refresh entry
-  styles/                        # main.css hub + tokens/base/drawer/components/shell/overrides/setup-guide/print
+  styles/                        # main.css hub + tokens/base/drawer/components/shell/overrides/
+                                 # setup-guide/print
 capacitor.config.ts              # native wrapper (webDir dist)
 android/                         # committed Capacitor scaffold
 tests/                           # vitest suites mirroring src/

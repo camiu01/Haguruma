@@ -49,12 +49,11 @@ export class SetupGuideShellCard extends Card<SetupShellCardOptions> {
 	}
 
 	/**
-	 * @brief Build the card shell with header, selects and mount points.
-	 * @return Detached shell element.
+	 * @brief Build the wizard accordion (host card owns the outer frame).
+	 * @return Detached accordion element.
 	 */
 	render(): HTMLElement {
 		const open = this.isOpen();
-		const card = createEl('div', 'card border border-border rounded-xl p-4');
 		const accordion = createEl('div');
 		accordion.dataset.accordion = 'setup';
 		const header = createEl('div', 'section-header');
@@ -76,18 +75,9 @@ export class SetupGuideShellCard extends Card<SetupShellCardOptions> {
 		const result = createEl('div', 'setup-result');
 		result.id = 'setup-result';
 		guide.appendChild(result);
-		guide.appendChild(createEl('h3', 'setup-h3', 'setup.feelTitle'));
-		const feel = createEl('div', 'setup-feel');
-		feel.id = 'setup-feel';
-		guide.appendChild(feel);
-		guide.appendChild(createEl('h3', 'setup-h3', 'setup.procedureTitle'));
-		const procedure = createEl('div', 'setup-procedure');
-		procedure.id = 'setup-procedure';
-		guide.appendChild(procedure);
 		content.appendChild(guide);
 		accordion.append(header, content);
-		card.appendChild(accordion);
-		return card;
+		return accordion;
 	}
 
 	/**

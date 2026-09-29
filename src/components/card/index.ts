@@ -20,3 +20,5 @@ export { SetupFixCard, severityDictKey } from './fix-card';
 export type { FixCardOptions } from './fix-card';
 export { SetupGuideShellCard } from './setup-shell-card';
 export type { SetupShellCardOptions } from './setup-shell-card';
+export { HandbookShellCard } from './handbook-shell-card';
+export type { HandbookShellCardOptions } from './handbook-shell-card';

@@ -3,7 +3,7 @@
  * @brief Unit tests for tire string parsing.
  */
 import { describe, expect, it } from 'vitest';
-import { clampRollingFactor, dynamicCircumferenceM, effectiveCircumferenceM, parseTire, tireGrowthFactorAtSpeed } from '../src/core/math/tire-math';
+import { clampRollingFactor, dynamicCircumferenceM, effectiveCircumferenceM, loadedDynamicRadiusM, parseTire, tireGrowthFactorAtSpeed } from '../src/core/math/tire-math';
 
 describe('parseTire', () => {
 	it('parses a valid spec', () => {
@@ -38,6 +38,26 @@ describe('effectiveCircumferenceM', () => {
 		expect(clampRollingFactor(Number.NaN)).toBe(0.975);
 		expect(effectiveCircumferenceM(null)).toBe(0);
 		expect(effectiveCircumferenceM(parsed, 1.0)).toBeCloseTo(parsed?.circumferenceM ?? 0, 6);
+	});
+});
+
+describe('loadedDynamicRadiusM', () => {
+	it('reproduces the ISO factor at typical corner loads', () => {
+		const r = loadedDynamicRadiusM(1.9852, 3433, 0);
+		expect(r * 2 * Math.PI).toBeCloseTo(1.9852 * 0.976, 2);
+	});
+	it('shrinks with load and grows with speed', () => {
+		const base = loadedDynamicRadiusM(1.9852, 3000, 0);
+		expect(loadedDynamicRadiusM(1.9852, 5000, 0)).toBeLessThan(base);
+		expect(loadedDynamicRadiusM(1.9852, 4500, 0)).toBeLessThan(base);
+		expect(loadedDynamicRadiusM(1.9852, 3000, 250)).toBeGreaterThan(base);
+	});
+	it('floors extreme loads and rejects bad input', () => {
+		const geo = 1.9852 / (2 * Math.PI);
+		expect(loadedDynamicRadiusM(1.9852, 1e9, 0)).toBeCloseTo(geo / 2, 6);
+		expect(loadedDynamicRadiusM(0, 3000, 0)).toBe(0);
+		expect(loadedDynamicRadiusM(1.9852, Number.NaN, 0)).toBe(0);
+		expect(loadedDynamicRadiusM(1.9852, 3000, 0, 0)).toBe(0);
 	});
 });
 

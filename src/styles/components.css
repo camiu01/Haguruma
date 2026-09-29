@@ -152,7 +152,8 @@ table, .font-mono, .gear-input, .reverse-input { font-variant-numeric: tabular-n
 .table-compare th:nth-child(5), .table-compare td:nth-child(5) { min-width: 9rem; }
 
 /* Wide tables: smooth horizontal scroll with sticky first column. */
-.table-scroll { -webkit-overflow-scrolling: touch; overflow-x: auto; box-shadow: inset -24px 0 16px -16px var(--bg-card); }
+.table-scroll { -webkit-overflow-scrolling: touch; overflow-x: auto; box-shadow: inset -24px 0 16px -16px var(--bg-card); scrollbar-width: none; }
+.table-scroll::-webkit-scrollbar { display: none; }
 .table-sticky th:first-child, .table-sticky td:first-child { position: sticky; left: 0; background-color: var(--bg-card); background-clip: padding-box; z-index: 1; }
 .table-sticky tr:hover th:first-child, .table-sticky tr:hover td:first-child { background-color: var(--bg-card); }
 

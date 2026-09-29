@@ -67,7 +67,7 @@ const buildTableRow = (circM: number, gearRatio: number, idx: number): HTMLEleme
 	const wheelDisplay = describeMinWheel();
 	const tr = document.createElement('tr');
 	tr.className = 'hover:bg-input/80 transition-colors';
-	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full shrink-0' style='background-color: ${getGearColor(idx)}'></span><span>${t('gear.prefix')} ${idx + 1}</span></span></td><td class='py-2.5 whitespace-nowrap'>${gearRatio.toFixed(2)}:1</td><td class='py-2.5 text-gray-400 whitespace-nowrap'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-white whitespace-nowrap'>${topSpeed.toFixed(1)}</td><td class='py-2.5 text-right text-rose-300 whitespace-nowrap'>${nextRpmDisplay}</td><td class='py-2.5 text-right text-rose-400 font-semibold whitespace-nowrap'>${dropDisplay}</td><td class='py-2.5 text-right text-sky-300 whitespace-nowrap'>${powerDisplay}</td><td class='py-2.5 text-right text-amber-300 whitespace-nowrap'>${torqueDisplay}</td><td class='py-2.5 text-right text-emerald-300 whitespace-nowrap'>${forceDisplay}</td><td class='py-2.5 text-right text-violet-300 whitespace-nowrap'>${shiftDisplay}</td><td class='py-2.5 text-right text-orange-300 whitespace-nowrap'>${spinDisplay}</td><td class='py-2.5 text-right text-lime-300 whitespace-nowrap'>${wheelDisplay}</td>`;
+	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full shrink-0' style='background-color: ${getGearColor(idx)}'></span><span>${t('gear.prefix')} ${idx + 1}</span></span></td><td class='py-2.5 whitespace-nowrap'>${gearRatio.toFixed(2)}:1</td><td class='py-2.5 text-gray-400 whitespace-nowrap hidden md:table-cell'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-white whitespace-nowrap'>${topSpeed.toFixed(1)}</td><td class='py-2.5 text-right text-rose-300 whitespace-nowrap'>${nextRpmDisplay}</td><td class='py-2.5 text-right text-rose-400 font-semibold whitespace-nowrap'>${dropDisplay}</td><td class='py-2.5 text-right text-sky-300 whitespace-nowrap hidden md:table-cell'>${powerDisplay}</td><td class='py-2.5 text-right text-amber-300 whitespace-nowrap hidden md:table-cell'>${torqueDisplay}</td><td class='py-2.5 text-right text-emerald-300 whitespace-nowrap hidden md:table-cell'>${forceDisplay}</td><td class='py-2.5 text-right text-violet-300 whitespace-nowrap'>${shiftDisplay}</td><td class='py-2.5 text-right text-orange-300 whitespace-nowrap'>${spinDisplay}</td><td class='py-2.5 text-right text-lime-300 whitespace-nowrap hidden md:table-cell'>${wheelDisplay}</td>`;
 	return tr;
 };
 
@@ -108,7 +108,7 @@ const buildReverseRow = (circM: number): HTMLElement => {
 	const powerDisplay = describeRoadLoad(topSpeed);
 	const tr = document.createElement('tr');
 	tr.className = 'hover:bg-input/80 transition-colors';
-	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full bg-gray-400 shrink-0'></span><span>${t('gear.reverse')}</span></span></td><td class='py-2.5 whitespace-nowrap'>${ratio.toFixed(2)}:1</td><td class='py-2.5 text-gray-400 whitespace-nowrap'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-white whitespace-nowrap'>${topSpeed.toFixed(1)}</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-sky-300 whitespace-nowrap'>${powerDisplay}</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td>`;
+	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full bg-gray-400 shrink-0'></span><span>${t('gear.reverse')}</span></span></td><td class='py-2.5 whitespace-nowrap'>${ratio.toFixed(2)}:1</td><td class='py-2.5 text-gray-400 whitespace-nowrap hidden md:table-cell'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-white whitespace-nowrap'>${topSpeed.toFixed(1)}</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-sky-300 whitespace-nowrap hidden md:table-cell'>${powerDisplay}</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap hidden md:table-cell'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap hidden md:table-cell'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap'>-</td><td class='py-2.5 text-right text-gray-500 whitespace-nowrap hidden md:table-cell'>-</td>`;
 	return tr;
 };
 /**
@@ -301,20 +301,73 @@ const buildAccelKey = (): string => {
 };
 
 /**
- * Update the 0-100 km/h and 1/4 mile KPI cells from the time-step solver.
+ * Update the acceleration KPI cells from the time-step solver.
  * @brief Memoized so renderTable does not re-simulate unchanged inputs.
+ * @brief Split cells follow the display unit: metric (0-100, 0-160, 0-400 m)
+ * @brief in km/h mode, imperial (60 ft, 0-60 mph, 1/4 mile) in mph mode.
  * @return void
  */
 export const updateAccelKpis = (): void => {
 	const el100 = document.getElementById('kpi-0-100-time');
 	const elQ = document.getElementById('kpi-quarter');
+	const el60ft = document.getElementById('kpi-60ft');
+	const el60mph = document.getElementById('kpi-060mph');
+	const el160 = document.getElementById('kpi-0160');
+	const elTrap = document.getElementById('kpi-trap');
 	if (!el100 || !elQ) {
 		return;
 	}
+	applyKpiUnits(el100, elQ, el60ft, el60mph, el160);
+	const setSplits = (r: SimResult | null): void => {
+		if (el60ft) {
+			el60ft.textContent = r && r.t60ftS !== null ? `${r.t60ftS.toFixed(2)} s` : '—';
+		}
+		if (el60mph) {
+			el60mph.textContent = r && r.t060mphS !== null ? `${r.t060mphS.toFixed(2)} s` : '—';
+		}
+		if (el160) {
+			el160.textContent = r && r.t0160S !== null ? `${r.t0160S.toFixed(2)} s` : '—';
+		}
+		if (elTrap) {
+			elTrap.textContent = r && r.trapSpeedKmh !== null ? `${toDisplaySpeed(r.trapSpeedKmh, state.unit).toFixed(1)}` : '—';
+		}
+	};
+/**
+ * @brief Show metric or imperial split cells matching the display unit.
+ * @brief km/h shows 0-100, 0-160 and 0-400 m; mph shows 60 ft, 0-60 and 1/4.
+ * @param el100 0-100 cell.
+ * @param elQ Quarter-mile cell.
+ * @param el60ft 60 ft cell, null when absent.
+ * @param el60mph 0-60 mph cell, null when absent.
+ * @param el160 0-160 cell, null when absent.
+ * @return void
+ */
+function applyKpiUnits(
+	el100: HTMLElement,
+	elQ: HTMLElement,
+	el60ft: HTMLElement | null,
+	el60mph: HTMLElement | null,
+	el160: HTMLElement | null,
+): void {
+	const metric = state.unit !== 'mph';
+	const show = (el: HTMLElement | null, visible: boolean): void => {
+		el?.closest('.kpi-cell')?.classList.toggle('hidden', !visible);
+	};
+	show(el100, metric);
+	show(el160, metric);
+	show(el60ft, !metric);
+	show(el60mph, !metric);
+	const label = elQ.closest('.kpi-cell')?.querySelector('[data-i18n]');
+	if (label) {
+		label.setAttribute('data-i18n', metric ? 'kpi.m400' : 'kpi.quarterMile');
+		label.textContent = t(metric ? 'kpi.m400' : 'kpi.quarterMile');
+	}
+};
 	const tire = parseTire(state.primaryTire);
 	if (!tire) {
 		el100.textContent = '—';
 		elQ.textContent = '—';
+		setSplits(null);
 		return;
 	}
 	const key = buildAccelKey();
@@ -338,6 +391,7 @@ export const updateAccelKpis = (): void => {
 	}
 	el100.textContent = accelCache && accelCache.time0To100S !== null ? `${accelCache.time0To100S.toFixed(2)} s` : '—';
 	elQ.textContent = accelCache && accelCache.quarterMileS !== null ? `${accelCache.quarterMileS.toFixed(2)} s` : '—';
+	setSplits(accelCache);
 };
 
 /**

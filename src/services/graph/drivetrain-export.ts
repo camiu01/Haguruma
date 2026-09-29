@@ -1,6 +1,6 @@
 /**
  * @file drivetrain-export.ts
- * @brief Sim-racing drivetrain exchange (Assetto Corsa .ini + generic JSON).
+ * @brief Sim-racing drivetrain exchange (Assetto Corsa .ini, BeamNG .jbeam, MoTeC/AiM CSV, generic JSON).
  */
 export interface DrivetrainExportInput {
 	/** Forward gear ratios from first to top gear. */
@@ -67,6 +67,57 @@ export const buildDrivetrainJson = (input: DrivetrainExportInput): string => {
 		null,
 		2,
 	);
+};
+
+/** Tabular telemetry dialect for gear-chart CSV exports. */
+export type TelemCsvKind = 'motec' | 'aim';
+
+/**
+ * @brief Build a minimal BeamNG .jbeam manual-transmission part.
+ * @brief Emits a powertrain "transmission" device with gearRatios ordered as
+ * @brief [reverse, neutral, 1st..nth] plus finalDrive; mount slots follow the
+ * @brief stock BeamNG manual-transmission part conventions (documented subset).
+ * @param input Gears, final drive and optional reverse.
+ * @return Pretty-printed .jbeam JSON string.
+ */
+export const buildBeamngJbeam = (input: DrivetrainExportInput): string => {
+	const ratios: number[] = [input.reverseRatio !== null && input.reverseRatio > 0 ? -Math.abs(input.reverseRatio) : -3.0, 0];
+	for (const g of input.gears) {
+		ratios.push(g);
+	}
+	return JSON.stringify(
+		{
+			[input.label.replace(/[^a-z0-9]+/gi, '_').toLowerCase() || 'haguruma_drivetrain']: {
+				information: { authors: 'Haguruma', name: input.label },
+				slotType: 'transmission',
+				powertrain: [['transmission', 'transmission']],
+				transmission: {
+					gearRatios: ratios.map((r) => Number(r.toFixed(3))),
+					finalDrive: Number(input.fd.toFixed(3)),
+				},
+			},
+		},
+		null,
+		2,
+	);
+};
+
+/**
+ * @brief Build a tabular gear-chart CSV for telemetry suites.
+ * @param input Gears, final drive and optional reverse.
+ * @param kind MoTeC (comma) or AiM Race Studio (semicolon) dialect.
+ * @return CSV text with one row per gear plus overall ratios.
+ */
+export const buildTelemCsv = (input: DrivetrainExportInput, kind: TelemCsvKind): string => {
+	const sep = kind === 'aim' ? ';' : ',';
+	const lines: string[] = [`Gear${sep}Ratio${sep}Overall${sep}FinalDrive`];
+	input.gears.forEach((g, i) => {
+		lines.push(`${i + 1}${sep}${fmt(g)}${sep}${fmt(g * input.fd)}${sep}${fmt(input.fd)}`);
+	});
+	if (input.reverseRatio !== null && input.reverseRatio > 0) {
+		lines.push(`R${sep}${fmt(input.reverseRatio)}${sep}${fmt(input.reverseRatio * input.fd)}${sep}${fmt(input.fd)}`);
+	}
+	return lines.join('\n') + '\n';
 };
 
 /**

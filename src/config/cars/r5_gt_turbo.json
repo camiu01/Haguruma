@@ -1,6 +1,6 @@
 {
   "id": "r5_gt_turbo",
-  "label": "Renault 5 GT Turbo (Turbo-Lag Slip Test)",
+  "label": "Renault 5 GT Turbo (5-Speed, 3.73 FD)",
   "group": "community",
   "preset": {
     "tire": "175/60R13",

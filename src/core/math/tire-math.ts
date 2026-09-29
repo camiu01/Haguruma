@@ -25,6 +25,9 @@ export const TIRE_GROWTH_REF_KMH = 250;
 /** Maximum radial growth fraction at very high speed (≈3%). */
 export const TIRE_GROWTH_MAX = 0.03;
 
+/** Default vertical sidewall stiffness in N/m (≈450 N/mm, reproduces the 0.975 factor at typical loads). */
+export const SIDEWALL_STIFFNESS_DEFAULT_NPM = 450000;
+
 /**
  * @brief Parse a tire string like 205/55R16.
  * @param specStr Raw input value.
@@ -106,4 +109,35 @@ export const dynamicCircumferenceM = (
 	speedKmh: number = 0,
 ): number => {
 	return effectiveCircumferenceM(spec, factor) * tireGrowthFactorAtSpeed(speedKmh);
+};
+
+/**
+ * @brief Load-sensitive dynamic rolling radius.
+ * @brief Static squash (per-tire vertical load over sidewall stiffness) plus
+ * @brief aerodynamic downforce shrink the geometric radius, then centrifugal
+ * @brief growth expands it: r(v,F) = (C/2pi - F/k) x kg(v), floored at half
+ * @brief the geometric radius so extreme loads read as a flat tire, not NaN.
+ * @param circM Geometric circumference in metres.
+ * @param verticalLoadN Per-tire vertical load in N (static share + downforce share).
+ * @param speedKmh Vehicle speed in km/h for the growth term.
+ * @param stiffnessNpm Sidewall vertical stiffness in N/m, defaults to 450000.
+ * @return Dynamic rolling radius in metres, 0 on invalid input.
+ */
+export const loadedDynamicRadiusM = (
+	circM: number,
+	verticalLoadN: number,
+	speedKmh: number = 0,
+	stiffnessNpm: number = SIDEWALL_STIFFNESS_DEFAULT_NPM,
+): number => {
+	if (!Number.isFinite(circM) || circM <= 0 || !Number.isFinite(verticalLoadN)) {
+		return 0;
+	}
+	if (!Number.isFinite(stiffnessNpm) || stiffnessNpm <= 0) {
+		return 0;
+	}
+	const load = Math.max(0, verticalLoadN);
+	const geoRadius = circM / (2 * Math.PI);
+	const squash = load / stiffnessNpm;
+	const loaded = Math.max(geoRadius / 2, geoRadius - squash);
+	return loaded * tireGrowthFactorAtSpeed(speedKmh);
 };

@@ -71,6 +71,8 @@ export interface RunningGear {
 	differentialCoastBias?: number;
 	/** Catalog id from diff-presets (open, lsd_1way, lsd_1_5way, lsd_2way, …). */
 	differentialModelId?: string;
+	/** Catalog id from tire-compounds (eco_400, touring_300, sport_200, semi_100, slick). */
+	tireCompoundId?: string;
 	/** Front spring rate per corner in N/mm, range [10, 120]. */
 	springRateFrontNmm: number;
 	/** Rear spring rate per corner in N/mm, range [10, 120]. */
@@ -86,6 +88,27 @@ export interface RunningGear {
 }
 
 /**
+ * Optional aftermarket drivetrain variants for one vehicle preset.
+ * @brief Alternate final drives, close-ratio gearsets and LSD options
+ * @brief selectable without overwriting the stock preset values.
+ */
+export interface DrivetrainOptions {
+	/** Alternate final drives (must include the stock fd). */
+	finalDrives?: number[];
+	/** Named close-ratio gearsets (at most 8, decreasing ratios). */
+	gearsets?: { label: string; ratios: number[] }[];
+	/** Catalog differential ids from diff-presets. */
+	lsds?: string[];
+}
+
+/**
+ * Setup complexity level gating visible inputs.
+ * @brief easy shows tires, ratios, limiter and downforce; medium adds aero,
+ * @brief engine and comparison; full unlocks every chassis control.
+ */
+export type SetupLevel = 'easy' | 'medium' | 'full';
+
+/**
  * Vehicle preset selectable from the header dropdown.
  * @brief Realistic starting point for tire, final drive and gears.
  */
@@ -96,6 +119,8 @@ export interface GearPreset {
 	fd: number;
 	/** Optional alternative final drives (stock fd included first). */
 	finalDrives?: number[];
+	/** Optional aftermarket drivetrain variants (gearsets, LSDs, final drives). */
+	drivetrainOptions?: DrivetrainOptions;
 	/** Rev limiter in RPM. */
 	redline: number;
 	/** Forward gear ratios from first to top gear. */
@@ -216,6 +241,10 @@ export interface AppState {
 	compRunningGear: RunningGear;
 	/** Setup wizard selection (phase + issue). */
 	setupGuide: SetupGuideSelection;
+	/** Setup complexity level gating visible inputs. */
+	setupLevel: SetupLevel;
+	/** Comparison detail level (same or smaller than the setup level). */
+	compLevel: SetupLevel;
 }
 
 /**

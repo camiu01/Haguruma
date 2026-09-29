@@ -19,6 +19,7 @@ export const defaultRunningGear: RunningGear = {
 	differentialType: 'open',
 	differentialBias: 0.25,
 	differentialCoastBias: 0,
+	tireCompoundId: 'touring_300',
 	springRateFrontNmm: 35,
 	springRateRearNmm: 32,
 	lateralG: 0,
@@ -71,6 +72,8 @@ export const defaultState: AppState = {
 	runningGear: { ...defaultRunningGear },
 	compRunningGear: { ...defaultRunningGear },
 	setupGuide: { phase: 'mid', issue: 'understeer' },
+	setupLevel: 'full',
+	compLevel: 'full',
 };
 
 /**

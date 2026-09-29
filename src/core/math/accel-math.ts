@@ -30,6 +30,12 @@ import type { RunningGear } from '../models';
 /** One quarter mile in metres (statute mile / 4). */
 export const QUARTER_MILE_M = 402.33928;
 
+/** Sixty feet in metres (drag-strip short split). */
+export const SIXTY_FT_M = 18.288;
+
+/** Sixty miles per hour in km/h (drag-strip speed split). */
+export const SIXTY_MPH_KMH = 96.56064;
+
 /** Fixed integration step in seconds. */
 const SIM_DT = 0.01;
 
@@ -66,6 +72,8 @@ export interface SimInput {
 	launchRpm?: number;
 	/** Torque-interruption duration per upshift in seconds. */
 	shiftTimeS?: number;
+	/** Reaction time in seconds added to every reported split (not simulated). */
+	reactionS?: number;
 	/** Chassis grip setup; traction clamp skipped when absent. */
 	runningGear?: RunningGear;
 	/** Aerodynamic drag coefficient (0 disables drag). */
@@ -85,6 +93,12 @@ export interface SimInput {
 export interface SimResult {
 	/** Seconds to reach 100 km/h, or null when never reached. */
 	time0To100S: number | null;
+	/** Seconds to 60 ft (18.288 m), or null when never reached. */
+	t60ftS: number | null;
+	/** Seconds to 60 mph (96.56 km/h), or null when never reached. */
+	t060mphS: number | null;
+	/** Seconds to 160 km/h, or null when never reached. */
+	t0160S: number | null;
 	/** Seconds to cover the quarter mile, or null when never covered. */
 	quarterMileS: number | null;
 	/** Speed at the quarter-mile line in km/h, or null. */
@@ -101,6 +115,9 @@ export interface SimResult {
  */
 const nullResult = (): SimResult => ({
 	time0To100S: null,
+	t60ftS: null,
+	t060mphS: null,
+	t0160S: null,
 	quarterMileS: null,
 	trapSpeedKmh: null,
 	distanceM: 0,
@@ -245,6 +262,7 @@ export const simulateAcceleration = (input: SimInput): SimResult => {
 	const shiftTime = Number.isFinite(input.shiftTimeS as number) ? Math.min(3, Math.max(0, input.shiftTimeS as number)) : 0;
 	const launchRpm = resolveLaunchRpm(input.launchRpm, curve.redline);
 	const targets = buildShiftTargets(input.gears, input.fd, input.circM, curve, input.drivetrainEff);
+	const reaction = Number.isFinite(input.reactionS as number) ? Math.min(5, Math.max(0, input.reactionS as number)) : 0;
 
 	let v = 0;
 	let dist = 0;
@@ -253,6 +271,9 @@ export const simulateAcceleration = (input: SimInput): SimResult => {
 	let cooldown = 0;
 	let pendingGear = -1;
 	let t100: number | null = null;
+	let t60ft: number | null = null;
+	let t60mph: number | null = null;
+	let t160: number | null = null;
 	let tQ: number | null = null;
 	let trap: number | null = null;
 
@@ -316,6 +337,15 @@ export const simulateAcceleration = (input: SimInput): SimResult => {
 		if (t100 === null) {
 			t100 = crossingTime(speedBefore, speedAfter, 100, t);
 		}
+		if (t60mph === null) {
+			t60mph = crossingTime(speedBefore, speedAfter, SIXTY_MPH_KMH, t);
+		}
+		if (t160 === null) {
+			t160 = crossingTime(speedBefore, speedAfter, 160, t);
+		}
+		if (t60ft === null && dist >= SIXTY_FT_M) {
+			t60ft = crossingTime(distBefore, dist, SIXTY_FT_M, t);
+		}
 		if (tQ === null && dist >= QUARTER_MILE_M) {
 			tQ = crossingTime(distBefore, dist, QUARTER_MILE_M, t);
 			if (tQ !== null && stepDist > 0) {
@@ -323,14 +353,18 @@ export const simulateAcceleration = (input: SimInput): SimResult => {
 				trap = speedBefore + frac * (speedAfter - speedBefore);
 			}
 		}
-		if (t100 !== null && tQ !== null) {
+		if (t100 !== null && t60ft !== null && t60mph !== null && t160 !== null && tQ !== null) {
 			break;
 		}
 	}
 
+	const withReaction = (raw: number | null): number | null => (raw === null ? null : raw + reaction);
 	return {
-		time0To100S: t100,
-		quarterMileS: tQ,
+		time0To100S: withReaction(t100),
+		t60ftS: withReaction(t60ft),
+		t060mphS: withReaction(t60mph),
+		t0160S: withReaction(t160),
+		quarterMileS: withReaction(tQ),
 		trapSpeedKmh: trap,
 		distanceM: dist,
 		timeS: t,

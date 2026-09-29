@@ -106,6 +106,64 @@ Development task management for the Haguruma vehicle dynamics simulator.
 
 ## Pending
 
+### v0.5.0 milestone — Physics Polish & Dynamic Chassis Convergence (in development, last release 0.4.0)
+
+Docs consolidation, physics polish, chassis convergence and trackside utilities batch. Version files already carry 0.5.0; tag the release when green.
+
+- [x] Rename `Math.md` -> `MATH.md` via `git mv` (history preserved, 730 physics lines intact, title self-reference updated) #docs
+- [x] Reference sweep: no remaining `Math.md` / `math reference` pointers in `src/`, `tests/`, `*.md`, `index.html`, `.github/`, `vite.config.ts` #docs
+- [x] Dead-code / build-artifact cleanup: tracked `.probe` leftover removed; `dist/` and `node_modules/` confirmed untracked via `.gitignore`; `android/` scaffold and `public/` PWA assets untouched #hygiene
+- [x] Style conformance audit: tabs, single quotes, semicolons, `@file`+`@brief` headers, TSDoc on functions, zero `noUnusedLocals`/`noUnusedParameters` findings, no stray `console.log` #style
+- [x] Version bump 0.4.0 -> 0.5.0 in `package.json`, `package-lock.json` and `android/app/build.gradle` (`versionName`, `versionCode` 4 -> 5); locked dep versions pinned, no upgrades #release
+- [x] Verification green: `npx tsc --noEmit` clean + full vitest suite passing #tests
+
+- [x] Brake-bias calculator from deceleration load transfer: ideal front/rear bias % at high decel (e.g. 1.2G) from dynamic axle loads and wheelbase; flag rear-lock trail-braking instability vs early front lock (entry understeer) `#physics` `#dynamics`
+- [x] Accel run split breakdown: reaction time, 60 ft (0-18 m), 0-60 mph and 0-160 km/h splits plus quarter-mile trap speed on top of the 0-100 / 1/4-mile KPIs `#physics` `#simulation`
+- [x] Tire-size comparison micro-tool: speedometer error and rolling-circumference delta % versus the homologated stock size when plus-sizing rims or sidewalls `#tires` `#ux`
+- [x] Tire compound catalog (`tire-compounds.ts`): treadwear-rated rubber (Eco 400TW, Touring 300TW, Sport 200TW, Semislick 100TW, Slick) scaling road mu via grip gain; `rg_tc`/`crg_tc` share keys plus primary and COMP selects `#physics` `#tires`
+- [x] QR code sharing modal: dependency-free SVG QR encoding the compressed setup URL for instant laptop-to-phone transfer trackside with no network or chat `#share` `#ux`
+- [x] Allocation-free canvas loop: audit `drawGraph()` and `renderAll()` for per-frame array/object allocations on pointer events, reuse preallocated coordinate buffers to avoid GC micro-stutter on low-end phones `#graph` `#perf`
+- [x] Dynamic tire radius from vertical load (`tire-math.ts`): fold static-deflection squash plus aero downforce (`aero-math.ts`) into the dynamic radius alongside centrifugal growth (`tireGrowthFactorAtSpeed`) `#physics` `#tires`
+- [x] Calculated gear-drop recovery time (`accel-math.ts`): estimate in milliseconds the time to climb back to peak-torque rpm after each upshift from the equivalent rotating inertia and residual wheel power `#physics` `#simulation`
+- [x] Dyno smoothing filter upgrade (`dyno-csv.ts`): configurable Savitzky-Golay or median pre-filter next to the Gaussian option to reject ignition spikes and roller transients before Akima interpolation `#engine` `#data`
+- [x] Ghost-curve delta annotations as a DOM panel (`compare-table.ts` `#comp-shift-deltas` from `shift-math.ts` `describeAllShiftDeltas`), canvas stays curve-only `#graph` `#comparison`
+- [x] Drivetrain options schema (`car-catalog.ts`, `config/cars/*.json`): optional `drivetrain_options` key (alternate final drives, close-ratio gearsets, optional LSDs) selectable from a dropdown without overwriting the base preset `#presets` `#config`
+- [x] Multi-sim and telemetry export expansion (`drivetrain-export.ts`): BeamNG (`.jbeam`) template plus tabular CSV for MoTeC / AiM Race Studio next to the Assetto Corsa export `#export` `#sim`
+- [x] Dynamic offline asset eviction (`public/sw.js`): max-age expiry policy with automatic cleanup of stale JSON files and catalogs in the stale-while-revalidate cache `#pwa` `#offline`
+- [x] Drivetrain export dropdown: single `export-format` select + Export button replacing the five INI/JSON/JBeam/MoTeC/AiM buttons in the graph card `#export` `#ux`
+- [x] Tire-size comparator redesign: diameters, delta pill with thresholds, relative-size bar, speedo check at 50/100/130 and gearing shift readout `#tires` `#ux`
+- [x] Settings live in the drawer: language, units/power, theme and share/QR rows in dedicated drawer sections `#ux` `#mobile`
+- [x] Setup split and rename: wizard card retitled Setup/Assetto, feel/procedure handbook moved to a separate `data-accordion="handbook"` card with `nav.handbook` entry `#setup` `#ux`
+- [x] Comparison preset search: `btnLoadPresetComp` enhanced with the same searchable combobox as the primary selector (full-width variant) `#ux` `#presets`
+- [x] Desktop slide-over drawer: hamburger visible on every viewport, header controls relocate into the drawer on open and restore on close `#ux` `#mobile`
+- [x] My Cars in the drawer: `btn-drawer-mycars` entry closes the drawer and forwards to the My Cars modal `#ux` `#mobile`
+- [x] Topbar cleanup: header controls (language, units, preset search, theme, share/QR) moved permanently into the drawer Garage/Settings/Share sections `#ux`
+- [x] Merged Assetto card: wizard and handbook accordions under one `merged-card` with h2 title, like Vehicle Setup `#setup` `#ux`
+- [x] Hidden table scrollbars: `.table-scroll` keeps swipe scrolling with `scrollbar-width: none` `#ux`
+- [x] Tire-size mount integration: comparator renders as a plain section inside the vehicle card, no nested card frame `#tires` `#ux`
+- [x] Tire comparator moved into the comparison card next to the tire delta, live-synced from primary/secondary state `#tires` `#comparison` `#ux`
+- [x] Setup levels Easy/Medium/Full: level selector in the Vehicle Setup header gating sections and rows, persisted in localStorage `#ux`
+- [x] Comparison gated to Full, wizard visible from Easy, emptied cards auto-hidden (no empty frames) `#ux`
+- [x] Split levels: primary level gates setup inputs only (graph/table/cruise/guides always visible), comparison follows it and can be lowered independently `#ux`
+- [x] Tools heading above the cruise and tire utilities `#ux`
+- [x] Secondary mirrors primary levels: comp gears Full, comp engine/aero Medium `#ux`
+- [x] Main Setup card collapsible with single divider, nav auto-opens collapsed ancestors `#ux`
+- [x] Fixed gear tables: secondary columns hidden below md, no horizontal scroll on phones `#ux`
+- [x] Clearer names: Main Setup / Base Setup (EN), Setup principale / Setup base (IT) `#ux` `#i18n`
+- [x] Gear ratios gated to Full, tire compound pinned to Easy `#ux`
+- [x] Car search moved under Main Setup; Topbar controls live permanently in the drawer `#ux`
+- [x] Tire comparator moved into the cruise card as a utilities group `#tires` `#ux`
+- [x] Unified running-gear block: primary and secondary setups built/bound/synced from one module (`running-gear-block.ts`), static crg markup removed `#comparison` `#ux`
+- [x] Drawer nav reduced to Primary Car, Secondary Car, Tools, Setup `#ux`
+- [x] Tools card with cruise and tire-size accordions like the other cards `#ux`
+- [x] Tire-size comparator gets its own accordion: header, verdict pill and independent open/close, uncoupled from the cruising check `#ux` `#tires`
+- [x] KPI acceleration cells follow the display unit: 0-100 / 0-160 / 0-400 m in km/h mode, 60 ft / 0-60 mph / 1/4 mile in mph mode with a swapping cell label `#ux` `#units`
+- [x] Catalog labels unified: all 26 preset labels follow `<Model> (<N>-Speed[, <Type>], <FD> FD)` — scenario descriptors and bare years dropped `#presets` `#i18n`
+- [x] README refresh: features (setup levels, QR share, sim/telemetry export, brake/recovery math, tire tools), physics table (`tire-math`, `engine-curve-core`), structure tree and preset labels `#docs`
+- [x] AGENTS refresh: shared running-gear block, Tools card, drawer nav, setup levels, catalog label convention, unit-aware KPIs `#docs`
+
+---
+
 ### v0.6.0 milestone — Canvas interactivity & mobile refinement
 
 Focus on visual responsiveness, touch ergonomics for portrait/landscape screens and rendering polish.
@@ -131,18 +189,18 @@ Focus on visual responsiveness, touch ergonomics for portrait/landscape screens 
 
 Focus on tire physics evolution, wheel tractive-force curves and the dynamic vertical-load model.
 
-- [ ] Dynamic tire radius from vertical load: combine static deflection and aerodynamic vertical load (downforce from `aero-math.ts`) with the existing centrifugal growth (`tireGrowthFactorAtSpeed`) in `tire-math.ts` `#physics` `#tires`
 - [ ] Switchable tractive force graph view: commutable wheel-force mode ($F_x$ in N vs km/h) with per-gear curves and the total resistance parabola overlaid ($F_{\text{drag}} + F_{rr}$) for a visual Vmax `#graph` `#physics`
-- [ ] Ghost-curve delta annotations: draw numeric rpm and speed delta callouts at the up-shift points while the COMP comparison curve is active `#graph` `#comparison`
-- [ ] Calculated gear-drop recovery time: estimate in milliseconds the time needed to return to peak torque rpm after each upshift from the computed equivalent inertia `#physics` `#simulation`
-- [ ] Dyno pre-filter Savitzky-Golay / median: add a spike and roller-noise filter before Akima interpolation in `dyno-csv.ts` `#engine` `#data`
-- [ ] Dynamic offline asset eviction in `sw.js`: age-based expiration policy and automatic cleanup of cached car catalogs in the stale-while-revalidate cache `#pwa` `#offline`
 - [ ] Live load transfer inside the accel solver: feed the instantaneous acceleration back into `maxDriveForceAtSpeed` (currently called with `accelMps2 = 0`) so grip and wheelspin respond to the real transfer `#physics` `#simulation`
 - [ ] Rev-limiter and fuel-cut model: bounce/hard-cut behavior at the limiter plus per-gear shift time (synchro vs dog box) instead of one global value `#physics` `#simulation`
 - [ ] Braking model with wheel lock and ABS: deceleration profile from mu, load transfer and optional ABS cycling, with a 100-0 km/h stopping-distance KPI `#physics` `#dynamics`
 - [ ] Downshift and rev-match simulation: engine-braking deceleration and the rev-match blip so the solver can model a full lap-style sequence `#physics` `#simulation`
 - [ ] Dense drivetrain efficiency map: replace the constant `eta` with a lookup verified against torque/load rather than the single layout default `#physics` `#powertrain`
 - [ ] Traction margin readout: per-gear excess of wheel force over grip ($F_x - F_{\text{limit}}$) as a table column and optional graph overlay `#physics` `#ux`
+- [ ] Braking distance and deceleration overlay: 100-0 and 200-0 km/h stopping curves on the canvas corrected by road mu plus the aero drag contribution `#graph` `#physics`
+- [ ] Torque-vectoring and active center differential: variable AWD front/rear bias beyond the fixed split (DCCD/ACD style) with handbrake-disengage behavior on turn-in `#physics` `#dynamics`
+- [ ] LSD clutch preload and breakaway torque: static preload parameter (Nm before plate slip) for mechanical clutch LSDs (KAAZ, Cusco, OS Giken) `#physics` `#dynamics`
+- [ ] Apex speed to shift advisor: corner radius plus max lateral G give cornering speed and recommend holding the gear vs downshifting to avoid shifts mid-corner `#physics` `#simulation`
+- [ ] Accel solver benchmark suite: vitest bench on the `accel-math.ts` Euler loop (dt=0.01s) guarding sub-3ms runs even with 64-point dyno curves `#tests` `#perf`
 
 ---
 
@@ -153,8 +211,6 @@ Focus on real-world data acquisition, advanced sim-racing compatibility and heur
 - [ ] Reverse gear-ratio calculator from telemetry logs: parser for MoTeC, AiM, RaceChrono and OBD2 CSV (`engine_rpm`, `wheel_speed_kmh`) to recover the real ratios and detect clutch/tire slip `#telemetry` `#data`
 - [ ] Gearset optimizer / heuristic solver: search engine (brute force over a discrete catalog or simulated annealing) to generate the optimal gear spacing constrained by straight-line Vmax and the maximum allowed drop `#physics` `#heuristic`
 - [ ] Target-track gear-ratio presets: profiles for track archetypes (tight hairpins / fast straights) to calibrate 2nd and 3rd gear outside the torque dead spots `#physics` `#heuristic`
-- [ ] Multi-sim exporter: extend `drivetrain-export.ts` with BeamNG (`.jbeam`) output and MoTeC / AiM Race Studio tabular CSV formats `#export` `#sim`
-- [ ] Differential and aftermarket transmission variants: support the optional `drivetrain_options` key in car JSON with a dedicated selector in the drawer `#presets` `#config`
 - [ ] Keep-screen-awake toggle: integrate `@capacitor/keep-awake` / `navigator.wakeLock` configurable from the UI for continuous track-side use on a mount `#android` `#ux`
 - [ ] Inverse dyno from an acceleration log: derive the torque curve from a logged v(t) run plus known mass and gearing, then load it as a custom curve `#telemetry` `#engine`
 - [ ] Phone-sensor performance timer: use device motion/GPS to measure 0-100 km/h and 1/4 mile and compare against the solver prediction `#telemetry` `#android`
@@ -162,6 +218,7 @@ Focus on real-world data acquisition, advanced sim-racing compatibility and heur
 - [ ] GPX track import: read a GPX file to seed the target-track gear presets with real corner and straight lengths `#telemetry` `#heuristic`
 - [ ] Spec-sheet quick-add wizard: build a new preset from a few datasheet numbers (power, mass, tire, gears) with range validation `#presets` `#ux`
 - [ ] Full-state backup bundle: export/import every persisted value (custom cars, units, theme, language) as a single JSON file `#data` `#pwa`
+- [ ] Bulk preset import/export: one-click JSON/ZIP backup and restore of all browser-saved custom cars for device migration (preset-scoped companion to the full-state bundle) `#data` `#pwa`
 
 ---
 

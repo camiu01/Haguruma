@@ -31,27 +31,31 @@ src/
     share/share-utils.ts          # URL hash encode/decode (verbose keys, compact `c` token, curve, rg_/crg_ running gear)
     share/running-gear-share.ts   # rg_/crg_ encode/decode block + numeric param helper
     share/share-compact.ts        # Packed Base64URL full-state codec (v1) + legacy primary token, no dependencies
+    share/qr-svg.ts               # Dependency-free QR encoder rendering an SVG for the share modal
   config/
     presets.ts                    # preset maps built from the catalog loader
     car-catalog.ts                # CarCatalogEntry model + import.meta.glob loader + validateCatalogEntry() contract
     cars/                         # one <id>.json per vehicle, drop-in to add (optional finalDrives[] must contain stock fd)
     diff-presets.ts               # Extensible LSD catalog (open, 1/1.5/2-way, custom, Torsen, spool, OS Giken, Cusco, KAAZ, Wavetrac, Quaife)
     drivetrain-eff.ts             # Default drivetrain efficiency lookup by FWD/RWD/AWD layout
+    tire-compounds.ts             # Treadwear catalog (Eco 400TW → Slick) with grip gain per compound
     gear-colors.ts                # 8-color palette
     graph-constants.ts            # GRAPH_PADDING, GRAPH_STYLE_*, GRAPH_LIMITS
   services/
     dom/element-refs.ts           # Typed DOM handles (ElementRefs)
     dom/focus-trap.ts             # Tab trap helper for drawer and modal overlays
-    graph/                        # canvas-setup, graph-axes, graph-curves, graph-shift-drops, graph-renderer, graph-tooltip, graph-theme, graph-export, graph-layers (static cache), graph-limits, drivetrain-export (sim INI/JSON)
+    graph/                        # canvas-setup, graph-axes, graph-curves, graph-shift-drops, graph-renderer, graph-tooltip, graph-theme, graph-export, graph-layers (static cache), graph-limits, drivetrain-export (sim INI/JSON/JBeam/CSV)
     events/                       # One binder per control group
   components/
     gear-list.ts                  # Editable gear rows + add/remove
     gear-table.ts                 # Primary breakdown table + KPI strip + accel memo
-    compare-table.ts              # Secondary comparison rows + tire-delta caption
+    compare-table.ts              # Secondary comparison rows + tire-delta caption + shift-delta panel
+    running-gear-block.ts         # Shared primary/secondary running-gear builder, binder and sync (prefix-parameterized)
     preset-search.ts              # Searchable preset combobox (grouped dropdown)
     custom-car.ts                 # Save/load/export/import custom presets
     setup-guide.ts                # Setup shell injection + card assembly
-    cruise-card.ts                # Highway cruising shell + render
+    cruise-card.ts                # Tools card: cruise accordion + tire-size accordion + render
+    tire-size-tool.ts             # Stock vs plus-size comparator (speedo error, gearing deltas)
     running-gear-readouts.ts      # Downforce + coast lock-up/downforce readouts
     card/                         # base Card + one file per specialized card + index.ts barrel
   views/render-all.ts             # resizeCanvas + drawGraph + renderTable + renderCruise
@@ -128,8 +132,8 @@ Dynamic layer, redrawn every render on top of the blitted bitmap:
 - `vitest` framework, tests in `tests/` mirroring `src/`.
 - Run single file: `npx vitest run tests/tire-math.test.ts`.
 - Always run `npx tsc --noEmit` + `npm test` before committing.
-- Coverage for the chassis/aero pass: `tests/dynamics-math.test.ts` (load transfer, friction circle, dyno taper, coast lock), `tests/drivetrain-eff.test.ts`, `tests/dyno-csv.test.ts`, `tests/setup-matrix.test.ts`.
-- Coverage for the physics/share/sim passes: `tests/engine-curve-akima.test.ts`, `tests/graph-layers.test.ts`, `tests/share-compact.test.ts`, `tests/catalog-validation.test.ts`, `tests/drivetrain-export.test.ts`, `tests/presets.test.ts`.
+- Coverage for the chassis/aero pass: `tests/dynamics-math.test.ts` (load transfer, friction circle, dyno taper, coast lock, compound gain), `tests/drivetrain-eff.test.ts`, `tests/dyno-csv.test.ts`, `tests/setup-matrix.test.ts`, `tests/brake-math.test.ts`, `tests/recovery-math.test.ts`, `tests/tire-compounds.test.ts`.
+- Coverage for the physics/share/sim passes: `tests/engine-curve-akima.test.ts`, `tests/graph-layers.test.ts`, `tests/share-compact.test.ts`, `tests/catalog-validation.test.ts`, `tests/drivetrain-export.test.ts`, `tests/presets.test.ts`, `tests/qr-svg.test.ts`, `tests/accel-math.test.ts` (splits + reaction).
 
 ## Share/URL
 - Full setup encoded in URL hash, restored on page load via `restoreFromUrl()`.
@@ -148,6 +152,22 @@ Dynamic layer, redrawn every render on top of the blitted bitmap:
 ## Simulation KPIs
 - `renderTable()` → `updateSummaryKpis()` keeps `#kpi-redline`, `#kpi-top-speed`, `#kpi-aero-wall` in sync with state (never rely on static HTML defaults).
 - Accel KPIs memoize on a JSON key of physical inputs (`buildAccelKey`).
+- `updateAccelKpis()` calls `applyKpiUnits()`: km/h mode shows 0-100 / 0-160 / 0-400 m, mph mode shows 60 ft / 0-60 mph / 1/4 mile. The quarter-mile cell swaps its label between `kpi.m400` and `kpi.quarterMile`; trap speed always renders in the active speed unit.
+
+## Setup levels (Easy / Medium / Full)
+- `SetupLevel = 'easy' | 'medium' | 'full'` on `AppState.setupLevel` (primary) and `AppState.compLevel` (comparison); persisted in `haguruma-setup-level` / `haguruma-comp-level`.
+- `services/events/setup-level-events.ts` owns the gating maps: `SECTION_LEVELS` (per `[data-accordion]`), `ROW_LEVELS` (per element id), plus `COMP_SECTION_LEVELS` / `COMP_ROW_LEVELS`. Rank is `easy < medium < full`.
+- Primary level gates **setup inputs only** — graph, tables, cruise and guides stay visible at every level. The comparison follows the primary level and can be lowered independently; its gear rows gate at `full`, engine/aero sections at `medium`.
+- A level change must re-run `applySetupLevel()` + `applyCompLevel()` and then `renderAll(refs)`.
+
+## Drawer navigation & Tools card
+- Drawer nav has four entries only: Primary Car, Secondary Car, Tools, Setup (`data-view='primaryCar' | 'secondaryCar' | 'tools' | 'setup'`).
+- `mobile-drawer-events.ts` maps each view to an accordion selector (`primaryCar → [data-accordion="primary"]`, `secondaryCar → compare`, `tools → cruise`, `setup → setup`); `openAccordionTree()` auto-opens collapsed ancestors.
+- The Tools card (`cruise-card.ts`) holds two sibling accordions: `data-accordion="cruise"` (cruising check) and `data-accordion="tiresize"` (tire-size comparator with its own verdict pill). Both share the standard section-header/chevron markup.
+
+## Car catalog labels
+- `label` follows one convention: `<Model> (<N>-Speed[, <Type>], <FD> FD)` — e.g. `BMW M3 E36 3.2 (5-Speed, 3.15 FD)`. No prose descriptors ("Test", scenario names, bare years).
+- FD is formatted to two decimals; gearbox type only when it is not a manual (`7-Speed DCT`, `8-Speed Auto`).
 
 ## Engine curve (anchors vs dyno CSV)
 - `core/state/engine-curve.ts` returns the active curve: anchors by default, sanitized dyno points once a CSV is imported.

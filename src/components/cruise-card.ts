@@ -21,6 +21,11 @@ export const injectCruiseShell = (host: HTMLElement): void => {
 	host.replaceChildren();
 	const card = document.createElement('div');
 	card.className = 'card border border-border rounded-xl p-4';
+	const heading = document.createElement('h2');
+	heading.className = 'text-sm font-semibold text-text-main pb-3 mb-1 border-b border-border';
+	heading.setAttribute('data-i18n', 'tools.title');
+	heading.textContent = t('tools.title');
+	card.appendChild(heading);
 	const accordion = document.createElement('div');
 	accordion.setAttribute('data-accordion', 'cruise');
 	const header = document.createElement('div');
@@ -57,6 +62,7 @@ export const injectCruiseShell = (host: HTMLElement): void => {
 	content.appendChild(buildControls());
 	accordion.append(header, content);
 	card.appendChild(accordion);
+	card.appendChild(buildTireAccordion());
 	host.appendChild(card);
 };
 
@@ -104,8 +110,55 @@ const buildControls = (): DocumentFragment => {
 };
 
 /**
+ * @brief Build the tire comparator accordion, mirroring card accordions.
+ * @brief Header holds the title plus the live verdict pill; the tool shell
+ * @brief mounts into the content node on bootstrap.
+ * @return Accordion element with an empty mount point.
+ */
+const buildTireAccordion = (): HTMLElement => {
+	const accordion = document.createElement('div');
+	accordion.setAttribute('data-accordion', 'tiresize');
+	accordion.className = 'border-t border-border mt-3';
+	const header = document.createElement('div');
+	header.className = 'section-header';
+	header.setAttribute('data-accordion-header', '');
+	const left = document.createElement('div');
+	left.className = 'flex items-center gap-2';
+	const dot = document.createElement('span');
+	dot.className = 'w-2 h-2 rounded-full bg-neon-cyan';
+	const title = document.createElement('span');
+	title.className = 'text-sm font-semibold text-text-main';
+	title.setAttribute('data-i18n', 'tiretool.title');
+	title.textContent = t('tiretool.title');
+	const pill = document.createElement('span');
+	pill.id = 'tiresize-pill';
+	pill.className = 'ml-auto text-[11px] font-mono font-semibold border rounded-full px-2.5 py-0.5 hidden';
+	left.append(dot, title);
+	header.append(left, pill);
+	const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	chevron.setAttribute('class', 'chevron open');
+	chevron.setAttribute('data-chevron', '');
+	chevron.setAttribute('viewBox', '0 0 24 24');
+	chevron.setAttribute('fill', 'none');
+	chevron.setAttribute('stroke', 'currentColor');
+	chevron.setAttribute('stroke-width', '2');
+	chevron.setAttribute('aria-hidden', 'true');
+	const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+	poly.setAttribute('points', '6 9 12 15 18 9');
+	chevron.appendChild(poly);
+	header.appendChild(chevron);
+	const content = document.createElement('div');
+	content.className = 'section-content open';
+	content.setAttribute('data-accordion-content', '');
+	const mount = document.createElement('div');
+	mount.id = 'tire-size-mount';
+	content.appendChild(mount);
+	accordion.append(header, content);
+	return accordion;
+};
+
+/**
  * @brief Recompute the cruising check and write it into the result node.
- * @brief Reads the live speed input; never throws on invalid tires or curves.
  * @param refs Cached DOM handles.
  * @return void
  */

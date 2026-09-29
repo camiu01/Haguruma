@@ -3,12 +3,14 @@
  * @brief App shell pieces: header controls, modal and preset combobox.
  */
 /* My Cars modal: bottom sheet on phone/tablet, centered dialog on desktop */
-#mycars-modal {
+#mycars-modal,
+#qr-modal {
 	transition: transform 0.3s ease, opacity 0.3s ease;
 	opacity: 0;
 }
 @media (max-width: 767px) {
-	#mycars-modal {
+	#mycars-modal,
+	#qr-modal {
 		left: 0;
 		right: 0;
 		bottom: 0;
@@ -16,13 +18,15 @@
 		padding-bottom: env(safe-area-inset-bottom);
 		transform: translateY(100%);
 	}
-	#mycars-modal.open {
+	#mycars-modal.open,
+	#qr-modal.open {
 		transform: translateY(0);
 		opacity: 1;
 	}
 }
 @media (min-width: 768px) {
-	#mycars-modal {
+	#mycars-modal,
+	#qr-modal {
 		left: 50%;
 		top: 50%;
 		width: calc(100% - 3rem);
@@ -32,18 +36,25 @@
 		box-shadow: var(--shadow-card);
 		transform: translate(-50%, -50%) scale(0.96);
 	}
-	#mycars-modal.open {
+	#mycars-modal.open,
+	#qr-modal.open {
 		transform: translate(-50%, -50%) scale(1);
 		opacity: 1;
 	}
 }
-#mycars-modal-backdrop {
+#mycars-modal-backdrop,
+#qr-modal-backdrop {
 	background: rgba(0,0,0,0.5);
 	transition: opacity 0.3s ease;
 	opacity: 0;
 }
-#mycars-modal-backdrop.open {
+#mycars-modal-backdrop.open,
+#qr-modal-backdrop.open {
 	opacity: 1;
+}
+#qr-image svg {
+	width: min(70vw, 280px);
+	height: auto;
 }
 .btn-remove-gear {
 	min-width: 44px;

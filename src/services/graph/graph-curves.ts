@@ -11,6 +11,7 @@ import { toX, toY } from './canvas-setup';
 /**
  * Draw dashed secondary comparison curves.
  * @brief Overlay an independent tire, final drive, gearset and redline.
+ * @return void
  */
 export const drawComparisonCurves = (
 	ctx: CanvasRenderingContext2D,

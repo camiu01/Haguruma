@@ -11,6 +11,7 @@
 import { rpmFromKmh, speedKmh, toDisplaySpeed } from './speed-math';
 import { dynamicRadiusM, tractiveForceAt } from './traction-math';
 import { kmhToMs } from './aero-math';
+import { gripGainFor } from '../../config/tire-compounds';
 import type { DifferentialType, RunningGear, SpeedUnit } from '../models';
 
 /** Standard gravity in m/s2. */
@@ -201,11 +202,17 @@ const drivenAxleLimitN = (rg: RunningGear, massKg: number, speedKmh: number, acc
 
 /**
  * @brief Resolve the usable road friction coefficient of a setup.
- * @param rg Setup carrying roadFrictionCoefficient.
- * @return Friction coefficient, 0 when missing or invalid.
+ * @brief The road value is scaled by the tire-compound grip gain, so stickier
+ * @brief rubber (200TW and below) raises the Kamm-circle budget while the
+ * @brief default touring compound leaves legacy numbers untouched.
+ * @param rg Setup carrying roadFrictionCoefficient and tireCompoundId.
+ * @return Effective friction coefficient, 0 when missing or invalid.
  */
 const muOf = (rg: RunningGear): number => {
-	return Number.isFinite(rg?.roadFrictionCoefficient) && rg.roadFrictionCoefficient > 0 ? rg.roadFrictionCoefficient : 0;
+	if (!Number.isFinite(rg?.roadFrictionCoefficient) || rg.roadFrictionCoefficient <= 0) {
+		return 0;
+	}
+	return rg.roadFrictionCoefficient * gripGainFor(rg.tireCompoundId);
 };
 
 /**

@@ -11,6 +11,7 @@ import { parseTire } from '../math/tire-math';
 import type { AppState, RunningGear } from '../models';
 import { defaultRunningGear } from '../state/app-state';
 import { DIFF_PRESETS } from '../../config/diff-presets';
+import { DEFAULT_TIRE_COMPOUND_ID } from '../../config/tire-compounds';
 
 export interface CompactSetup {
 	/** Tire string like 205/55R16. */
@@ -270,6 +271,12 @@ const pushGrip = (out: number[], rg: RunningGear): boolean => {
  */
 export const encodeCompactHash = (s: AppState): string | null => {
 	if (s.torqueCurvePoints && s.torqueCurvePoints.length > 0) {
+		return null;
+	}
+	if (
+		(s.runningGear.tireCompoundId ?? DEFAULT_TIRE_COMPOUND_ID) !== DEFAULT_TIRE_COMPOUND_ID ||
+		(s.compRunningGear.tireCompoundId ?? DEFAULT_TIRE_COMPOUND_ID) !== DEFAULT_TIRE_COMPOUND_ID
+	) {
 		return null;
 	}
 	if (!inR(s.primaryFd, 1, 10) || !inR(s.primaryRedline, 3000, 12000) || !inR(s.maxGraphSpeed, 50, 500)) {

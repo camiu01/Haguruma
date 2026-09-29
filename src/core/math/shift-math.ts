@@ -2,7 +2,7 @@
  * @file shift-math.ts
  * @brief Upshift analysis: landing RPM, drops, ratios and torque-band checks.
  */
-import { calculateSpeed } from './speed-math';
+import { calculateRpm, calculateSpeed } from './speed-math';
 import type { SpeedUnit } from '../models';
 
 const MIN_RATIO = 0.4;
@@ -125,6 +125,114 @@ export const describeAllUpshifts = (
 		}
 	}
 	return steps;
+};
+
+/**
+ * Primary-vs-comparison delta at one up-shift point.
+ * @brief Landing-RPM gap in the next gear plus shift-speed gap, display units.
+ */
+export interface ShiftPointDelta {
+	/** Zero-based index of the gear being left. */
+	fromIndex: number;
+	/** Comparison landing RPM minus primary landing RPM. */
+	dLandingRpm: number;
+	/** Comparison shift speed minus primary shift speed (display unit). */
+	dShiftSpeed: number;
+}
+
+/**
+ * @brief Compare primary and secondary landing RPM at the same road speed.
+ * @brief The primary shift speed comes from its redline point; both landings
+ * @brief are evaluated in the next gear at that speed, like the graph peaks.
+ * @param gears Primary gearset from first to top gear.
+ * @param fromIndex Zero-based index of the gear being left.
+ * @param redline Primary rev limiter in RPM.
+ * @param fd Primary final drive.
+ * @param circM Primary rolling circumference in metres.
+ * @param compGears Secondary gearset.
+ * @param compFd Secondary final drive.
+ * @param compCircM Secondary rolling circumference in metres.
+ * @param compRedline Secondary rev limiter in RPM.
+ * @param unit Display unit for speeds.
+ * @return Delta entry, or null when either side is invalid.
+ */
+export const describeShiftDelta = (
+	gears: number[],
+	fromIndex: number,
+	redline: number,
+	fd: number,
+	circM: number,
+	compGears: number[],
+	compFd: number,
+	compCircM: number,
+	compRedline: number,
+	unit: SpeedUnit = 'kmh',
+): ShiftPointDelta | null => {
+	if (!Array.isArray(gears) || !Array.isArray(compGears) || fromIndex < 0) {
+		return null;
+	}
+	const next = gears[fromIndex + 1];
+	const compNext = compGears[fromIndex + 1];
+	const current = gears[fromIndex];
+	const compCurrent = compGears[fromIndex];
+	if (!isValidRatio(current) || !isValidRatio(next) || !isValidRatio(compCurrent) || !isValidRatio(compNext)) {
+		return null;
+	}
+	if (!Number.isFinite(redline) || redline <= 0 || !Number.isFinite(compRedline) || compRedline <= 0) {
+		return null;
+	}
+	if (!Number.isFinite(fd) || fd <= 0 || !Number.isFinite(compFd) || compFd <= 0) {
+		return null;
+	}
+	if (!Number.isFinite(circM) || circM <= 0 || !Number.isFinite(compCircM) || compCircM <= 0) {
+		return null;
+	}
+	const shiftSpeed = calculateSpeed(redline, current, fd, circM, unit);
+	const compShiftSpeed = calculateSpeed(compRedline, compCurrent, compFd, compCircM, unit);
+	const landing = calculateRpm(shiftSpeed, next, fd, circM, unit);
+	const compLanding = calculateRpm(shiftSpeed, compNext, compFd, compCircM, unit);
+	if (![shiftSpeed, compShiftSpeed, landing, compLanding].every((v) => Number.isFinite(v))) {
+		return null;
+	}
+	return { fromIndex, dLandingRpm: compLanding - landing, dShiftSpeed: compShiftSpeed - shiftSpeed };
+};
+
+/**
+ * @brief Compare every shared up-shift point of two gearsets.
+ * @param gears Primary gearset from first to top gear.
+ * @param redline Primary rev limiter in RPM.
+ * @param fd Primary final drive.
+ * @param circM Primary rolling circumference in metres.
+ * @param compGears Secondary gearset.
+ * @param compFd Secondary final drive.
+ * @param compCircM Secondary rolling circumference in metres.
+ * @param compRedline Secondary rev limiter in RPM.
+ * @param unit Display unit for speeds.
+ * @return One delta per shared gear change, skipping invalid pairs.
+ */
+export const describeAllShiftDeltas = (
+	gears: number[],
+	redline: number,
+	fd: number,
+	circM: number,
+	compGears: number[],
+	compFd: number,
+	compCircM: number,
+	compRedline: number,
+	unit: SpeedUnit = 'kmh',
+): ShiftPointDelta[] => {
+	const out: ShiftPointDelta[] = [];
+	if (!Array.isArray(gears) || !Array.isArray(compGears)) {
+		return out;
+	}
+	const pairs = Math.min(gears.length, compGears.length) - 1;
+	for (let i = 0; i < pairs; i += 1) {
+		const delta = describeShiftDelta(gears, i, redline, fd, circM, compGears, compFd, compCircM, compRedline, unit);
+		if (delta) {
+			out.push(delta);
+		}
+	}
+	return out;
 };
 
 /**
