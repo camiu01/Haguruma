@@ -3,23 +3,29 @@
  * @brief Collapsible accordion sections for the vehicle setup card.
  */
 import type { ElementRefs } from '../dom/element-refs';
-import { syncAccordionHeight, syncOpenAccordionHeights } from '../dom/accordion-height';
+import { observeAccordionHeights, syncAccordionHeight, syncOpenAccordionHeights } from '../dom/accordion-height';
 import { debounce } from '../../core/debounce';
 
 /**
  * Wire click-to-toggle on every [data-accordion] section.
  * @brief Headers act as buttons for mouse, touch and keyboard users.
- * @brief Open heights are re-synced at bind time, on font load and on resize
- * @brief so the collapse transition always matches the real content height.
+ * @brief Open heights are re-synced at bind time, on font load, on resize and
+ * @brief through the document mutation observer, so the collapse transition
+ * @brief always matches the real content height.
  * @param refs Unused but kept for signature consistency.
  * @return void
  */
 export const bindAccordionEvents = (_refs: ElementRefs): void => {
 	syncOpenAccordionHeights();
+	observeAccordionHeights();
 	if (document.fonts) {
 		document.fonts.ready.then(() => syncOpenAccordionHeights());
 	}
 	window.addEventListener('resize', debounce(() => syncOpenAccordionHeights(), 150));
+	// `<details>` toggles change height without a class mutation.
+	document.querySelectorAll<HTMLDetailsElement>('details.accordion').forEach((details) => {
+		details.addEventListener('toggle', () => syncOpenAccordionHeights());
+	});
 	const sections = document.querySelectorAll<HTMLElement>('[data-accordion]');
 	sections.forEach((section) => {
 		const header = section.querySelector<HTMLElement>('[data-accordion-header]');

@@ -11,15 +11,17 @@ import { syncAccordionHeight, syncOpenAccordionHeights } from '../src/services/d
  * Build a minimal content stub exposing only the properties the sync reads.
  * @param open Whether the section carries the `open` class.
  * @param height Reported scroll height in pixels.
+ * @param rendered Whether the section currently lays out (client rects exist).
  * @return Stub cast to HTMLElement.
  */
-const stub = (open: boolean, height = 1842): HTMLElement =>
+const stub = (open: boolean, height = 1842, rendered = true): HTMLElement =>
 	({
 		classList: {
 			contains: (name: string): boolean => name === 'open' && open,
 		},
 		style: { maxHeight: '' },
 		scrollHeight: height,
+		getClientRects: (): unknown[] => (rendered ? [{}] : []),
 	}) as unknown as HTMLElement;
 
 describe('syncAccordionHeight', () => {
@@ -31,6 +33,23 @@ describe('syncAccordionHeight', () => {
 	it('clears the inline height on closed sections', () => {
 		const content = stub(false, 1842);
 		content.style.maxHeight = '1842px';
+		syncAccordionHeight(content);
+		expect(content.style.maxHeight).toBe('');
+	});
+	it('recovers a stale zero height once the section lays out again', () => {
+		const content = stub(true, 1842);
+		content.style.maxHeight = '0px';
+		syncAccordionHeight(content);
+		expect(content.style.maxHeight).toBe('1842px');
+	});
+	it('keeps the last known height while the section is unrendered', () => {
+		const content = stub(true, 1842, false);
+		content.style.maxHeight = '900px';
+		syncAccordionHeight(content);
+		expect(content.style.maxHeight).toBe('900px');
+	});
+	it('ignores an empty section', () => {
+		const content = stub(true, 0);
 		syncAccordionHeight(content);
 		expect(content.style.maxHeight).toBe('');
 	});

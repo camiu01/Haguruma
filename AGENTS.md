@@ -119,7 +119,7 @@ Dynamic layer, redrawn every render on top of the blitted bitmap:
 - All English copy lives in `dictionary.en.ts`, all Italian copy in `dictionary.it.ts` (compile-time parity). Data modules hold `DictKey` references and resolve via `t(key, lang)` — never inline user-facing strings.
 - All static elements are resolved in `element-refs.ts` via `document.getElementById()`.
 - Feature shells are injected by `inject*Shell(mount)` builders called in `bootstrap()` **before** `getElementRefs()`, so ids, `[data-accordion]` sections and `[data-i18n]` nodes exist for refs, accordion binding and `applyI18n()`.
-- Accordions are never height-capped: `.section-content.open` is `max-height: none` and `services/dom/accordion-height.ts` mirrors `scrollHeight` into an inline value so the transition still animates. Call `syncOpenAccordionHeights()` after any DOM mutation outside `renderAll()` (it already runs it last).
+- Accordions are never height-capped: `.section-content.open` is `max-height: none` and `services/dom/accordion-height.ts` mirrors `scrollHeight` into an inline value so the transition still animates. Heights self-heal via a document mutation observer, a resize observer on each open section's children and a `<details>` toggle hook; `renderAll()` also re-measures as its last step.
 - **Do not put help-dot spans inside `data-i18n` elements** — `textContent` replacement strips children. Wrap the span in a separate parent.
 
 ## Custom car system
