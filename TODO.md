@@ -163,6 +163,7 @@ Docs consolidation, physics polish, chassis convergence and trackside utilities 
 - [x] AGENTS refresh: shared running-gear block, Tools card, drawer nav, setup levels, catalog label convention, unit-aware KPIs `#docs`
 - [x] Fix clipped Main Setup body on large-font devices: open accordions are unbounded (`max-height: none`) and re-measured via `accordion-height.ts` sync on render/level/toggle/resize instead of a fixed 1600px cap `#bug` `#ux`
 - [x] Accordion height self-heals: `<details>` toggle hook, document mutation observer and resize observer on section children re-measure open sections, so late web-font swaps, reopened details and injected rows never leave the downforce/coast readouts clipped `#bug` `#ux`
+- [x] Patch bump 0.5.0 -> 0.5.1 (`package.json`, `package-lock.json`, `build.gradle` `versionName` + `versionCode` 5 -> 6) for the accordion clip fixes `#release`
 
 ---
 
