@@ -7,9 +7,9 @@
 	width: 100%;
 	background: var(--bg-surface-input);
 	border: 1px solid var(--border-surface-border);
-	border-radius: 8px;
+	border-radius: var(--radius-xs);
 	padding: 8px 12px;
-	font-size: 14px;
+	font-size: 0.875rem;
 	font-family: 'JetBrains Mono', monospace;
 	color: var(--text-output);
 }
@@ -17,63 +17,17 @@
 	border-color: var(--accent-cyan);
 }
 
-/* Secondary comparison per-gear ratio grid. */
-.comp-gear-grid {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 8px;
+/* Gear ratio stack rows (primary and mirrored comparison). */
+.gear-rows-container {
+	scrollbar-gutter: stable;
 }
-.comp-gear-cell {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	min-width: 0;
-}
-.comp-gear-cell-label {
-	font-size: 10px;
-	font-weight: 600;
-	color: var(--text-dim);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-}
-.comp-gear-cell-input {
-	width: 100%;
-	background: var(--bg-surface-input);
-	border: 1px solid var(--border-surface-border);
-	border-radius: 8px;
-	padding: 8px 10px;
-	font-size: 13px;
-	font-family: 'JetBrains Mono', monospace;
-	font-weight: 600;
-	color: var(--text-output);
-	outline: none;
-	text-align: right;
-}
-.comp-gear-cell-input:focus {
-	border-color: var(--accent-cyan);
-}
-@media (max-width: 400px) {
-	.comp-gear-grid {
-		grid-template-columns: minmax(0, 1fr);
-	}
-}
-
-/* Gear glow classes matching oledmode.html */
-.gear-glow-1 { filter: drop-shadow(0 0 4px rgba(255, 59, 48, 0.45)); }
-.gear-glow-2 { filter: drop-shadow(0 0 4px rgba(255, 149, 0, 0.45)); }
-.gear-glow-3 { filter: drop-shadow(0 0 4px rgba(255, 214, 10, 0.45)); }
-.gear-glow-4 { filter: drop-shadow(0 0 4px rgba(48, 209, 88, 0.45)); }
-.gear-glow-5 { filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.45)); }
-.gear-glow-6 { filter: drop-shadow(0 0 4px rgba(10, 132, 255, 0.45)); }
-.gear-glow-7 { filter: drop-shadow(0 0 4px rgba(191, 90, 242, 0.45)); }
-.gear-glow-8 { filter: drop-shadow(0 0 4px rgba(236, 72, 153, 0.45)); }
 
 /* Cards: 1px border, 12px radius, subtle shadow, 16px padding. */
 .card {
 	border-width: 1px;
-	border-radius: 12px;
+	border-radius: var(--radius-sm);
 	box-shadow: var(--shadow-card);
-	padding: 16px;
+	padding: var(--card-pad);
 	background-color: var(--bg-card);
 }
 
@@ -141,7 +95,7 @@ details.accordion:not([open]) .chevron {
 }
 table, .font-mono, .gear-input, .reverse-input { font-variant-numeric: tabular-nums; }
 .table-sticky { border-collapse: separate; border-spacing: 0; }
-.table-sticky th, .table-sticky td { white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; padding-left: 0.5rem; padding-right: 0.5rem; }
+.table-sticky th, .table-sticky td { white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; padding-left: 0.75rem; padding-right: 0.75rem; }
 .table-sticky th:first-child, .table-sticky td:first-child { min-width: 5.5rem; }
 .table-sticky th:nth-child(2), .table-sticky td:nth-child(2), .table-sticky th:nth-child(3), .table-sticky td:nth-child(3) { min-width: 4.25rem; }
 .table-sticky th:nth-child(4), .table-sticky td:nth-child(4) { min-width: 5rem; }
@@ -172,8 +126,8 @@ table, .font-mono, .gear-input, .reverse-input { font-variant-numeric: tabular-n
 	height: 1rem;
 	margin-left: 0.25rem;
 	border: 1px solid currentColor;
-	border-radius: 9999px;
-	font-size: 10px;
+	border-radius: var(--radius-pill);
+	font-size: 0.625rem;
 	line-height: 1;
 	cursor: help;
 	text-decoration: underline dotted;
@@ -191,10 +145,10 @@ table, .font-mono, .gear-input, .reverse-input { font-variant-numeric: tabular-n
 	white-space: normal;
 	background: #000000;
 	border: 1px solid #374151;
-	border-radius: 6px;
+	border-radius: var(--radius-xs);
 	color: #e5e7eb;
 	font-family: 'Inter', sans-serif;
-	font-size: 11px;
+	font-size: 0.6875rem;
 	font-weight: 400;
 	padding: 6px 8px;
 	text-align: left;
@@ -210,4 +164,83 @@ table, .font-mono, .gear-input, .reverse-input { font-variant-numeric: tabular-n
 .help-dot:focus::after {
 	opacity: 1;
 	transform: translateY(0);
+}
+
+/* --- Contained accordion panels (reference mockup shell) ------------------- */
+
+/* Top-level panels: tinted block, hairline border, tinted header strip. */
+[data-accordion] {
+	background-color: var(--bg-surface-subtle);
+	border: 1px solid var(--border-hairline);
+	border-radius: var(--radius-xs);
+	overflow: hidden;
+}
+[data-accordion] > .section-header {
+	padding: 8px var(--card-pad);
+	min-height: 44px;
+	background-color: var(--bg-surface-raised);
+	border-bottom: 1px solid var(--border-hairline);
+}
+[data-accordion] > .section-content.open {
+	padding: var(--card-pad);
+}
+
+/* Card-level collapse shells keep no chrome of their own. */
+[data-accordion='vehicle'],
+[data-accordion='compare'],
+[data-accordion='tools'] {
+	background-color: transparent;
+	border: 0;
+	border-radius: 0;
+	overflow: visible;
+}
+[data-accordion='vehicle'] > .section-header,
+[data-accordion='compare'] > .section-header,
+[data-accordion='tools'] > .section-header {
+	padding: 0 0 8px;
+	min-height: 36px;
+	background-color: transparent;
+	border-bottom: 1px solid var(--border-hairline);
+}
+[data-accordion='vehicle'] > .section-content.open,
+[data-accordion='compare'] > .section-content.open,
+[data-accordion='tools'] > .section-content.open {
+	padding: 0;
+}
+
+/* Nested ratio stacks (gear list, mirrored compare list) stay flat. */
+[data-accordion='gears'],
+[data-accordion='comp-gears'] {
+	background-color: transparent;
+	border: 0;
+	border-radius: 0;
+	overflow: visible;
+}
+[data-accordion='gears'] > .section-header,
+[data-accordion='comp-gears'] > .section-header {
+	padding: 6px 0;
+	min-height: 36px;
+	background-color: transparent;
+	border-bottom: 0;
+}
+[data-accordion='gears'] > .section-content.open,
+[data-accordion='comp-gears'] > .section-content.open {
+	padding: 0;
+}
+
+/* Native details accordions share the same panel recipe. */
+details.accordion {
+	background-color: var(--bg-surface-subtle);
+	border: 1px solid var(--border-hairline);
+	border-radius: var(--radius-xs);
+	overflow: hidden;
+}
+details.accordion > summary {
+	padding: 8px var(--card-pad);
+	min-height: 44px;
+	background-color: var(--bg-surface-raised);
+	border-bottom: 1px solid var(--border-hairline);
+}
+details.accordion > *:not(summary) {
+	padding: 0 var(--card-pad) var(--card-pad);
 }

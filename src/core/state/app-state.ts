@@ -74,6 +74,14 @@ export const defaultState: AppState = {
 	setupGuide: { phase: 'mid', issue: 'understeer' },
 	setupLevel: 'full',
 	compLevel: 'full',
+	graphLayers: {
+		shiftDrops: true,
+		aeroWall: true,
+		gripLimit: true,
+		powerCurve: false,
+		fineGrid: true,
+		snapHud: true,
+	},
 };
 
 /**

@@ -762,8 +762,11 @@ Cross-checks that pin the model to reality:
 
 ## 23. Graph coordinate mapping
 
-The canvas is not physics, but the plot lives in the same units. Mapping in
-`canvas-setup.ts` (CSS pixels):
+The plot is not physics, but it lives in the same units. Since v0.6.0 the
+graph is a declarative SVG: every render pins the viewBox of `#graph-svg` to
+the measured host size in CSS pixels (`graph-renderer.ts`), so one user unit
+equals one screen pixel, fonts keep their real size on every viewport and
+the plot never stretches. Mapping in `svg-frame.ts` (user units):
 
 $$
 x(v) = \text{pad}_{\text{left}} + \frac{v}{v_{\max}}\,\text{plotWidth},
@@ -777,17 +780,19 @@ $$
 \text{plotHeight} = H - \text{pad}_{\text{top}} - \text{pad}_{\text{bottom}}
 $$
 
-Paddings (top/right/bottom/left) = 25/30/40/55. Axis ceiling
-$n_{\max} = \lceil n_{\text{red}}/1000 \rceil · 1000 + 500$; $v_{\max}$ is the
-state's `maxGraphSpeed`. HiDPI: the backing store is `round(cssSize × dpr)` with
-`dpr = min(devicePixelRatio, 2)`, and the context transform is set so all
-mapping stays in CSS pixels.
+Base paddings (top/right/bottom/left) = 34/74/48/62 user units, scaled by
+$\max(0.62, \min(1, W/900))$ so narrow hosts keep a readable plot band.
+Axis ceiling $n_{\max} = \lceil n_{\text{red}}/1000 \rceil · 1000 + 500$;
+$v_{\max}$ is the state's `maxGraphSpeed`. Gear rays are cut at the
+drag-limited wall: solid up to the wall, dashed (`10 8`, opacity 0.32)
+past it; the required-power envelope crossing lands on the same wall
+speed, so the power label and the wall label can never disagree.
 
 Ghost-delta readout (v0.5.0, `describeAllShiftDeltas` in `shift-math.ts`,
 rendered as DOM rows in `#comp-shift-deltas`): at each primary up-shift
 point, $\Delta n$ compares the next-gear landing RPM of both setups at the
 same road speed and $\Delta v$ compares the same-gear shift-point speeds; the
-canvas stays curve-only.
+plot stays curve-only.
 
 ## 24. Extending the model
 

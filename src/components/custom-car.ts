@@ -15,7 +15,7 @@ import { applyCompPresetData } from '../services/events/comparison-events';
 /** Target slot for a custom preset apply. */
 export type CustomTarget = 'primary' | 'compare';
 
-const INVALID_CLASS = 'border-rose-500';
+const INVALID_CLASS = 'border-neon-red';
 
 /**
  * @brief Mark an input as valid or invalid.
@@ -124,7 +124,7 @@ export const renderCustomList = (refs: ElementRefs, render: () => void): void =>
 	refs.customList.innerHTML = '';
 	if (names.length === 0) {
 		const empty = document.createElement('p');
-		empty.className = 'text-xs text-gray-500';
+		empty.className = 'font-mono text-[0.75rem] text-text-muted';
 		empty.textContent = t('custom.empty');
 		refs.customList.appendChild(empty);
 		return;
@@ -132,14 +132,14 @@ export const renderCustomList = (refs: ElementRefs, render: () => void): void =>
 	for (const name of names) {
 		const preset = customs[name];
 		const row = document.createElement('div');
-		row.className = 'flex items-center gap-2 border border-gray-800 rounded-lg px-3 py-1.5';
+		row.className = 'flex items-center gap-2 rounded border border-border-hairline bg-surface-recessed px-2 py-1.5';
 		const label = document.createElement('span');
-		label.className = 'flex-1 text-xs text-gray-200 truncate';
+		label.className = 'flex-1 truncate font-mono text-[0.75rem] text-text-output';
 		label.textContent = name;
 		label.title = name;
 		const loadPrimary = document.createElement('button');
 		loadPrimary.type = 'button';
-		loadPrimary.className = 'text-xs text-gray-400 hover:text-white transition-colors';
+		loadPrimary.className = 'font-mono text-[0.6875rem] text-text-dim hover:text-text-output transition-colors';
 		loadPrimary.textContent = t('custom.load');
 		loadPrimary.title = t('custom.loadPrimary');
 		loadPrimary.addEventListener('click', () => {
@@ -148,14 +148,14 @@ export const renderCustomList = (refs: ElementRefs, render: () => void): void =>
 		});
 		const loadComp = document.createElement('button');
 		loadComp.type = 'button';
-		loadComp.className = 'text-xs text-amber-400/80 hover:text-amber-300 transition-colors';
+		loadComp.className = 'font-mono text-[0.6875rem] text-accent-compare hover:text-neon-yellow transition-colors';
 		loadComp.textContent = t('custom.loadCompare');
 		loadComp.addEventListener('click', () => {
 			applyCustomToSlot(refs, preset, 'compare', render);
 		});
 		const exportBtn = document.createElement('button');
 		exportBtn.type = 'button';
-		exportBtn.className = 'text-xs text-gray-500 hover:text-sky-400 transition-colors';
+		exportBtn.className = 'font-mono text-[0.6875rem] text-text-muted hover:text-neon-cyan transition-colors';
 		exportBtn.textContent = t('custom.export');
 		exportBtn.addEventListener('click', () => {
 			const blob = new Blob([JSON.stringify(preset, null, 2)], { type: 'application/json' });
@@ -168,7 +168,7 @@ export const renderCustomList = (refs: ElementRefs, render: () => void): void =>
 		});
 		const remove = document.createElement('button');
 		remove.type = 'button';
-		remove.className = 'text-xs text-gray-500 hover:text-rose-400 transition-colors';
+		remove.className = 'font-mono text-[0.6875rem] text-text-muted hover:text-neon-red transition-colors';
 		remove.textContent = t('custom.delete');
 		remove.addEventListener('click', () => {
 			deleteCustomPreset(name);

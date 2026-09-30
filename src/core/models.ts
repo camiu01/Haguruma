@@ -245,6 +245,8 @@ export interface AppState {
 	setupLevel: SetupLevel;
 	/** Comparison detail level (same or smaller than the setup level). */
 	compLevel: SetupLevel;
+	/** Cartesian plot layer visibility switches. */
+	graphLayers: GraphLayerSettings;
 }
 
 /**
@@ -272,6 +274,25 @@ export interface PlotFrame {
 	maxSpeed: number;
 	/** Top edge of the Y axis in RPM. */
 	maxRpm: number;
+}
+
+/**
+ * Visibility switches for the cartesian plot layers.
+ * @brief Toggled from the graph toolbar and the drawer display section.
+ */
+export interface GraphLayerSettings {
+	/** Show the shift-drop connectors and landing markers. */
+	shiftDrops: boolean;
+	/** Show the aerodynamic-wall shading and limit marker. */
+	aeroWall: boolean;
+	/** Show the friction grip-limit curve and wheelspin shading. */
+	gripLimit: boolean;
+	/** Show the available versus required wheel-power envelope. */
+	powerCurve: boolean;
+	/** Draw the fine background grid instead of the coarse one. */
+	fineGrid: boolean;
+	/** Snap the crosshair HUD to the nearest shift point. */
+	snapHud: boolean;
 }
 
 /**

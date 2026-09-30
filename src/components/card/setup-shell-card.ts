@@ -54,20 +54,20 @@ export class SetupGuideShellCard extends Card<SetupShellCardOptions> {
 	 */
 	render(): HTMLElement {
 		const open = this.isOpen();
-		const accordion = createEl('div');
+		const accordion = createEl('div', 'bg-surface-subtle rounded border border-border-hairline overflow-hidden');
 		accordion.dataset.accordion = 'setup';
-		const header = createEl('div', 'section-header');
+		const header = createEl('div', 'section-header px-3 py-2 bg-surface-subtle border-b border-border-hairline');
 		header.dataset.accordionHeader = '';
 		const titleRow = createEl('div', 'flex items-center gap-2 min-w-0');
 		titleRow.append(createEl('span', 'w-2 h-2 rounded-full bg-neon-cyan'));
-		titleRow.append(createEl('span', 'text-sm font-semibold text-text-main', 'setup.title'));
-		titleRow.append(createEl('span', 'text-[10px] text-text-dim whitespace-nowrap', 'setup.note'));
+		titleRow.append(createEl('span', 'text-[0.8125rem] font-semibold uppercase tracking-wide text-text-output', 'setup.title'));
+		titleRow.append(createEl('span', 'font-mono text-[0.625rem] text-text-muted whitespace-nowrap', 'setup.note'));
 		header.append(titleRow, this.buildChevron(open));
-		const content = createEl('div', open ? 'section-content open' : 'section-content');
+		const content = createEl('div', open ? 'section-content open p-3' : 'section-content p-3');
 		content.dataset.accordionContent = '';
-		const guide = createEl('div', 'setup-guide pt-1');
+		const guide = createEl('div', 'setup-guide');
 		guide.appendChild(createEl('h3', 'setup-h3', 'setup.wizardTitle'));
-		const grid = createEl('div', 'grid grid-cols-2 gap-4');
+		const grid = createEl('div', 'grid grid-cols-2 gap-3');
 		grid.append(this.buildSelect('setup-phase', 'setup.phaseLabel', PHASE_OPTIONS));
 		grid.append(this.buildSelect('setup-issue', 'setup.issueLabel', ISSUE_OPTIONS));
 		guide.appendChild(grid);
@@ -110,11 +110,11 @@ export class SetupGuideShellCard extends Card<SetupShellCardOptions> {
 	 */
 	private buildSelect(id: string, labelKey: DictKey, options: SetupShellOption[]): HTMLElement {
 		const wrap = createEl('div', 'col-span-2 sm:col-span-1');
-		const label = createEl('label', 'block text-xs font-medium text-text-dim mb-1', labelKey);
+		const label = createEl('label', 'mb-1 block text-[0.6875rem] font-medium text-text-dim', labelKey);
 		label.setAttribute('for', id);
 		const select = document.createElement('select');
 		select.id = id;
-		select.className = 'w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim';
+		select.className = 'w-full bg-surface-input border border-border-hairline rounded px-2 py-2 font-mono text-[0.8125rem] text-text-output outline-none focus:border-neon-cyan';
 		for (const opt of options) {
 			const node = document.createElement('option');
 			node.value = opt.value;

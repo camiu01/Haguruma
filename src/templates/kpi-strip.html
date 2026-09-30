@@ -1,0 +1,63 @@
+<!-- @file kpi-strip.html -->
+<!-- @brief Static application shell fragment. -->
+<!-- KPI strip (always visible) -->
+	<div class='w-full max-w-[1920px] mx-auto px-4 lg:px-6 pt-3'>
+		<div id='kpi-strip' class='grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-1 p-1 bg-surface-card border border-border-hairline rounded-lg shadow-sm'>
+		<div class='kpi-cell kpi-card border-l-neon-red'>
+			<span class='font-mono text-[0.5625rem] uppercase tracking-wider text-text-dim' data-i18n='kpi.redline'>Redline Engine</span>
+			<div class='flex items-baseline gap-1 mt-1'>
+				<span id='kpi-redline' class='font-mono text-base font-bold tabular-nums text-neon-red'>7,200</span>
+				<span class='font-mono text-[0.5625rem] text-text-muted'>RPM</span>
+			</div>
+		</div>
+		<div class='kpi-cell kpi-card border-l-neon-cyan'>
+			<span class='font-mono text-[0.5625rem] uppercase tracking-wider text-text-dim' data-i18n='kpi.topSpeed'>Top Speed (Theor.)</span>
+			<div class='flex items-baseline gap-1 mt-1'>
+				<span id='kpi-top-speed' class='font-mono text-base font-bold tabular-nums text-neon-cyan'>299.9</span>
+				<span class='font-mono text-[0.5625rem] text-text-muted unit-label'>km/h</span>
+			</div>
+		</div>
+		<div class='kpi-cell kpi-card border-l-accent-warning'>
+			<span class='flex items-center justify-between gap-1 font-mono text-[0.5625rem] uppercase tracking-wider text-accent-warning'>
+				<span data-i18n='kpi.aeroWall'>Aero Wall</span>
+				<span class='w-1.5 h-1.5 rounded-full bg-accent-warning animate-pulse' aria-hidden='true'></span>
+			</span>
+			<div class='flex items-baseline gap-1 mt-1'>
+				<span id='kpi-aero-wall' class='font-mono text-base font-bold tabular-nums text-accent-warning'>281.0</span>
+				<span class='font-mono text-[0.5625rem] text-text-muted unit-label'>km/h</span>
+			</div>
+		</div>
+		<div class='kpi-cell kpi-card border-l-neon-green'>
+			<span class='font-mono text-[0.5625rem] uppercase tracking-wider text-text-dim' data-i18n='kpi.gripLimit'>Grip Limit (Peak)</span>
+			<div class='flex items-baseline gap-1 mt-1'>
+				<span id='kpi-grip' class='font-mono text-base font-bold tabular-nums text-neon-green'>6,310</span>
+				<span class='font-mono text-[0.5625rem] text-text-muted'>N</span>
+			</div>
+		</div>
+		<div class='kpi-cell kpi-card border-l-neon-green'>
+			<span class='font-mono text-[0.5625rem] uppercase tracking-wider text-text-dim' data-i18n='kpi.time0to100'>0-100 km/h</span>
+			<div class='flex items-baseline gap-1 mt-1'>
+				<span id='kpi-0-100-time' class='font-mono text-base font-bold tabular-nums text-neon-green'>—</span>
+			</div>
+		</div>
+		<div class='kpi-cell kpi-card border-l-neon-yellow'>
+			<span class='font-mono text-[0.5625rem] uppercase tracking-wider text-text-dim' data-i18n='kpi.m400'>0-400 m</span>
+			<div class='flex items-baseline gap-1 mt-1'>
+				<span id='kpi-quarter' class='font-mono text-base font-bold tabular-nums text-neon-yellow'>—</span>
+			</div>
+		</div>
+		<div class='kpi-cell kpi-card border-l-neon-orange'>
+			<span class='font-mono text-[0.5625rem] uppercase tracking-wider text-text-dim' data-i18n='kpi.trap'>Trap Speed</span>
+			<div class='flex items-baseline gap-1 mt-1'>
+				<span id='kpi-trap' class='font-mono text-base font-bold tabular-nums text-neon-orange'>—</span>
+				<span class='font-mono text-[0.5625rem] text-text-muted unit-label'>km/h</span>
+			</div>
+		</div>
+		<div class='kpi-cell kpi-card border-l-neon-blue'>
+			<span class='font-mono text-[0.5625rem] uppercase tracking-wider text-text-dim' data-i18n='kpi.wheelPower'>Wheel Power</span>
+			<div class='flex items-baseline gap-1 mt-1'>
+				<span id='kpi-wheel-power' class='font-mono text-base font-bold tabular-nums text-neon-blue'>—</span>
+			</div>
+		</div>
+	</div>
+	</div>

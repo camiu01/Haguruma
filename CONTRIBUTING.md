@@ -38,17 +38,22 @@ src/
     graph-constants.ts             # GRAPH_PADDING, GRAPH_STYLE per theme, GRAPH_LIMITS
   services/
     dom/element-refs.ts            # Typed DOM handles (ElementRefs)
-    graph/                         # canvas-setup, axes, curves, drops, renderer, tooltip, theme, export, layers (static cache), limits, drivetrain-export
+    graph/                        # svg-frame (geometry/projection), svg-defs, svg-axes, svg-curves, svg-shift-drops, svg-limits, svg-power, svg-nodes, graph-scene, graph-renderer, graph-crosshair, crosshair-tooltip, graph-theme, graph-export, drivetrain-export
     events/                        # One binder per control group
   components/
-    gear-list.ts                   # Editable gear rows + add/remove
-    gear-table.ts                  # Top-speed + shift-drop + torque/traction/opt-shift table + KPI strip
+    gear-list.ts                   # Editable gear rows + add/remove (ratio, overall, RPM drop)
+    gear-table.ts                  # Breakdown table renderer (WALL/OVERDRIVE verdicts)
+    gear-status.ts                 # Pure gear verdict classifiers (no DOM)
+    kpi-strip.ts                   # 8-cell KPI strip + accel memo
+    setup-controls.ts              # Tire pills, FD/rev steppers, aero readout
+    header-bar.ts                  # Header chip + active-car label sync
+    pyrometer-tool.ts              # 3-zone pyrometer calculator card
     custom-car.ts                  # Save/load/export/import custom presets
     setup-guide.ts                 # Setup shell injection + card assembly
     cruise-card.ts                 # Highway cruising check shell
     card/                          # base Card + one file per specialized card + index.ts barrel
-  views/render-all.ts              # resizeCanvas + drawGraph + renderTable + renderCruise
-  styles/                          # main.css hub + tokens/base/drawer/components/shell/overrides/setup-guide/print modules
+  views/render-all.ts              # renderGraph + renderTable + KPI/readout syncs
+  styles/                          # main.css hub + tokens/base/drawer/components/shell/overrides/setup-guide/telemetry/print modules
 capacitor.config.ts                # native wrapper (webDir dist)
 android/                           # committed Capacitor scaffold (generated outputs ignored)
 ```

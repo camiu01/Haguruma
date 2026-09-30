@@ -15,6 +15,9 @@ const DELTA_BAD = 3;
 /** Indicated speeds used for the speedometer check. */
 const SPEEDO_SPOTS = [50, 100, 130];
 
+/** Shared classes of the header verdict pill, hidden until a verdict exists. */
+const PILL_BASE = 'ml-auto rounded-full border px-2 py-0.5 font-mono text-[0.625rem] font-bold uppercase tracking-wider';
+
 /** Parsed pair driving every readout row. */
 interface TirePair {
 	/** Stock geometry. */
@@ -28,22 +31,87 @@ interface TirePair {
 /**
  * @brief Inject the tire-size comparator shell into its mount point.
  * @brief Runs in bootstrap before refs resolve so ids exist on first paint.
+ * @brief The tool owns its card chrome and accordion header because the
+ * @brief sidebar hands out bare mount cells.
  * @param host Mount element hosting the card.
  * @return void
  */
 export const injectTireSizeShell = (host: HTMLElement): void => {
 	host.replaceChildren();
+	const card = document.createElement('div');
+	card.className = 'card border border-border-hairline rounded-lg p-3 flex flex-col gap-3';
+	const accordion = document.createElement('div');
+	accordion.className = 'bg-surface-subtle rounded border border-border-hairline overflow-hidden';
+	accordion.setAttribute('data-accordion', 'tiresize');
+	const content = document.createElement('div');
+	content.className = 'section-content open p-3';
+	content.setAttribute('data-accordion-content', '');
+	content.appendChild(buildBody());
+	accordion.append(buildHeader(), content);
+	card.appendChild(accordion);
+	host.appendChild(card);
+	updateTireSize();
+};
+
+/**
+ * @brief Build the accordion header: dot, title, verdict pill and chevron.
+ * @brief The pill keeps id 'tiresize-pill' because updateTireSize() repaints it.
+ * @return Header element picked up by the shared accordion binder.
+ */
+const buildHeader = (): HTMLElement => {
+	const header = document.createElement('div');
+	header.className = 'section-header px-3 py-2 bg-surface-subtle border-b border-border-hairline';
+	header.setAttribute('data-accordion-header', '');
+	const left = document.createElement('div');
+	left.className = 'flex items-center gap-2';
+	const dot = document.createElement('span');
+	dot.className = 'w-2 h-2 rounded-full bg-neon-cyan';
+	const title = document.createElement('span');
+	title.className = 'text-[0.8125rem] font-semibold uppercase tracking-wide text-text-output';
+	title.setAttribute('data-i18n', 'tiretool.title');
+	title.textContent = t('tiretool.title');
+	left.append(dot, title);
+	const pill = document.createElement('span');
+	pill.id = 'tiresize-pill';
+	pill.className = `${PILL_BASE} hidden`;
+	header.append(left, pill, buildChevron());
+	return header;
+};
+
+/**
+ * @brief Build the standard accordion chevron icon.
+ * @return Inline SVG chevron in the expanded state.
+ */
+const buildChevron = (): SVGSVGElement => {
+	const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	chevron.setAttribute('class', 'chevron open');
+	chevron.setAttribute('data-chevron', '');
+	chevron.setAttribute('viewBox', '0 0 24 24');
+	chevron.setAttribute('fill', 'none');
+	chevron.setAttribute('stroke', 'currentColor');
+	chevron.setAttribute('stroke-width', '2');
+	chevron.setAttribute('aria-hidden', 'true');
+	const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+	poly.setAttribute('points', '6 9 12 15 18 9');
+	chevron.appendChild(poly);
+	return chevron;
+};
+
+/**
+ * @brief Build the accordion body: the two inputs and the readout stack.
+ * @return Body element ready to append to the section content.
+ */
+const buildBody = (): HTMLElement => {
 	const section = document.createElement('div');
-	section.className = 'pt-1';
+	section.className = 'flex flex-col gap-3';
 	const grid = document.createElement('div');
-	grid.className = 'grid grid-cols-2 gap-4';
+	grid.className = 'grid grid-cols-2 gap-3';
 	grid.append(buildInput('tiresize-stock', 'tiretool.stock', '205/55R16'), buildInput('tiresize-new', 'tiretool.new', '225/45R17'));
 	const out = document.createElement('div');
 	out.id = 'tiresize-result';
-	out.className = 'pt-2 flex flex-col gap-1.5';
+	out.className = 'flex flex-col gap-1.5';
 	section.append(grid, out);
-	host.appendChild(section);
-	updateTireSize();
+	return section;
 };
 
 /**
@@ -57,7 +125,7 @@ const buildInput = (id: string, labelKey: 'tiretool.stock' | 'tiretool.new', val
 	const col = document.createElement('div');
 	col.className = 'col-span-2 sm:col-span-1';
 	const label = document.createElement('label');
-	label.className = 'block text-xs font-medium text-text-dim mb-1';
+	label.className = 'mb-1 block text-[0.6875rem] font-medium text-text-dim';
 	label.setAttribute('for', id);
 	label.setAttribute('data-i18n', labelKey);
 	label.textContent = t(labelKey);
@@ -68,7 +136,7 @@ const buildInput = (id: string, labelKey: 'tiretool.stock' | 'tiretool.new', val
 	input.autocomplete = 'off';
 	input.spellcheck = false;
 	input.className =
-		'w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono uppercase focus:border-text-dim outline-none';
+		'w-full bg-surface-input border border-border-hairline rounded px-2 py-2 font-mono text-[0.8125rem] font-semibold uppercase text-text-output outline-none focus:border-neon-cyan';
 	input.addEventListener('input', updateTireSize);
 	col.append(label, input);
 	return col;
@@ -131,11 +199,11 @@ const parsePair = (stockRaw: string, nextRaw: string): TirePair | null => {
  */
 const buildSpecTable = (pair: TirePair): HTMLElement => {
 	const table = document.createElement('div');
-	table.className = 'grid grid-cols-3 gap-x-3 gap-y-1 text-xs font-mono';
+	table.className = 'grid grid-cols-3 gap-x-3 gap-y-1 font-mono text-[0.75rem]';
 	const head = ['', pair.stock.size, pair.next.size];
 	for (const h of head) {
 		const cell = document.createElement('div');
-		cell.className = h === '' ? '' : 'text-right text-text-dim text-[10px] uppercase tracking-wider truncate';
+		cell.className = h === '' ? '' : 'truncate text-right font-mono text-[0.625rem] uppercase tracking-wider text-text-muted';
 		cell.textContent = h;
 		table.appendChild(cell);
 	}
@@ -172,7 +240,7 @@ const buildBar = (pair: TirePair, absDelta: number): HTMLElement => {
 	const max = Math.max(pair.stock.circMm, pair.next.circMm);
 	for (const circ of [pair.stock.circMm, pair.next.circMm]) {
 		const track = document.createElement('div');
-		track.className = 'h-1.5 rounded-full bg-surface-input overflow-hidden';
+		track.className = 'h-1.5 rounded-full bg-surface-recessed overflow-hidden';
 		const fill = document.createElement('div');
 		fill.className = `h-full rounded-full ${color}`;
 		fill.style.width = `${Math.round((circ / max) * 100)}%`;
@@ -190,7 +258,7 @@ const buildBar = (pair: TirePair, absDelta: number): HTMLElement => {
  */
 const buildRow = (label: string, value: string): HTMLElement => {
 	const row = document.createElement('div');
-	row.className = 'flex justify-between items-center text-xs font-mono gap-2';
+	row.className = 'flex items-center justify-between gap-2 font-mono text-[0.75rem]';
 	const left = document.createElement('span');
 	left.className = 'text-text-dim';
 	left.textContent = label;
@@ -239,14 +307,14 @@ export const updateTireSize = (): void => {
 			pill.classList.add('hidden');
 		}
 		const bad = document.createElement('div');
-		bad.className = 'text-xs font-mono text-neon-red';
+		bad.className = 'font-mono text-[0.75rem] text-neon-red';
 		bad.textContent = t('tiretool.invalid');
 		out.appendChild(bad);
 		return;
 	}
 	const abs = Math.abs(pair.deltaPct);
 	const sign = pair.deltaPct >= 0 ? '+' : '';
-	pill.className = `ml-auto text-[11px] font-mono font-semibold border rounded-full px-2.5 py-0.5 ${verdictClass(abs)}`;
+	pill.className = `${PILL_BASE} ${verdictClass(abs)}`;
 	pill.textContent = `${t(verdictKey(abs))} ${sign}${pair.deltaPct.toFixed(1)}%`;
 	out.appendChild(buildSpecTable(pair));
 	out.appendChild(buildBar(pair, abs));

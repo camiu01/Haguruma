@@ -1,237 +1,176 @@
 /**
  * @file graph-renderer.ts
- * @brief Full graph orchestration: background, grids, curves, limits.
+ * @brief Declarative rebuild of the 16:9 SVG plot and the layer-pill state.
+ *
+ * The plot is a pure function of the shared state: every call clears
+ * `#graph-svg`, mounts the layer primitives composed by `graph-scene.ts` and
+ * hands the crosshair its context. No measurement, no HiDPI work, no
+ * offscreen cache, no canvas.
  */
-import { state, defaultRunningGear } from '../../core/state/app-state';
-import { effectiveCircumferenceM, parseTire } from '../../core/math/tire-math';
-import { rpmFromKmh, toDisplaySpeed } from '../../core/math/speed-math';
-import { dynamicRadiusM, tractiveForceAt } from '../../core/math/traction-math';
-import { activeEngineCurve } from '../../core/state/engine-curve';
-import { maxDriveForceAtSpeed } from '../../core/math/dynamics-math';
-import { availableWheelKw, dragLimitedSpeedKmh } from '../../core/math/aero-math';
-import { getMaxRpm } from '../../core/units/unit-utils';
-import type { PlotFrame } from '../../core/models';
+import { state } from '../../core/state/app-state';
+import { parseTire } from '../../core/math/tire-math';
+import { t } from '../../core/i18n/language';
+import type { DictKey } from '../../core/i18n/dictionaries';
+import type { GraphLayerSettings } from '../../core/models';
 import type { ElementRefs } from '../dom/element-refs';
-import { buildPlotFrame, toX, toY } from './canvas-setup';
-import { drawAeroLimit, shadeAeroWall } from './graph-axes';
-import { blitStaticLayer } from './graph-layers';
-import { drawComparisonCurves, drawPrimaryCurves, drawReverseCurve } from './graph-curves';
-import { drawShiftDrops } from './graph-shift-drops';
-import { drawGripCurve, shadeWheelspin } from './graph-limits';
+import { buildSceneData, composeNodes } from './graph-scene';
+import { bindCrosshair, clearCrosshair, clearCrosshairContext, mountCrosshair, setCrosshairContext } from './graph-crosshair';
+import { clearChildren, mountPrims } from './svg-nodes';
+import { GRAPH_VIEWBOX } from '../../config/graph-constants';
+
+/** Settings key behind each `[data-graph-layer]` button. */
+const LAYER_SETTINGS: Record<string, keyof GraphLayerSettings> = {
+	shiftdrops: 'shiftDrops',
+	aerowall: 'aeroWall',
+	griplimit: 'gripLimit',
+	powercurve: 'powerCurve',
+	finegrid: 'fineGrid',
+	snaphud: 'snapHud',
+};
+
+/** Dictionary label used when a toolbar pill ships without its own copy. */
+const LAYER_LABELS: Record<string, DictKey> = {
+	shiftdrops: 'graph.toggleShiftDrops',
+	aerowall: 'graph.toggleAeroWall',
+	griplimit: 'graph.toggleGripLimit',
+	powercurve: 'graph.togglePowerCurve',
+};
 
 /**
- * Render the full RPM vs speed graph.
- * @brief Composite the cached static layer, then draw dynamic curves.
- * @brief Layer order: static bitmap, primary curves, shift drops, aero wall,
- * @brief comparison dashed overlay, grip limits (titles live in the static layer).
+ * @brief Normalize a `data-graph-layer` value into a settings slug.
+ * @param raw Raw attribute value.
+ * @return Lowercase alphanumeric slug.
+ */
+const layerSlug = (raw: string | undefined): string => {
+	return (raw ?? '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+};
+
+/**
+ * @brief Fill a pill label when the markup carries none.
+ * @param btn Toolbar pill.
+ * @param label Dictionary key of the layer name.
+ * @return void
+ */
+const applyPillLabel = (btn: HTMLElement, label: DictKey | undefined): void => {
+	if (!label || btn.hasAttribute('data-i18n') || (btn.textContent ?? '').trim() !== '') {
+		return;
+	}
+	btn.textContent = t(label);
+	btn.setAttribute('aria-label', t(label));
+};
+
+/**
+ * @brief Reflect the active layer switches onto the toolbar pills.
+ * @param refs Cached DOM handles.
+ * @param layers Active layer switches.
+ * @return void
+ */
+const syncLayerPills = (refs: ElementRefs, layers: GraphLayerSettings): void => {
+	refs.graphLayerButtons.forEach((btn) => {
+		const slug = layerSlug(btn.dataset.graphLayer);
+		const key = LAYER_SETTINGS[slug];
+		if (!key) {
+			return;
+		}
+		const on = layers[key];
+		btn.setAttribute('aria-pressed', String(on));
+		btn.dataset.active = String(on);
+		btn.classList.toggle('is-active', on);
+		applyPillLabel(btn, LAYER_LABELS[slug]);
+	});
+};
+
+/**
+ * @brief Measure the plot host in CSS pixels for the viewBox of this pass.
+ * @brief ViewBox units equal CSS pixels, so fonts keep their real size at
+ * @brief every viewport and the plot never stretches on non-16:9 hosts.
+ * @param refs Cached DOM handles.
+ * @return Host size, or the static 16:9 fallback while the host is unmeasured.
+ */
+const measurePlotHost = (refs: ElementRefs): { width: number; height: number } => {
+	const width = Math.round(refs.graphHost.clientWidth);
+	const height = Math.round(refs.graphHost.clientHeight);
+	if (width <= 0 || height <= 0) {
+		return { width: GRAPH_VIEWBOX.width, height: GRAPH_VIEWBOX.height };
+	}
+	return { width, height };
+};
+
+/**
+ * @brief Render the plot from the current state.
+ * @brief Silently renders nothing when the primary tire is unparseable.
  * @param refs Cached DOM handles.
  * @return void
  */
-export const drawGraph = (refs: ElementRefs): void => {
-	const primaryTire = parseTire(state.primaryTire);
-	if (!primaryTire) {
+export const renderGraph = (refs: ElementRefs): void => {
+	syncLayerPills(refs, state.graphLayers);
+	const tire = parseTire(state.primaryTire);
+	if (!tire) {
+		clearChildren(refs.graphSvg);
+		clearCrosshairContext();
+		clearCrosshair(refs);
 		return;
 	}
-	const circM = effectiveCircumferenceM(primaryTire, state.rollingFactor);
-	const topRedline = state.compareEnabled ? Math.max(state.primaryRedline, state.compRedline) : state.primaryRedline;
-	const maxRpm = getMaxRpm(topRedline);
-	const frame = buildPlotFrame(refs.canvas, state.maxGraphSpeed, maxRpm);
-	if (!frame) {
-		return;
-	}
-	const { ctx } = refs;
-	blitStaticLayer(ctx, refs.canvas, frame, state.unit, state.primaryRedline);
-	const peaks = drawPrimaryCurves(ctx, frame, state.gears, state.primaryFd, circM, state.primaryRedline, state.unit);
-	if (state.reverseRatio !== null && state.reverseRatio > 0) {
-		drawReverseCurve(ctx, frame, state.reverseRatio, state.primaryFd, circM, state.primaryRedline, state.unit);
-	}
-	drawShiftDrops(ctx, frame, peaks, state.gears, state.primaryFd, circM, state.unit);
-	drawOptionalAeroLimit(ctx, frame);
-	drawCompareRedline(ctx, frame);
-	drawOptionalComparison(ctx, frame);
-	drawOptionalCompAeroLimit(ctx, frame);
-	drawOptionalGripLimit(ctx, frame, circM);
+	const { width, height } = measurePlotHost(refs);
+	refs.graphSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+	const scene = buildSceneData(tire, width, height);
+	clearChildren(refs.graphSvg);
+	mountPrims(refs.graphSvg, composeNodes(scene));
+	setCrosshairContext(scene.crosshair);
+	mountCrosshair(refs);
 };
 
 /**
- * Draw the aero-limit marker only when road load is enabled.
- * @brief Show where wheel power runs out against drag.
- */
-export const drawOptionalAeroLimit = (
-	ctx: CanvasRenderingContext2D,
-	frame: PlotFrame,
-): void => {
-	if (!state.roadLoadEnabled) {
-		return;
-	}
-	const wheelKw = availableWheelKw(state.enginePowerKw, state.drivetrainEff);
-	const limit = dragLimitedSpeedKmh(
-		wheelKw,
-		state.vehicleMassKg,
-		state.dragCd,
-		state.frontalAreaM2,
-		state.rollingCrr,
-		state.roadGradePercent,
-	);
-	if (limit > 0) {
-		shadeAeroWall(ctx, frame, limit, state.unit);
-		drawAeroLimit(ctx, frame, limit, state.unit);
-	}
-};
-
-/**
- * Draw the comparison aero-limit marker from isolated comp slots.
- * @brief Secondary drag limit uses comp mass, Cd, area and power.
- * @param ctx Rendering context.
- * @param frame Plot geometry and limits.
+ * @brief Wire the toolbar layer pills to the shared layer switches.
+ * @brief Each pill flips its switch and repaints the plot; the pressed state
+ * @brief is re-synced from `state.graphLayers` on every render.
+ * @param refs Cached DOM handles.
  * @return void
  */
-export const drawOptionalCompAeroLimit = (
-	ctx: CanvasRenderingContext2D,
-	frame: PlotFrame,
-): void => {
-	if (!state.roadLoadEnabled || !state.compareEnabled) {
-		return;
-	}
-	const wheelKw = availableWheelKw(state.compPowerKw, state.drivetrainEff);
-	const limit = dragLimitedSpeedKmh(
-		wheelKw,
-		state.compMassKg,
-		state.compCd,
-		state.compFrontalAreaM2,
-		state.rollingCrr,
-		state.roadGradePercent,
-	);
-	if (limit <= 0) {
-		return;
-	}
-	const limitDisplay = toDisplaySpeed(limit, state.unit);
-	if (limitDisplay <= 0 || limitDisplay >= frame.maxSpeed) {
-		return;
-	}
-	const x = toX(frame, limitDisplay);
-	ctx.fillStyle = 'rgba(251, 191, 36, 0.08)';
-	ctx.fillRect(x, frame.paddingTop, frame.paddingLeft + frame.plotWidth - x, frame.plotHeight);
-	ctx.strokeStyle = 'rgba(251, 191, 36, 0.8)';
-	ctx.lineWidth = 1.5;
-	ctx.setLineDash([6, 4]);
-	ctx.beginPath();
-	ctx.moveTo(x, frame.paddingTop);
-	ctx.lineTo(x, frame.paddingTop + frame.plotHeight);
-	ctx.stroke();
-	ctx.setLineDash([]);
-	ctx.fillStyle = '#fbbf24';
-	ctx.font = '10px Inter, sans-serif';
-	ctx.textAlign = 'left';
-	ctx.fillText(`COMP AERO ${Math.round(limitDisplay)}`, x + 6, frame.paddingTop + 26);
-};
-/**
- * Draw the friction-limited grip curve and 1st-gear spin shading.
- * @brief Grip after aero limits, before titles to keep legend on top.
- * @param ctx Rendering context.
- * @param frame Plot geometry and limits.
- * @param circM Primary rolling circumference (avoids re-parsing the tire).
- * @return void
- */
-export const drawOptionalGripLimit = (ctx: CanvasRenderingContext2D, frame: PlotFrame, circM: number): void => {
-	const rg = state.runningGear ?? defaultRunningGear;
-	const gripFn = (vKmh: number): number => maxDriveForceAtSpeed(rg, state.vehicleMassKg, vKmh, 0, 0).limitN;
-	drawGripCurve(ctx, frame, gripFn, '#f59e0b');
-	shadePrimarySpin(ctx, frame, gripFn, circM);
-	drawOptionalCompGrip(ctx, frame);
-};
-
-/**
- * Shade 1st-gear wheelspin against the primary grip limit.
- * @brief Convert display speed to RPM, then compare tractive force.
- * @param ctx Rendering context.
- * @param frame Plot geometry and limits.
- * @param gripFn Grip limit in newtons from speed in km/h.
- * @param circM Primary rolling circumference from the caller.
- * @return void
- */
-const shadePrimarySpin = (ctx: CanvasRenderingContext2D, frame: PlotFrame, gripFn: (v: number) => number, circM: number): void => {
-	if (state.gears.length === 0) {
-		return;
-	}
-	const curve = activeEngineCurve();
-	if (!curve) {
-		return;
-	}
-	const radius = dynamicRadiusM(circM);
-	const first = state.gears[0];
-	const gearForceFn = (vKmh: number): number => {
-		const rpm = rpmFromKmh(vKmh, first, state.primaryFd, circM);
-		if (rpm <= 0) {
-			return 0;
+const bindLayerPills = (refs: ElementRefs): void => {
+	refs.graphLayerButtons.forEach((btn) => {
+		const key = LAYER_SETTINGS[layerSlug(btn.dataset.graphLayer)];
+		if (!key || btn.dataset.graphBound === '1') {
+			return;
 		}
-		return tractiveForceAt(rpm, first, state.primaryFd, radius, curve, state.drivetrainEff);
-	};
-	shadeWheelspin(ctx, frame, gripFn, gearForceFn);
+		btn.dataset.graphBound = '1';
+		btn.addEventListener('click', () => {
+			const next: GraphLayerSettings = { ...state.graphLayers };
+			next[key] = !next[key];
+			state.graphLayers = next;
+			renderGraph(refs);
+		});
+	});
 };
 
 /**
- * Draw the dashed secondary grip curve when comparing.
- * @brief Comp grip uses comp mass and comp running gear.
- * @param ctx Rendering context.
- * @param frame Plot geometry and limits.
+ * @brief Wire the crosshair pointer/keyboard interactions and the layer pills.
+ * @param refs Cached DOM handles.
  * @return void
  */
-const drawOptionalCompGrip = (ctx: CanvasRenderingContext2D, frame: PlotFrame): void => {
-	if (!state.compareEnabled) {
-		return;
-	}
-	const rg = state.compRunningGear ?? state.runningGear ?? defaultRunningGear;
-	const gripFn = (vKmh: number): number => maxDriveForceAtSpeed(rg, state.compMassKg, vKmh, 0, 0).limitN;
-	drawGripCurve(ctx, frame, gripFn, '#ef4444');
-};
-/**
- * Draw comparison curves only when enabled and valid.
- * @brief Overlay an independent gearset, tire, final drive and redline.
- * @param ctx Rendering context.
- * @param frame Plot geometry and limits.
- * @return void
- */
-const drawOptionalComparison = (
-	ctx: CanvasRenderingContext2D,
-	frame: PlotFrame,
-): void => {
-	if (!state.compareEnabled || state.compFd <= 0 || state.compGears.length === 0) {
-		return;
-	}
-	const compTire = parseTire(state.compTire);
-	if (!compTire) {
-		return;
-	}
-	const compCircM = effectiveCircumferenceM(compTire, state.rollingFactor);
-	drawComparisonCurves(ctx, frame, state.compGears, state.compFd, compCircM, state.compRedline, state.unit);
+export const bindGraphInteractions = (refs: ElementRefs): void => {
+	bindCrosshair(refs);
+	bindLayerPills(refs);
 };
 
 /**
- * Draw the secondary redline when it differs from primary.
- * @brief Distinguish 4.10 vs short-final-drive limiter setups.
- * @param ctx Rendering context.
- * @param frame Plot geometry and limits.
+ * @brief Toggle the fullscreen graph card and its button state.
+ * @param refs Cached DOM handles.
+ * @return void
  */
-const drawCompareRedline = (ctx: CanvasRenderingContext2D, frame: PlotFrame): void => {
-	if (!state.compareEnabled || state.compRedline === state.primaryRedline) {
+export const toggleGraphExpand = (refs: ElementRefs): void => {
+	const card = refs.graphSvg.closest('.graph-card');
+	if (!card) {
 		return;
 	}
-	const compTire = parseTire(state.compTire);
-	if (!compTire || state.compGears.length === 0) {
-		return;
-	}
-	const y = toY(frame, state.compRedline);
-	ctx.strokeStyle = 'rgba(251, 191, 36, 0.7)';
-	ctx.lineWidth = 1.2;
-	ctx.setLineDash([4, 4]);
-	ctx.beginPath();
-	ctx.moveTo(frame.paddingLeft, y);
-	ctx.lineTo(frame.paddingLeft + frame.plotWidth, y);
-	ctx.stroke();
-	ctx.setLineDash([]);
-	ctx.fillStyle = '#fbbf24';
-	ctx.font = '10px Inter, sans-serif';
-	ctx.textAlign = 'right';
-	ctx.fillText(`COMPARE LIMIT: ${state.compRedline} RPM`, frame.paddingLeft + frame.plotWidth - 10, y - 8);
+	const open = !card.classList.contains('graph-fullscreen');
+	card.classList.toggle('graph-fullscreen', open);
+	refs.btnExpandGraph.setAttribute('aria-expanded', String(open));
+	refs.btnExpandGraph.textContent = open ? t('graph.collapse') : t('graph.expand');
+	const tip = open ? t('graph.collapseTip') : t('graph.expandTip');
+	refs.btnExpandGraph.setAttribute('title', tip);
+	refs.btnExpandGraph.setAttribute('data-tip', tip);
+	refs.btnExpandGraph.setAttribute('aria-label', tip);
+	document.body.style.overflow = open ? 'hidden' : '';
+	renderGraph(refs);
 };

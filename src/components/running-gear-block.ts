@@ -29,15 +29,20 @@ interface NumField {
 	step: string;
 	/** Unit adornment shown at the row edge. */
 	unit: string;
+	/** True when the input lives in static markup instead of the injected grid. */
+	external?: boolean;
 	/** State reader with legacy default. */
 	get: (rg: RunningGear) => number;
 	/** State writer receiving the scaled value. */
 	set: (rg: RunningGear, v: number) => void;
 }
 
+/** Suffixes owned by the accordions' static markup (grid skips their rows). */
+const EXTERNAL_SUFFIXES = new Set<string>(['tire', 'weight']);
+
 /** Numeric rows in primary-card order. */
 const NUM_FIELDS: NumField[] = [
-	{ suffix: 'weight', labelKey: 'running.weight', min: 40, max: 70, scale: 0.01, step: '0.5', unit: '%', get: (rg) => rg.frontWeightDistribution * 100, set: (rg, v) => { rg.frontWeightDistribution = v; } },
+	{ suffix: 'weight', labelKey: 'setupctl.weightTitle', min: 40, max: 70, scale: 0.01, step: '0.5', unit: '%', external: true, get: (rg) => rg.frontWeightDistribution * 100, set: (rg, v) => { rg.frontWeightDistribution = v; } },
 	{ suffix: 'cog', labelKey: 'running.cog', min: 300, max: 700, scale: 1, step: '5', unit: 'mm', get: (rg) => rg.centerOfGravityHeightMm, set: (rg, v) => { rg.centerOfGravityHeightMm = v; } },
 	{ suffix: 'wheelbase', labelKey: 'running.wheelbase', min: 2200, max: 3300, scale: 1, step: '10', unit: 'mm', get: (rg) => rg.wheelbaseMm, set: (rg, v) => { rg.wheelbaseMm = v; } },
 	{ suffix: 'track', labelKey: 'running.track', min: 1300, max: 1800, scale: 1, step: '5', unit: 'mm', get: (rg) => rg.trackWidthMm, set: (rg, v) => { rg.trackWidthMm = v; } },
@@ -73,13 +78,13 @@ const buildSelectRow = (prefix: string, suffix: string, labelKey: DictKey): { ro
 	const row = document.createElement('div');
 	row.className = 'col-span-2 sm:col-span-1';
 	const label = document.createElement('label');
-	label.className = 'block text-xs font-medium text-text-dim mb-1';
+	label.className = 'mb-1 block text-[0.6875rem] font-medium text-text-dim';
 	label.setAttribute('for', `${prefix}-${suffix}`);
 	label.setAttribute('data-i18n', labelKey);
 	label.textContent = t(labelKey);
 	const select = document.createElement('select');
 	select.id = `${prefix}-${suffix}`;
-	select.className = 'w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim';
+	select.className = 'w-full bg-surface-recessed border border-border-hairline rounded px-2 py-2 font-mono text-[0.8125rem] text-text-output outline-none focus:border-neon-cyan';
 	row.append(label, select);
 	return { row, select };
 };
@@ -94,7 +99,7 @@ const buildNumRow = (prefix: string, field: NumField): HTMLElement => {
 	const row = document.createElement('div');
 	row.className = 'col-span-2 sm:col-span-1';
 	const label = document.createElement('label');
-	label.className = 'block text-xs font-medium text-text-dim mb-1';
+	label.className = 'mb-1 block text-[0.6875rem] font-medium text-text-dim';
 	label.setAttribute('for', `${prefix}-${field.suffix}`);
 	label.setAttribute('data-i18n', field.labelKey);
 	label.textContent = t(field.labelKey);
@@ -107,9 +112,9 @@ const buildNumRow = (prefix: string, field: NumField): HTMLElement => {
 	input.min = String(field.min);
 	input.max = String(field.max);
 	input.id = `${prefix}-${field.suffix}`;
-	input.className = 'w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none';
+	input.className = 'w-full bg-surface-recessed border border-border-hairline rounded px-2 py-2 font-mono text-[0.8125rem] text-text-output outline-none focus:border-neon-cyan';
 	const unit = document.createElement('span');
-	unit.className = 'absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none';
+	unit.className = 'absolute right-2.5 top-2 text-[0.625rem] font-mono text-text-muted pointer-events-none';
 	unit.textContent = field.unit;
 	wrap.append(input, unit);
 	row.append(label, wrap);
@@ -125,7 +130,7 @@ const buildLatgRow = (prefix: string): HTMLElement => {
 	const row = document.createElement('div');
 	row.className = 'col-span-2 sm:col-span-1';
 	const label = document.createElement('label');
-	label.className = 'block text-xs font-medium text-text-dim mb-1';
+	label.className = 'mb-1 block text-[0.6875rem] font-medium text-text-dim';
 	label.setAttribute('for', `${prefix}-latg`);
 	label.setAttribute('data-i18n', 'running.latg');
 	label.textContent = t('running.latg');
@@ -140,7 +145,7 @@ const buildLatgRow = (prefix: string): HTMLElement => {
 	input.className = 'flex-1';
 	const val = document.createElement('span');
 	val.id = `${prefix}-latg-val`;
-	val.className = 'text-xs text-text-output font-mono whitespace-nowrap';
+	val.className = 'whitespace-nowrap font-mono text-[0.75rem] text-text-output tabular-nums';
 	val.textContent = '0.60 G';
 	wrap.append(input, val);
 	row.append(label, wrap);
@@ -163,7 +168,7 @@ const buildLockRows = (prefix: string): DocumentFragment => {
 		row.className = 'col-span-2 sm:col-span-1';
 		row.id = `${prefix}-${def.suffix}-wrap`;
 		const label = document.createElement('label');
-		label.className = 'block text-xs font-medium text-text-dim mb-1';
+		label.className = 'mb-1 block text-[0.6875rem] font-medium text-text-dim';
 		label.setAttribute('for', `${prefix}-${def.suffix}`);
 		label.setAttribute('data-i18n', def.labelKey);
 		label.textContent = t(def.labelKey);
@@ -176,9 +181,9 @@ const buildLockRows = (prefix: string): DocumentFragment => {
 		input.min = '0';
 		input.max = '100';
 		input.id = `${prefix}-${def.suffix}`;
-		input.className = 'w-full bg-surface-input border border-surface-border rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:outline-none';
+		input.className = 'w-full bg-surface-recessed border border-border-hairline rounded px-2 py-2 font-mono text-[0.8125rem] text-text-output outline-none focus:border-neon-cyan';
 		const unit = document.createElement('span');
-		unit.className = 'absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none';
+		unit.className = 'absolute right-2.5 top-2 text-[0.625rem] font-mono text-text-muted pointer-events-none';
 		unit.textContent = '%';
 		wrap.append(input, unit);
 		row.append(label, wrap);
@@ -212,17 +217,22 @@ export const buildRunningGearBlock = (prefix: string): DocumentFragment => {
 		diff.select.appendChild(option);
 	}
 	frag.appendChild(diff.row);
-	const tire = buildSelectRow(prefix, 'tire', 'running.tire');
-	for (const c of TIRE_COMPOUNDS) {
-		const option = document.createElement('option');
-		option.value = c.id;
-		option.setAttribute('data-i18n', c.labelKey);
-		option.textContent = t(c.labelKey);
-		tire.select.appendChild(option);
+	const tire = EXTERNAL_SUFFIXES.has('tire') ? null : buildSelectRow(prefix, 'tire', 'running.tire');
+	if (tire) {
+		for (const c of TIRE_COMPOUNDS) {
+			const option = document.createElement('option');
+			option.value = c.id;
+			option.setAttribute('data-i18n', c.labelKey);
+			option.textContent = t(c.labelKey);
+			tire.select.appendChild(option);
+		}
+		frag.appendChild(tire.row);
 	}
-	frag.appendChild(tire.row);
 	frag.appendChild(buildLockRows(prefix));
 	for (const field of NUM_FIELDS) {
+		if (field.external) {
+			continue;
+		}
 		frag.appendChild(buildNumRow(prefix, field));
 	}
 	frag.appendChild(buildLatgRow(prefix));

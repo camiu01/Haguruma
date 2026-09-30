@@ -28,9 +28,9 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 - **Layout-mapped efficiency** — picking FWD/RWD/AWD in the running-gear card also sets the default drivetrain efficiency (0.90 / 0.85 / 0.80).
 - **Acceleration solver** — fixed-step Euler simulation of 0-100 km/h and the quarter mile, including optional rotating inertia (per-gear when `I` values are set), shift torque cut, and launch clutch-slip `launchRpm`. Splits follow the display unit: 0-400 m / 0-160 in km/h mode, 60 ft / 0-60 mph / 1/4-mile trap speed in mph mode.
 - **Highway cruising check** — required vs available wheel power and gear RPM at a chosen cruise speed.
-- **Graph export** — PNG (canvas) and SVG (vector) downloads; print stylesheet for PDF via the browser print dialog.
+- **Graph export** — PNG and SVG downloads rendered from the SVG plot; print stylesheet for PDF via the browser print dialog.
 - **Sim & telemetry export** — one dropdown for Assetto Corsa `.ini`, drivetrain `.json`, BeamNG `.jbeam`, and tabular CSV for MoTeC / AiM Race Studio.
-- **KPI strip** — live redline, top speed, aero wall, grip limit, and unit-aware acceleration cells.
+- **KPI strip** — 8 live cells: redline, top speed, aero wall, grip limit, wheel power, unit-aware 0-100/0-60 cell, quarter-mile/trap pair.
 - **Brake bias & stopping distance** — ideal front/rear bias from deceleration load transfer with a rear-lock flag, plus `v²/2a` stopping distance with aero/grade correction (`brake-math.ts`).
 - **Gear-drop recovery** — milliseconds to climb back to peak torque after each upshift from equivalent inertia (`recovery-math.ts`).
 - **Tire size comparator** — stock vs plus-size diameters, speedometer error at 50/100/130 km/h, and gearing shift deltas, live-synced from primary/secondary state.
@@ -44,8 +44,12 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 - **Share via URL** — encodes all setup parameters into the URL hash (packed Base64URL `c` token with verbose fallback). One-click copy, plus an offline **QR code** modal for laptop-to-phone transfer.
 - **Setup levels** — Easy / Medium / Full gating of setup inputs, persisted in localStorage; the comparison card follows the primary level and can be lowered independently.
 - **PWA** — `manifest.webmanifest` with standalone display, maskable icons; service worker for offline asset caching.
-- **Theme system** — three-way toggle: dark (default) → oled (pure black) → light (white). Persisted in localStorage. Graph canvas palette follows the theme.
-- **Mobile-first layout** — slide-over drawer (nav, garage, units/theme, share/QR), compact header, 16/9 graph canvas, horizontal-scroll tables with sticky first column, 44px touch targets, `visualViewport` keyboard-avoidance.
+- **Theme system** — three-way toggle: dark (default) → oled (pure black) → light (white). Persisted in localStorage. The SVG plot palette follows the theme through CSS tokens.
+- **Mobile-first layout** — universal slide-over drawer (nav, units/language, export & data pipeline, display preferences, technical specs), 64px fixed header, 16/9 SVG cartesian plot with layer toggles and snapping crosshair HUD, horizontal-scroll tables with sticky first column, 44px touch targets, `visualViewport` keyboard-avoidance.
+- **Touch-first setup controls** — tire geometry pills (width/aspect/rim), tactile final-drive and rev-limiter steppers with live circumference, diameter and 200 km/h aero drag readouts. The A/B comparison mirrors the same controls with amber accents, and the gear stack rows carry micro ±0.005 steppers with per-row overall-ratio readouts.
+- **Breakdown table** — 10 columns (gear, ratio, overall ratio, v-max, next-gear RPM, RPM-drop badge, required power, wheel torque, tractive force, shift advisory), per-gear WALL (drag-limited) and OVERDRIVE flags plus ECO cruising advisories, and the SAE J1263 coastdown formula footnote.
+- **3-zone pyrometer calculator** — inner/middle/outer tread temperatures with camber and hot-pressure advisories (bar steps, clamped), inner-outer and center-edge spread readouts, and a cold/optimal/hot working-window verdict.
+- **Tools grid** — four self-contained cards below the workbench: highway cruising check, plus-size tire delta, 3-zone pyrometer and the paddock guide with the setup wizard.
 
 ## Physics engine
 
@@ -66,6 +70,7 @@ HAGURUMA uses strict SI discipline internally:
 | `accel-math.ts` | Forward-Euler time-step solver for 0-100 and 1/4 mile; 60 ft / 0-60 mph / 0-160 splits plus trap speed and reaction offset; shift window; optional rotating mass and launch RPM |
 | `inertia-math.ts` | Reflects engine/wheel moments of inertia through the current gear into an equivalent translational mass |
 | `cruise-math.ts` | Highest gear with RPM ≥ floor, required/available wheel power, OK / high / over verdict |
+| `pyrometer-math.ts` | 3-zone tread analysis: inner/outer and center/edge spreads, camber advice (±8 °C), pressure advice in 0.05 bar steps (0.30 bar cap, 1.0 bar hot floor), target ± 15 °C working window |
 
 ## Presets
 
@@ -131,15 +136,17 @@ src/
                                  # tire-compounds, drivetrain-eff, gear colors, graph constants
   services/
     dom/element-refs.ts          # typed DOM handles
-    graph/                       # canvas setup, axes, curves, drops, renderer, tooltip,
-                                 # theme, export, layers, limits, drivetrain-export
+    graph/                       # svg-frame geometry + projection, defs, axes, curves,
+                                 # shift drops, limits, power envelope, prim mount,
+                                 # scene + renderer, crosshair + tooltip, theme,
+                                 # export, drivetrain-export
     events/                      # one binder per control group
   components/                    # gear list, breakdown table, compare table, running-gear-block,
                                  # tire-size tool, custom car, cruise card, preset search
   components/card/               # base Card + one file per specialized card + barrel
   views/render-all.ts            # single refresh entry
   styles/                        # main.css hub + tokens/base/drawer/components/shell/overrides/
-                                 # setup-guide/print
+                                 # setup-guide/telemetry/print
 capacitor.config.ts              # native wrapper (webDir dist)
 android/                         # committed Capacitor scaffold
 tests/                           # vitest suites mirroring src/

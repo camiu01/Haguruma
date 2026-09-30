@@ -17,14 +17,17 @@ import { initTheme } from './core/theme/theme';
 import { initPowerUnit, initUnit, formatPowerInput } from './core/units/unit-utils';
 import { syncThemeToggle } from './services/events/theme-events';
 import { applyUnitLabels, syncPowerUnitToggle, syncUnitToggle } from './services/events/unit-events';
-import { renderGearsList } from './components/gear-list';
-import { injectSetupGuideShell, renderSetupGuide } from './components/setup-guide';
+import { renderGearsList, renderCompareGearsList } from './components/gear-list';
+import { injectSetupGuideShell } from './components/setup-guide';
 import { injectCruiseShell, renderCruise } from './components/cruise-card';
 import { injectTireSizeShell } from './components/tire-size-tool';
+import { injectSetupBaseBlock, injectAeroReadout } from './components/setup-controls';
+import { injectPyrometerShell } from './components/pyrometer-tool';
 import { renderAll } from './views/render-all';
 import { initSetupLevel, syncSetupLevel } from './services/events/setup-level-events';
 import { state } from './core/state/app-state';
-import { resizeCanvas } from './services/graph/canvas-setup';
+import { injectAppShell } from './components/app-shell';
+import { injectMetricFields } from './components/metric-fields';
 
 /**
  * Bootstrap HAGURUMA.
@@ -32,24 +35,19 @@ import { resizeCanvas } from './services/graph/canvas-setup';
  * @return void
  */
 const bootstrap = (): void => {
-	const mount = document.getElementById('setup-guide-mount');
-	if (!mount) {
-		throw new Error('Missing required element: setup-guide-mount');
-	}
-	injectSetupGuideShell(mount);
-	const cruiseMount = document.getElementById('cruise-mount');
-	if (!cruiseMount) {
-		throw new Error('Missing required element: cruise-mount');
-	}
-	injectCruiseShell(cruiseMount);
-	const tireMount = document.getElementById('tire-size-mount');
-	if (!tireMount) {
-		throw new Error('Missing required element: tire-size-mount');
-	}
-	injectTireSizeShell(tireMount);
+	injectAppShell(requireMount('app-shell'));
+	initLang();
+	injectMetricFields();
+	injectSetupGuideShell(requireMount('setup-guide-mount'));
+	injectCruiseShell(requireMount('cruise-mount'));
+	injectTireSizeShell(requireMount('tire-size-mount'));
+	injectSetupBaseBlock(requireMount('setup-controls-mount'), 'primary');
+	injectAeroReadout(requireMount('aero-controls-mount'), 'primary');
+	injectSetupBaseBlock(requireMount('comp-setup-controls-mount'), 'compare');
+	injectAeroReadout(requireMount('comp-aero-controls-mount'), 'compare');
+	injectPyrometerShell(requireMount('pyrometer-mount'));
 	const refs = getElementRefs();
 	const render = (): void => renderAll(refs);
-	initLang();
 	state.unit = initUnit();
 	state.powerUnit = initPowerUnit();
 	initSetupLevel();
@@ -71,11 +69,23 @@ const bootstrap = (): void => {
 	refreshPresetOptions(refs);
 	renderCustomList(refs, render);
 	renderGearsList(refs, () => render());
-	renderSetupGuide(refs);
+	renderCompareGearsList(refs, () => render());
 	restoreFromUrl(refs, render);
-	resizeCanvas(refs.canvas, refs.ctx);
 	renderCruise(refs);
 	renderAll(refs);
+};
+
+/**
+ * @brief Resolve one required component mount or fail with its id.
+ * @param id Required mount id.
+ * @return Existing mount element.
+ */
+const requireMount = (id: string): HTMLElement => {
+	const mount = document.getElementById(id);
+	if (!mount) {
+		throw new Error(`Missing required element: ${id}`);
+	}
+	return mount;
 };
 
 window.addEventListener('DOMContentLoaded', bootstrap);

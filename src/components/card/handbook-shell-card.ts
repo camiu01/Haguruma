@@ -28,17 +28,17 @@ export class HandbookShellCard extends Card<HandbookShellCardOptions> {
 	 */
 	render(): HTMLElement {
 		const open = this.isOpen();
-		const accordion = createEl('div');
+		const accordion = createEl('div', 'bg-surface-subtle rounded border border-border-hairline overflow-hidden');
 		accordion.dataset.accordion = 'handbook';
-		const header = createEl('div', 'section-header');
+		const header = createEl('div', 'section-header px-3 py-2 bg-surface-subtle border-b border-border-hairline');
 		header.dataset.accordionHeader = '';
 		const titleRow = createEl('div', 'flex items-center gap-2 min-w-0');
 		titleRow.append(createEl('span', 'w-2 h-2 rounded-full bg-neon-purple'));
-		titleRow.append(createEl('span', 'text-sm font-semibold text-text-main', 'setup.handbookTitle'));
+		titleRow.append(createEl('span', 'text-[0.8125rem] font-semibold uppercase tracking-wide text-text-output', 'setup.handbookTitle'));
 		header.append(titleRow, this.buildChevron(open));
-		const content = createEl('div', open ? 'section-content open' : 'section-content');
+		const content = createEl('div', open ? 'section-content open p-3' : 'section-content p-3');
 		content.dataset.accordionContent = '';
-		const guide = createEl('div', 'setup-guide pt-1');
+		const guide = createEl('div', 'setup-guide');
 		guide.appendChild(createEl('h3', 'setup-h3', 'setup.feelTitle'));
 		const feel = createEl('div', 'setup-feel');
 		feel.id = 'setup-feel';

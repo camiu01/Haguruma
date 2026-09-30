@@ -89,8 +89,12 @@ export interface ElementRefs {
 	customImportInput: HTMLInputElement;
 	customList: HTMLElement;
 	customError: HTMLElement;
-	canvas: HTMLCanvasElement;
-	ctx: CanvasRenderingContext2D;
+	graphHost: HTMLElement;
+	graphSvg: SVGSVGElement;
+	graphHud: HTMLElement;
+	graphTooltip: HTMLElement;
+	graphLayerToggles: HTMLElement;
+	graphLayerButtons: NodeListOf<HTMLElement>;
 	tooltip: HTMLElement;
 	breakdownBody: HTMLElement;
 	compareBody: HTMLElement;
@@ -151,18 +155,14 @@ export interface ElementRefs {
  * @return Fully typed element handles.
  */
 export const getElementRefs = (): ElementRefs => {
-	const get = <T extends HTMLElement>(id: string): T => {
+	const get = <T extends Element>(id: string): T => {
 		const el = document.getElementById(id);
 		if (!el) {
 			throw new Error(`Missing required element: ${id}`);
 		}
-		return el as T;
+		return el as unknown as T;
 	};
-	const canvas = get<HTMLCanvasElement>('graph-canvas');
-	const ctx = canvas.getContext('2d');
-	if (!ctx) {
-		throw new Error('Canvas 2D context unavailable');
-	}
+	const graphSvg = get<SVGSVGElement>('graph-svg');
 	return {
 		primaryTire: get<HTMLInputElement>('primary-tire'),
 		primaryFd: get<HTMLInputElement>('primary-fd'),
@@ -250,9 +250,13 @@ export const getElementRefs = (): ElementRefs => {
 		customImportInput: get<HTMLInputElement>('custom-import-input'),
 		customList: get<HTMLElement>('custom-list'),
 		customError: get<HTMLElement>('custom-error'),
-		canvas,
-		ctx,
-		tooltip: get<HTMLElement>('canvas-tooltip'),
+		graphHost: get<HTMLElement>('graph-host'),
+		graphSvg,
+		graphHud: get<HTMLElement>('graph-hud'),
+		graphTooltip: get<HTMLElement>('graph-tooltip'),
+		graphLayerToggles: get<HTMLElement>('graph-layer-toggles'),
+		graphLayerButtons: document.querySelectorAll<HTMLElement>('[data-graph-layer]'),
+		tooltip: get<HTMLElement>('graph-tooltip'),
 		breakdownBody: get<HTMLElement>('gear-breakdown-body'),
 		compareBody: get<HTMLElement>('compare-breakdown-body'),
 		compareWrap: get<HTMLElement>('compare-table-wrap'),

@@ -57,6 +57,7 @@ const unobserveSection = (content: HTMLElement): void => {
  * @return void
  */
 export const syncOpenAccordionHeights = (root: ParentNode = document): void => {
+	ensureToolsAccordion();
 	const open = root.querySelectorAll<HTMLElement>('.section-content.open');
 	open.forEach(syncAccordionHeight);
 	observeOpenSections(open);
@@ -98,6 +99,38 @@ const scheduleAccordionSync = (): void => {
 		pendingFrame = null;
 		syncOpenAccordionHeights();
 	});
+};
+
+/**
+ * Keep the tools wrapper open and measurable after injects.
+ * @brief The tools card hosts late-injected mounts; when measured while a
+ * @brief hidden ancestor reports zero rects the sync must not freeze it shut.
+ * @return void
+ */
+const ensureToolsAccordion = (): void => {
+	if (typeof document === 'undefined') {
+		return;
+	}
+	const section = document.querySelector<HTMLElement>('[data-accordion=\'tools\']');
+	if (!section || section.classList.contains('hidden')) {
+		return;
+	}
+	const content = section.querySelector<HTMLElement>('[data-accordion-content]');
+	const header = section.querySelector<HTMLElement>('[data-accordion-header]');
+	if (!content || !content.classList.contains('open')) {
+		return;
+	}
+	if (content.style.maxHeight !== '' && content.style.maxHeight !== '0px') {
+		return;
+	}
+	if (content.getClientRects().length === 0) {
+		content.style.maxHeight = '';
+		if (header) {
+			header.setAttribute('aria-expanded', 'true');
+		}
+		return;
+	}
+	syncAccordionHeight(content);
 };
 
 /**

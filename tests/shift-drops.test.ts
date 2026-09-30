@@ -3,7 +3,7 @@
  * @brief Unit tests for shift-drop visibility helpers.
  */
 import { describe, expect, it } from 'vitest';
-import { isPeakVisible } from '../src/services/graph/graph-shift-drops';
+import { isPeakVisible } from '../src/services/graph/svg-frame';
 import { describeAllShiftDeltas, describeShiftDelta } from '../src/core/math/shift-math';
 import type { PeakPoint, PlotFrame } from '../src/core/models';
 

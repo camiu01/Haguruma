@@ -1,0 +1,22 @@
+<!-- @file tools.html -->
+<!-- @brief Static application shell fragment. -->
+<div class='card card-container'>
+	<div data-accordion='tools'>
+		<div class='section-header accordion-header' data-accordion-header=''>
+			<h2 class='text-[0.8125rem] font-semibold text-text-main' data-i18n='tools.title' id='accordion-label-tools'>Strumenti</h2>
+			<button type='button' class='accordion-toggle' aria-expanded='true' aria-labelledby='accordion-label-tools'>
+				<svg class='chevron open transition-transform duration-200' data-chevron='' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+					<polyline points='6 9 12 15 18 9'></polyline>
+				</svg>
+			</button>
+		</div>
+		<div class='section-content open' data-accordion-content=''>
+			<div class='flex flex-col gap-2 pt-2 [&_.card]:border-0 [&_.card]:bg-transparent [&_.card]:shadow-none [&_.card]:p-0'>
+				<div id='cruise-mount'></div>
+				<div id='tire-size-mount'></div>
+				<div id='pyrometer-mount'></div>
+			</div>
+		</div>
+	</div>
+</div>
+<div id='setup-guide-mount'></div>

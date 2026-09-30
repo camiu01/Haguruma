@@ -8,6 +8,18 @@ body {
 	font-family: 'Inter', system-ui, sans-serif;
 }
 
+/* Corner radii and card metrics — one scale shared by every surface.
+ * Controls and inner rows use xs, card and accordion shells use sm,
+ * overlays use md, pill-shaped affordances and badges use chip. */
+:root {
+	--radius-xs: 2px;
+	--radius-sm: 4px;
+	--radius-md: 8px;
+	--radius-chip: 12px;
+	--radius-pill: 9999px;
+	--card-pad: 12px;
+}
+
 :root,
 [data-theme='dark'] {
 	--bg-page: #0f141c;
@@ -15,19 +27,24 @@ body {
 	--bg-input: #161e2b;
 	--bg-surface-input: #0a0e17;
 	--bg-surface-row: #0a0e17;
+	--bg-surface-recessed: #0a0e17;
 	--bg-canvas: #0d121a;
+	--bg-canvas-plot: #0c0e12;
 	--text-main: #e2e8f0;
 	--text-dim: #9ca3af;
 	--text-label: #9ca3af;
 	--text-output: #ffffff;
-	--text-muted: #71717a;
+	--text-muted: #a1a1aa;
 	--border: #212b3c;
+	--border-hairline: #212b3c;
 	--border-input: #212b3c;
 	--border-surface-border: #212b3c;
-	--shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5);
+	--focus-ring: #38bdf8;
+	--shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35);
 	--bg-background: var(--bg-page);
 	--bg-surface-card: var(--bg-card);
 	--bg-surface-subtle: var(--bg-input);
+	--bg-surface-raised: #171c24;
 	--accent-red: #ff3b30;
 	--accent-orange: #ff9500;
 	--accent-yellow: #ffd60a;
@@ -35,9 +52,21 @@ body {
 	--accent-cyan: #00f0ff;
 	--accent-blue: #0a84ff;
 	--accent-purple: #bf5af2;
+	--accent-kinematic: #bf5af2;
+	--accent-aero: #0a84ff;
+	--accent-warning: #ffd60a;
+	--accent-compare: #fbbf24;
 	--accent-amber-overlay: rgba(255, 214, 10, 0.12);
 	--accent-red-overlay: rgba(255, 59, 48, 0.12);
 	--accent-cyan-overlay: rgba(0, 240, 255, 0.12);
+	--gear-1: #ef4444;
+	--gear-2: #f97316;
+	--gear-3: #facc15;
+	--gear-4: #10b981;
+	--gear-5: #06b6d4;
+	--gear-6: #3b82f6;
+	--gear-7: #a855f7;
+	--gear-8: #ec4899;
 }
 
 [data-theme='oled'] {
@@ -46,19 +75,24 @@ body {
 	--bg-input: #000000;
 	--bg-surface-input: #000000;
 	--bg-surface-row: #000000;
+	--bg-surface-recessed: #000000;
 	--bg-canvas: #000000;
+	--bg-canvas-plot: #000000;
 	--text-main: #f8fafc;
 	--text-dim: #a1a1aa;
 	--text-label: #a1a1aa;
 	--text-output: #ffffff;
-	--text-muted: #71717a;
+	--text-muted: #a1a1aa;
 	--border: #1a1a22;
+	--border-hairline: #1a1a22;
 	--border-input: #24242e;
 	--border-surface-border: #24242e;
-	--shadow-card: 0 0 25px -10px rgba(0, 0, 0, 0.9);
+	--focus-ring: #38bdf8;
+	--shadow-card: 0 1px 2px rgba(0, 0, 0, 0.9);
 	--bg-background: var(--bg-page);
 	--bg-surface-card: var(--bg-card);
 	--bg-surface-subtle: var(--bg-input);
+	--bg-surface-raised: #0d0d12;
 	--accent-red: #ff3b30;
 	--accent-orange: #ff9500;
 	--accent-yellow: #ffd60a;
@@ -66,9 +100,21 @@ body {
 	--accent-cyan: #00f0ff;
 	--accent-blue: #0a84ff;
 	--accent-purple: #bf5af2;
+	--accent-kinematic: #bf5af2;
+	--accent-aero: #0a84ff;
+	--accent-warning: #ffd60a;
+	--accent-compare: #fbbf24;
 	--accent-amber-overlay: rgba(255, 214, 10, 0.12);
 	--accent-red-overlay: rgba(255, 59, 48, 0.12);
 	--accent-cyan-overlay: rgba(0, 240, 255, 0.12);
+	--gear-1: #ff453a;
+	--gear-2: #ff9f0a;
+	--gear-3: #ffd60a;
+	--gear-4: #30d158;
+	--gear-5: #40c8e0;
+	--gear-6: #4a9bff;
+	--gear-7: #bf5af2;
+	--gear-8: #ff375f;
 }
 
 [data-theme='light'] {
@@ -77,19 +123,24 @@ body {
 	--bg-input: #ffffff;
 	--bg-surface-input: #ffffff;
 	--bg-surface-row: #f8fafc;
+	--bg-surface-recessed: #f1f5f9;
 	--bg-canvas: #ffffff;
+	--bg-canvas-plot: #ffffff;
 	--text-main: #0f172a;
-	--text-dim: #64748b;
-	--text-label: #64748b;
+	--text-dim: #475569;
+	--text-label: #475569;
 	--text-output: #0f172a;
-	--text-muted: #64748b;
+	--text-muted: #475569;
 	--border: #e2e8f0;
+	--border-hairline: #e2e8f0;
 	--border-input: #cbd5e1;
 	--border-surface-border: #cbd5e1;
-	--shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05);
+	--focus-ring: #0891b2;
+	--shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06);
 	--bg-background: var(--bg-page);
 	--bg-surface-card: var(--bg-card);
 	--bg-surface-subtle: #f8fafc;
+	--bg-surface-raised: #ffffff;
 	--accent-red: #dc2626;
 	--accent-orange: #ea580c;
 	--accent-yellow: #ca8a04;
@@ -97,7 +148,19 @@ body {
 	--accent-cyan: #0891b2;
 	--accent-blue: #2563eb;
 	--accent-purple: #7c3aed;
+	--accent-kinematic: #7c3aed;
+	--accent-aero: #2563eb;
+	--accent-warning: #b45309;
+	--accent-compare: #d97706;
 	--accent-amber-overlay: rgba(217, 119, 6, 0.12);
 	--accent-red-overlay: rgba(220, 38, 38, 0.12);
 	--accent-cyan-overlay: rgba(8, 145, 178, 0.12);
+	--gear-1: #dc2626;
+	--gear-2: #ea580c;
+	--gear-3: #a16207;
+	--gear-4: #059669;
+	--gear-5: #0891b2;
+	--gear-6: #2563eb;
+	--gear-7: #7c3aed;
+	--gear-8: #db2777;
 }

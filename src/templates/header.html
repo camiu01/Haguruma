@@ -1,0 +1,32 @@
+<!-- @file header.html -->
+<!-- @brief Static application shell fragment. -->
+<header class='app-header border-b border-border-hairline bg-surface-subtle/95 backdrop-blur-xl sticky top-0 z-30 px-3 lg:px-6 h-16 flex items-center justify-between gap-2 overflow-hidden flex-nowrap'>
+		<div class='flex items-center gap-2 md:gap-3 min-w-0 flex-shrink-1'>
+			<button id='btn-menu' type='button' class='hamburger' aria-expanded='false' aria-controls='mobile-drawer' data-i18n-tip='menu.open' title='Open menu' data-tip='Open menu' aria-label='Open menu'>
+				<span class="material-symbols-outlined text-[1.25rem]">menu</span>
+			</button>
+			<div class='hidden sm:block h-5 w-px bg-border-hairline flex-shrink-0' aria-hidden='true'></div>
+			<div class='flex items-center gap-2 min-w-0'>
+				<div class='min-w-0'>
+					<div class='flex items-center gap-1.5'>
+						<h1 class='brand text-sm md:text-base font-semibold text-text-output whitespace-nowrap'>HAGURUMA</h1>
+						<span id='header-solver-dot' class='w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0' role='status' data-i18n-tip='header.solverOnline' title='Kinematics solver engine online' data-tip='Kinematics solver engine online' aria-label='Kinematics solver engine online'></span>
+					</div>
+					<p class='text-[0.6875rem] text-text-dim brand-sub whitespace-nowrap truncate' data-i18n='header.subtitle'>Kinematic Telemetry &amp; Gearing Simulator</p>
+				</div>
+			</div>
+		</div>
+		<div class='flex items-center gap-2 md:gap-3 flex-shrink-0'>
+			<div id='header-chip' class='hidden sm:flex items-center gap-2 bg-surface-recessed px-2.5 py-1 rounded border border-border-hairline'>
+				<span class='h-2 w-2 rounded-full bg-neon-green'></span>
+				<span id='header-unit-label' class='text-[0.625rem] font-mono font-bold text-text-main tracking-wider'>METRIC</span>
+				<span class='text-border-hairline'>·</span>
+				<span id='header-level-label' class='text-[0.625rem] font-mono font-bold text-neon-cyan tracking-wider'>FULL</span>
+			</div>
+			<button id='header-car-trigger' type='button' data-view='presets' class='flex items-center gap-2 bg-surface-recessed hover:bg-input border border-border-hairline hover:border-border-input text-text-output px-2.5 py-1.5 rounded transition-colors' data-i18n-tip='header.carTrigger' title='Active vehicle preset' data-tip='Active vehicle preset' aria-label='Active vehicle preset'>
+				<span class="material-symbols-outlined text-text-muted text-[1.125rem]" aria-hidden='true'>directions_car</span>
+				<span id='header-car-name' class='text-[0.6875rem] font-mono text-text-output max-w-[160px] lg:max-w-[210px] truncate hidden md:inline'>—</span>
+				<span class="material-symbols-outlined text-text-muted text-[0.875rem]" aria-hidden='true'>expand_more</span>
+			</button>
+		</div>
+	</header>

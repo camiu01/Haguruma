@@ -1,0 +1,299 @@
+<!-- @file primary-setup.html -->
+<!-- @brief Static application shell fragment. -->
+<div class='card card-container merged-card'>
+			<div data-accordion='vehicle'>
+				<div class='accordion-header accordion-header-bordered mb-1' data-accordion-header>
+					<h2 class='text-[0.8125rem] font-semibold text-text-main' data-i18n='vehicle.title'>Main Setup</h2>
+					<div class='flex'>
+						<label class='flex items-center gap-2 text-[0.6875rem] text-text-dim font-mono'>
+							<span data-i18n='setup.level'>Level</span>
+							<select id='setup-level' class='bg-surface-input border border-surface-border rounded px-2 py-1 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim'>
+								<option value='easy' data-i18n='setup.levelEasy'>Easy</option>
+								<option value='medium' data-i18n='setup.levelMedium'>Medium</option>
+								<option value='full' data-i18n='setup.levelFull'>Full</option>
+							</select>
+						</label>
+						<svg class='chevron open transition-transform duration-200' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+							<polyline points='6 9 12 15 18 9'></polyline>
+						</svg>
+					</div>
+				</div>
+				<div class='section-content open' data-accordion-content>
+				<div class='pt-3' id='preset-anchor'>
+					<select id='preset-selector' aria-label='Load Preset Vehicle' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2.5 text-xs font-mono text-text-main focus:outline-none focus:border-text-dim truncate'>
+						<option value='' disabled selected data-i18n='header.presetPlaceholder'>Load Preset Vehicle...</option>
+					</select>
+				</div>
+				<!-- ACCORDION 1: SETUP BASE & DRIVETRAIN -->
+				<div data-accordion='primary'>
+					<div class='section-header accordion-header' data-accordion-header>
+						<div class='flex items-center gap-2'>
+							<span class='w-2 h-2 rounded-full bg-neon-cyan shadow-[0_0_8px_#00f0ff]'></span>
+							<span class='text-sm font-semibold text-text-main uppercase tracking-wide' data-i18n='setup.baseTitle'>Setup Base &amp; Drivetrain</span>
+						</div>
+						<div class='flex items-center gap-2'>
+							<span id='primary-circ-display' class='text-[0.625rem] text-text-dim font-mono whitespace-nowrap'>Circ: 1985 mm</span>
+							<svg class='chevron open transition-transform duration-200' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+								<polyline points='6 9 12 15 18 9'></polyline>
+							</svg>
+						</div>
+					</div>
+					<div class='section-content open' data-accordion-content>
+						<!-- Touch-first tire pills, FD/rev steppers (injected) -->
+						<div id='setup-controls-mount'></div>
+						<!-- Hidden legacy inputs kept in sync for presets, share and refs -->
+						<input type='hidden' id='primary-tire' value='205/55R16' />
+						<input type='hidden' id='primary-fd' value='4.10' />
+						<input type='hidden' id='primary-redline' value='7200' />
+						<select id='primary-fd-variant' class='hidden mt-1.5 w-full bg-surface-input border border-surface-border rounded px-2 py-1.5 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim' data-i18n-tip='primary.fdVariantTip' title='Optional final drives for this chassis' aria-label='Optional final drives for this chassis'></select>
+						<select id='drivetrain-opt-variant' class='hidden mt-1.5 w-full bg-surface-input border border-surface-border rounded px-2 py-1.5 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim' data-i18n-tip='primary.drivOptTip' title='Aftermarket gearsets, final drives and LSDs for this chassis' aria-label='Aftermarket gearsets, final drives and LSDs for this chassis'></select>
+						<div class='mt-1.5'>
+							<label class='block text-[0.625rem] font-mono uppercase tracking-wider text-text-muted mb-1' for='graph-max-speed'><span data-i18n='primary.maxSpeed'>Graph Max Speed</span> (<span class='unit-label'>km/h</span>)</label>
+							<input type='number' inputmode='decimal' step='10' min='100' max='500' id='graph-max-speed' value='300' class='w-full bg-surface-recessed border border-border-hairline rounded px-2.5 py-1.5 text-xs text-text-output font-mono outline-none' />
+						</div>
+						<!-- Gear ratio stack (nested, level-gated at Full) -->
+						<div class='mt-3 border-t border-border-hairline pt-2' data-accordion='gears'>
+							<div class='section-header accordion-header' data-accordion-header>
+								<div class='flex items-center gap-2'>
+									<span class='w-2 h-2 rounded-full bg-neon-green'></span>
+									<span class='text-xs font-semibold text-text-main uppercase tracking-wide' data-i18n='gears.title'>Transmission Gears</span>
+									<span class='text-[0.5625rem] font-mono text-text-muted'>&plusmn;0.005</span>
+									<button id='btn-add-gear' type='button' class='ml-auto px-2 py-1 text-[0.625rem] font-mono bg-surface-recessed hover:bg-surface-subtle text-text-main rounded border border-border-hairline transition flex items-center gap-1'>
+										<svg class='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 4v16m8-8H4'/></svg>
+										<span data-i18n='gears.add'>Add Gear</span>
+									</button>
+								</div>
+								<svg class='chevron open transition-transform duration-200' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+									<polyline points='6 9 12 15 18 9'></polyline>
+								</svg>
+							</div>
+							<div class='section-content open' data-accordion-content>
+								<div id='gears-container' class='flex flex-col gap-1 max-h-72 overflow-y-auto pr-1 custom-scroll pt-1 gear-rows-container'></div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- ACCORDION 2: CHASSIS, AERO & GRIP -->
+				<div data-accordion='road'>
+					<div class='section-header accordion-header' data-accordion-header>
+						<div class='flex items-center gap-2'>
+							<input type='checkbox' id='roadload-toggle' checked class='rounded bg-surface-input border-surface-border cursor-pointer w-4 h-4' data-i18n-tip='road.title' title='Road Load' data-tip='Road Load' aria-label='Road Load' />
+							<span class='w-2 h-2 rounded-full bg-accent-kinematic shadow-[0_0_8px_#bf5af2]'></span>
+							<span class='text-sm font-semibold text-text-main uppercase tracking-wide' data-i18n='setup.aeroTitle'>Chassis, Aero &amp; Grip</span>
+						</div>
+						<svg class='chevron open transition-transform duration-200' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+							<polyline points='6 9 12 15 18 9'></polyline>
+						</svg>
+					</div>
+					<div class='section-content open' data-accordion-content>
+						<div id='roadload-fields' class='grid grid-cols-2 gap-2 transition-opacity duration-200 pt-1'>
+							<!-- Tire compound -->
+							<div class='col-span-2'>
+								<label class='block text-[0.625rem] font-mono uppercase tracking-wider text-text-muted mb-1' for='rg-tire' data-i18n='running.tire'>Tire compound</label>
+								<select id='rg-tire' class='w-full bg-surface-recessed border border-border-hairline rounded px-2.5 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim'>
+									<option value='eco_400' data-i18n='running.tireEco'>Eco 400TW</option>
+									<option value='touring_300' data-i18n='running.tireTouring'>Touring 300TW</option>
+									<option value='sport_200' data-i18n='running.tireSport'>Sport 200TW</option>
+									<option value='semi_100' data-i18n='running.tireSemi'>Semislick 100TW</option>
+									<option value='slick' data-i18n='running.tireSlick'>Slick</option>
+								</select>
+							</div>
+							<div id='primary-metrics-mount' class='contents'></div>
+							<!-- Weight distribution -->
+							<div class='col-span-2 flex flex-col gap-1'>
+								<div class='flex justify-between items-center text-[0.6875rem]'>
+									<span class='text-text-dim' data-i18n='setupctl.weightTitle'>Axle weight split</span>
+									<span id='setupctl-weight-label' class='font-mono text-[0.625rem] font-bold text-text-output'>60% / 40%</span>
+								</div>
+								<div class='flex items-center gap-2'>
+									<input type='number' inputmode='decimal' step='0.5' min='40' max='70' id='rg-weight' value='60' class='w-16 bg-surface-recessed border border-border-hairline rounded px-2 py-1 text-xs text-text-output font-mono outline-none' aria-label='Front weight percent' />
+									<div class='w-full h-1.5 bg-surface-recessed rounded-full overflow-hidden flex border border-border-hairline'>
+										<div id='setupctl-weight-bar' class='bg-gear-5 h-full' style='width: 60%'></div>
+										<div id='setupctl-weight-bar-rear' class='bg-accent-compare h-full' style='width: 40%'></div>
+									</div>
+								</div>
+							</div>
+							<div id='primary-advanced-metrics-mount' class='contents'></div>
+							<!-- Live aero drag readout (injected) -->
+							<div class='col-span-2' id='aero-controls-mount'></div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Section 4: Engine Curve -->
+				<div data-accordion='engine'>
+					<div class='section-header accordion-header' data-accordion-header>
+						<div class='flex items-center gap-2'>
+							<span class='w-2 h-2 rounded-full bg-neon-yellow'></span>
+							<span class='text-[0.8125rem] font-semibold text-text-main' data-i18n='engine.title'>Engine Curve</span>
+							<span class='text-[0.625rem] text-text-dim' data-i18n='engine.note'>Torque + Power anchors</span>
+						</div>
+						<svg class='chevron open transition-transform duration-200' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+							<polyline points='6 9 12 15 18 9'></polyline>
+						</svg>
+					</div>
+					<div class='section-content open' data-accordion-content>
+						<div class='grid grid-cols-2 gap-4 pt-1'>
+							<div class='col-span-2 sm:col-span-1'>
+								<label class='block text-xs font-medium text-text-dim mb-1' for='engine-torque-rpm' data-i18n='engine.torqueRpm'>Peak Torque RPM</label>
+								<div class='relative'>
+									<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='engine-torque-rpm' value='4500' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+									<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>RPM</span>
+								</div>
+							</div>
+							<div class='col-span-2 sm:col-span-1'>
+								<label class='block text-xs font-medium text-text-dim mb-1' for='engine-torque' data-i18n='engine.torque'>Peak Torque (Nm)</label>
+								<div class='relative'>
+									<input type='number' inputmode='decimal' step='5' min='20' max='1500' id='engine-torque' value='180' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+									<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>Nm</span>
+								</div>
+							</div>
+							<div class='col-span-2 sm:col-span-1'>
+								<label class='block text-xs font-medium text-text-dim mb-1' for='engine-power-rpm' data-i18n='engine.powerRpm'>Peak Power RPM</label>
+								<div class='relative'>
+									<input type='number' inputmode='decimal' step='100' min='1000' max='12000' id='engine-power-rpm' value='6500' class='w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none' />
+									<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>RPM</span>
+								</div>
+							</div>
+							<div class='col-span-2 sm:col-span-1'>
+								<label class='block text-xs font-medium text-text-dim mb-1' for='engine-power-at'><span data-i18n='engine.powerAt'>Power @ Torque Peak</span> (<span class='power-unit-label'>kW</span>)</label>
+								<input type='text' id='engine-power-at' readonly tabindex='-1' value='-' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-dim font-mono outline-none cursor-default' />
+							</div>
+						</div>
+						<p class='text-[0.625rem] text-text-dim mt-3 font-mono'><span data-i18n='engine.caption'>Anchors for tractive force and optimal shift: T = P × 9549.3 / n.</span> <span class='help-dot' tabindex='0' data-i18n-tip='engine.caption' title='Anchors for tractive force and optimal shift: T = P × 9549.3 / n.' data-tip='Anchors for tractive force and optimal shift: T = P × 9549.3 / n.' aria-label='Anchors for tractive force and optimal shift: T = P × 9549.3 / n.'>?</span></p>
+						<div class='flex items-center gap-2 pt-2 flex-wrap'>
+							<button id='btn-import-csv' type='button' class='px-2.5 py-1.5 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='engine.importCsv' data-i18n-tip='engine.csvTip' title='Import a dyno CSV: rpm + torque Nm columns, or rpm + power kW/cv (power-only files need a header row). Semicolon and decimal comma are supported.' data-tip='Import a dyno CSV: rpm + torque Nm columns, or rpm + power kW/cv (power-only files need a header row). Semicolon and decimal comma are supported.' aria-label='Import a dyno CSV: rpm + torque Nm columns, or rpm + power kW/cv (power-only files need a header row). Semicolon and decimal comma are supported.'>Import dyno CSV</button>
+							<button id='btn-clear-csv' type='button' class='px-2.5 py-1.5 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition hidden' data-i18n='engine.clearCsv' title='Back to the anchor curve model' data-tip='Back to the anchor curve model' aria-label='Back to the anchor curve model'>Back to anchors</button>
+							<input type='file' id='engine-csv-input' accept='.csv,text/csv' class='hidden' />
+							<label class='inline-flex items-center gap-1.5 text-[0.6875rem] font-mono text-text-dim cursor-pointer'><input type='checkbox' id='engine-csv-smooth' class='rounded bg-surface-input border-surface-border cursor-pointer w-4 h-4' /><span data-i18n='engine.smooth'>Smooth raw dyno</span></label>
+							<span id='engine-csv-status' class='text-[0.625rem] text-text-dim font-mono' data-i18n='engine.csvIdle'>Anchor curve (torque + power peak)</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- Section 5: Running Gear -->
+				<details class='accordion' id='running-gear-accordion' open>
+					<summary class='section-header accordion-header'>
+						<div class='flex items-center gap-2'>
+							<span class='w-2 h-2 rounded-full bg-neon-purple'></span>
+							<span class='text-[0.8125rem] font-semibold text-text-main' data-i18n='running.title'>Running Gear</span>
+							<span class='text-[0.625rem] text-text-dim' data-i18n='running.note'>Load transfer + grip</span>
+						</div>
+						<svg class='chevron open transition-transform duration-200' data-chevron viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+							<polyline points='6 9 12 15 18 9'></polyline>
+						</svg>
+					</summary>
+					<div class='grid grid-cols-2 gap-4 pt-1 pb-2'>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-layout' data-i18n='running.layout' data-i18n-tip='running.layoutTip' title='Selecting a layout also sets the default drivetrain efficiency: FWD 0.90, RWD 0.85, AWD 0.80.' data-tip='Selecting a layout also sets the default drivetrain efficiency: FWD 0.90, RWD 0.85, AWD 0.80.' aria-label='Selecting a layout also sets the default drivetrain efficiency: FWD 0.90, RWD 0.85, AWD 0.80.'>Drivetrain layout</label>
+							<select id='rg-layout' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim'>
+								<option value='FWD'>FWD</option>
+								<option value='RWD' selected>RWD</option>
+								<option value='AWD'>AWD</option>
+							</select>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-diff' data-i18n='running.diff'>Differential</label>
+							<select id='rg-diff' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim'>
+								<option value='open' data-i18n='running.diffOpen'>Open</option>
+								<option value='lsd_1way' data-i18n='running.diff1Way'>LSD 1-Way</option>
+								<option value='lsd_1_5way' data-i18n='running.diff15Way'>LSD 1.5-Way</option>
+								<option value='lsd_2way' data-i18n='running.diff2Way'>LSD 2-Way</option>
+								<option value='lsd_custom' data-i18n='running.diffCustom'>LSD Custom</option>
+								<option value='lsd_osgiken' data-i18n='running.diffOsGiken'>OS Giken Super Lock</option>
+								<option value='lsd_cusco' data-i18n='running.diffCusco'>Cusco MZ</option>
+								<option value='lsd_kaaz' data-i18n='running.diffKaaz'>KAAZ 2-Way</option>
+								<option value='torsen' data-i18n='running.diffTorsen'>Torsen</option>
+								<option value='torsen_wavetrac' data-i18n='running.diffWavetrac'>Wavetrac ATB</option>
+								<option value='torsen_quaife' data-i18n='running.diffQuaife'>Quaife ATB</option>
+								<option value='spool' data-i18n='running.diffSpool'>Spool</option>
+							</select>
+						</div>
+						<div class='col-span-2 sm:col-span-1' id='rg-bias-wrap'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-bias' data-i18n='running.bias'>Accel lock</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='5' min='0' max='100' id='rg-bias' value='25' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>%</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1' id='rg-coast-wrap'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-coast' data-i18n='running.coast'>Coast lock</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='5' min='0' max='100' id='rg-coast' value='0' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>%</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-cog' data-i18n='running.cog'>CoG height</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='5' min='300' max='700' id='rg-cog' value='500' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>mm</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-wheelbase' data-i18n='running.wheelbase'>Wheelbase</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='10' min='2200' max='3300' id='rg-wheelbase' value='2570' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>mm</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-track' data-i18n='running.track'>Track width</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='5' min='1300' max='1800' id='rg-track' value='1500' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>mm</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-spring-f' data-i18n='running.springF'>Front spring</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='1' min='10' max='120' id='rg-spring-f' value='40' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>N/mm</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-spring-r' data-i18n='running.springR'>Rear spring</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='1' min='10' max='120' id='rg-spring-r' value='45' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none' />
+								<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>N/mm</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-latg' data-i18n='running.latg'>Sustained lateral G</label>
+							<div class='flex items-center gap-2'>
+								<input type='range' min='0' max='1.3' step='0.05' id='rg-latg' value='0.6' class='flex-1' />
+								<span id='rg-latg-val' class='text-xs text-text-output font-mono whitespace-nowrap'>0.60 G</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-lift' data-i18n='running.lift'>Downforce CL</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='0.05' min='0' max='4' id='rg-lift' value='0.15' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim' />
+								<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>CL</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-lift-area' data-i18n='running.liftArea'>Downforce area (m²)</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='0.05' min='0.5' max='5' id='rg-lift-area' value='2.00' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim' />
+								<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>m²</span>
+							</div>
+						</div>
+						<div class='col-span-2 sm:col-span-1'>
+							<label class='block text-xs font-medium text-text-dim mb-1' for='rg-lift-share' data-i18n='running.liftShare'>Downforce front share</label>
+							<div class='relative'>
+								<input type='number' inputmode='decimal' step='1' min='20' max='80' id='rg-lift-share' value='52' class='w-full bg-surface-input border border-surface-border rounded px-3 py-2 text-xs text-text-output font-mono focus:outline-none focus:border-text-dim' />
+								<span class='absolute right-2.5 top-2 text-[0.625rem] font-mono text-zinc-500 pointer-events-none'>%</span>
+							</div>
+						</div>
+						<div class='col-span-2 flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-border/60 text-[0.625rem] text-text-dim font-mono'>
+							<span class='whitespace-nowrap'><span data-i18n='running.downforceAt'>Downforce @ 200 km/h</span>: <span id='rg-downforce-val' class='text-text-output'>—</span></span>
+							<span class='whitespace-nowrap' data-i18n-tip='running.coastLockupTip' title='First speed where closed-throttle engine braking exceeds the coast-lock grip of the driven axle (Kamm circle).' data-tip='First speed where closed-throttle engine braking exceeds the coast-lock grip of the driven axle (Kamm circle).' aria-label='First speed where closed-throttle engine braking exceeds the coast-lock grip of the driven axle (Kamm circle).'><span data-i18n='running.coastLockup'>Coast lock-up</span>: <span id='rg-coast-val' class='text-text-output'>—</span></span>
+						</div>
+					</div>
+				</details>
+				</div>
+			</div>
+
+			</div>

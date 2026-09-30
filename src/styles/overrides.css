@@ -21,7 +21,7 @@
 [data-theme='oled'] .border-amber-400\/30, [data-theme='oled'] .border-amber-400\/40, [data-theme='oled'] .border-amber-400\/60, [data-theme='oled'] .border-rose-500 { border-color: #52525b !important; }
 [data-theme='oled'] #mobile-drawer, [data-theme='oled'] header, [data-theme='oled'] .card, [data-theme='oled'] #mycars-modal, [data-theme='oled'] .merged-card { background-color: #070709 !important; }
 [data-theme='oled'] #kpi-strip { background-color: #070709 !important; }
-[data-theme='oled'] #canvas-tooltip { background-color: #000000 !important; border-color: #24242e !important; color: #f8fafc !important; }
+[data-theme='oled'] #graph-tooltip { background-color: #000000 !important; border-color: #24242e !important; color: #f8fafc !important; }
 [data-theme='oled'] #share-fab { background-color: #f59e0b !important; color: #000000 !important; }
 [data-theme='oled'] .custom-scroll::-webkit-scrollbar-track { background: #000000; }
 [data-theme='oled'] .custom-scroll::-webkit-scrollbar-thumb { background: #24242e; }
@@ -67,7 +67,7 @@
 [data-theme='light'] .hover\:text-rose-400:hover { color: #be123c !important; }
 [data-theme='light'] .hover\:text-amber-300:hover, [data-theme='light'] .hover\:text-sky-400:hover { color: #b45309 !important; }
 [data-theme='light'] .hover\:border-gray-400:hover, [data-theme='light'] .focus\:border-gray-400:focus { border-color: #94a3b8 !important; }
-[data-theme='light'] #canvas-tooltip { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+[data-theme='light'] #graph-tooltip { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
 [data-theme='light'] #share-fab { background-color: #f59e0b !important; color: #0f172a !important; }
 [data-theme='light'] .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
 [data-theme='light'] .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; }
