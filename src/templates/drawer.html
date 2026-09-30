@@ -1,0 +1,210 @@
+<!-- @file drawer.html -->
+<!-- @brief Static application shell fragment. -->
+<div id='mobile-drawer-backdrop' class='hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm'></div>
+	<aside id='mobile-drawer' role='dialog' aria-modal='true' aria-labelledby='mobile-drawer-title' class='hidden fixed left-0 top-0 h-full h-dvh z-[70] bg-surface border-r border-border-hairline w-[85vw] max-w-sm sm:w-96 flex flex-col'>
+		<!-- Drawer Header -->
+		<div class='flex items-center justify-between gap-2 px-4 py-3 border-b border-border-hairline shrink-0'>
+			<div class='flex items-center gap-2.5 min-w-0'>
+				<span class='w-7 h-7 rounded bg-neon-cyan flex items-center justify-center font-mono fs-tiny font-bold text-[#002022] flex-shrink-0' aria-hidden='true'>HG</span>
+				<div class='flex flex-col min-w-0'>
+					<h2 id='mobile-drawer-title' class='fs-title font-semibold text-text-output uppercase tracking-wider truncate' data-i18n='drawer.title'>Navigation &amp; Tools</h2>
+					<span class='fs-tiny font-mono text-text-muted truncate' data-i18n='drawer.subtitle'>Telemetry &amp; Mechanical Control</span>
+				</div>
+			</div>
+			<button id='mobile-drawer-close' type='button' class='btn btn--icon flex-shrink-0' data-i18n-tip='menu.close' title='Close menu' data-tip='Close menu' aria-label='Close menu'>
+				<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12'/></svg>
+			</button>
+		</div>
+
+		<!-- Section 1: Workspace navigation -->
+		<div class='flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3 custom-scroll'>
+			<section class='flex flex-col gap-1.5'>
+				<span class='px-1 fs-micro font-mono font-bold uppercase tracking-wider text-text-muted' data-i18n='drawer.navTitle'>Workspace navigation</span>
+				<div class='flex flex-col gap-1 bg-surface-card p-1.5 rounded border border-border-hairline'>
+					<button type='button' data-view='primaryCar' class='drawer-nav-row is-active'>
+						<span class='flex items-center gap-2.5 min-w-0'>
+							<span class="material-symbols-outlined text-neon-cyan text-[1.125rem]" aria-hidden='true'>speed</span>
+							<span class='drawer-nav-label truncate' data-i18n='drawer.navWorkbench'>Cinematic Workbench</span>
+						</span>
+						<span class='fs-micro font-mono font-bold px-1.5 py-0.5 rounded border border-neon-cyan/30 text-neon-cyan flex-shrink-0' data-i18n='drawer.navActive'>ACTIVE</span>
+					</button>
+					<button type='button' data-view='secondaryCar' class='drawer-nav-row'>
+						<span class='flex items-center gap-2.5 min-w-0'>
+							<span class="material-symbols-outlined text-text-muted text-[1.125rem]" aria-hidden='true'>compare_arrows</span>
+							<span class='drawer-nav-label truncate' data-i18n='drawer.navSecondary'>A/B Setup Comparison</span>
+						</span>
+						<span class='fs-micro font-mono px-1.5 py-0.5 rounded border border-border-hairline text-neon-yellow flex-shrink-0'>A/B</span>
+					</button>
+					<button type='button' data-view='engine' class='drawer-nav-row'>
+						<span class='flex items-center gap-2.5 min-w-0'>
+							<span class="material-symbols-outlined text-text-muted text-[1.125rem]" aria-hidden='true'>show_chart</span>
+							<span class='drawer-nav-label truncate' data-i18n='drawer.navDyno'>Dyno &amp; Torque Curves</span>
+						</span>
+						<span class='fs-micro font-mono px-1.5 py-0.5 rounded border border-border-hairline text-neon-cyan flex-shrink-0' data-i18n='drawer.badgeDyno'>CSV / Akima</span>
+					</button>
+					<button type='button' data-view='setup' class='drawer-nav-row'>
+						<span class='flex items-center gap-2.5 min-w-0'>
+							<span class="material-symbols-outlined text-text-muted text-[1.125rem]" aria-hidden='true'>build</span>
+							<span class='drawer-nav-label truncate' data-i18n='drawer.navSetup'>Setup &amp; Tools</span>
+						</span>
+						<span class='fs-micro font-mono px-1.5 py-0.5 rounded border border-border-hairline text-neon-green flex-shrink-0' data-i18n='drawer.badgeSetup'>Tuning</span>
+					</button>
+					<button type='button' data-view='pyrometer' class='drawer-nav-row'>
+						<span class='flex items-center gap-2.5 min-w-0'>
+							<span class="material-symbols-outlined text-text-muted text-[1.125rem]" aria-hidden='true'>device_thermostat</span>
+							<span class='drawer-nav-label truncate' data-i18n='drawer.navPaddock'>Paddock Guide &amp; Pyrometer</span>
+						</span>
+						<span class='fs-micro font-mono px-1.5 py-0.5 rounded border border-border-hairline text-accent-warning flex-shrink-0' data-i18n='drawer.badgePaddock'>Pit-Lane</span>
+					</button>
+					<button type='button' data-view='presets' class='drawer-nav-row'>
+						<span class='flex items-center gap-2.5 min-w-0'>
+							<span class="material-symbols-outlined text-text-muted text-[1.125rem]" aria-hidden='true'>garage</span>
+							<span class='drawer-nav-label truncate' data-i18n='drawer.navPresets'>Car Database &amp; Presets</span>
+						</span>
+						<span class='fs-micro font-mono px-1.5 py-0.5 rounded border border-border-hairline text-neon-orange flex-shrink-0' data-i18n='drawer.badgePresets'>Presets</span>
+					</button>
+				</div>
+				<button id='btn-my-cars' type='button' class='w-full field-input field-input--tall field-input--center transition'>
+					<span data-i18n='custom.manage'>Manage my cars</span>
+				</button>
+			</section>
+			<!-- Section 2: Unit system -->
+			<section class='flex flex-col gap-2 bg-surface-card p-3 rounded border border-border-hairline'>
+				<div class='flex items-center justify-between gap-2'>
+					<span class='section-title' data-i18n='drawer.unitsTitle'>Unit system</span>
+					<span class='fs-micro font-mono px-1.5 py-0.5 rounded border border-border-hairline text-neon-green' data-i18n='drawer.unitsActive'>ACTIVE: SI</span>
+				</div>
+				<div class='drawer-section drawer-section-row'>
+					<p class='drawer-label' data-i18n='nav.language'>Language</p>
+					<div id='drawer-lang-host' class='drawer-host'>
+						<div id='lang-group' class='inline-flex items-center rounded bg-input p-0.5 border border-border h-8'>
+							<button id='lang-en' type='button' class='seg-btn is-active'>EN</button>
+							<button id='lang-it' type='button' class='seg-btn'>IT</button>
+						</div>
+					</div>
+				</div>
+				<div class='drawer-section drawer-section-row'>
+					<p class='drawer-label' data-i18n='nav.units'>Units</p>
+					<div id='drawer-unit-host' class='drawer-host'>
+						<div id='unit-group' class='inline-flex items-center rounded bg-input p-0.5 border border-border h-8'>
+							<button id='unit-kmh' type='button' class='seg-btn seg-btn--mono is-active'>km/h</button>
+							<button id='unit-mph' type='button' class='seg-btn seg-btn--mono'>mph</button>
+						</div>
+						<div id='power-unit-group' class='inline-flex items-center rounded bg-input p-0.5 border border-border h-8'>
+							<button id='power-unit-kw' type='button' class='seg-btn seg-btn--mono is-active'>kW</button>
+							<button id='power-unit-cv' type='button' class='seg-btn seg-btn--mono'>cv</button>
+						</div>
+					</div>
+				</div>
+			</section>
+			<!-- Section 3: Export & data pipeline -->
+			<section class='flex flex-col gap-2 bg-surface-card p-3 rounded border border-border-hairline'>
+				<div class='flex items-center justify-between gap-2'>
+					<span class='section-title' data-i18n='drawer.ioTitle'>Export &amp; data pipeline</span>
+					<span class='mono-note' data-i18n='drawer.ioEngine'>IO ENGINE</span>
+				</div>
+				<div class='grid grid-cols-2 gap-1.5'>
+					<button id='drawer-export-png' type='button' class='drawer-export-btn'>>
+						<span class='flex items-center gap-1.5 min-w-0'>
+							<span class="material-symbols-outlined text-neon-cyan fs-body" aria-hidden='true'>image</span>
+							<span class='drawer-nav-meta truncate' data-i18n='drawer.exportPng'>Graph PNG</span>
+						</span>
+						<span class='mono-note' data-i18n='drawer.raster'>Raster</span>
+					</button>
+					<button id='drawer-export-svg' type='button' class='drawer-export-btn'>>
+						<span class='flex items-center gap-1.5 min-w-0'>
+							<span class="material-symbols-outlined text-neon-cyan fs-body" aria-hidden='true'>polyline</span>
+							<span class='drawer-nav-meta truncate' data-i18n='drawer.exportSvg'>Vector SVG</span>
+						</span>
+						<span class='mono-note' data-i18n='drawer.vector'>Vector</span>
+					</button>
+					<button id='drawer-export-ini' type='button' class='drawer-export-btn'>>
+						<span class='flex items-center gap-1.5 min-w-0'>
+							<span class="material-symbols-outlined text-neon-green fs-body" aria-hidden='true'>sports_score</span>
+							<span class='drawer-nav-meta truncate' data-i18n='drawer.acIni'>Assetto Corsa</span>
+						</span>
+						<span class='fs-micro font-mono text-neon-green'>.INI</span>
+					</button>
+					<button id='drawer-export-json' type='button' class='drawer-export-btn'>>
+						<span class='flex items-center gap-1.5 min-w-0'>
+							<span class="material-symbols-outlined text-neon-yellow fs-body" aria-hidden='true'>data_object</span>
+							<span class='drawer-nav-meta truncate' data-i18n='drawer.driveJson'>Drivetrain</span>
+						</span>
+						<span class='fs-micro font-mono text-neon-yellow'>.JSON</span>
+					</button>
+					<button id='drawer-export-jbeam' type='button' class='drawer-export-btn'>>
+						<span class='flex items-center gap-1.5 min-w-0'>
+							<span class="material-symbols-outlined text-neon-orange fs-body" aria-hidden='true'>car_crash</span>
+							<span class='drawer-nav-meta truncate' data-i18n='drawer.jbeam'>BeamNG Drive</span>
+						</span>
+						<span class='fs-micro font-mono text-neon-orange'>.JBEAM</span>
+					</button>
+					<button id='drawer-export-motec' type='button' class='drawer-export-btn'>>
+						<span class='flex items-center gap-1.5 min-w-0'>
+							<span class="material-symbols-outlined text-neon-purple fs-body" aria-hidden='true'>analytics</span>
+							<span class='drawer-nav-meta truncate' data-i18n='drawer.motec'>MoTeC i2 Pro</span>
+						</span>
+						<span class='fs-micro font-mono text-neon-purple'>.CSV</span>
+					</button>
+				</div>
+				<div class='drawer-section'>
+					<p class='drawer-label' data-i18n='nav.data'>Data</p>
+					<div class='flex gap-2'>
+						<button id='btn-drawer-export' type='button' class='drawer-json-btn' data-i18n='custom.export'>Export</button>
+						<button id='btn-drawer-import' type='button' class='drawer-json-btn' data-i18n='custom.import'>Import JSON</button>
+					</div>
+				</div>
+				<div class='drawer-section'>
+					<p class='drawer-label' data-i18n='share.section'>Share setup</p>
+					<div class='flex gap-2'>
+						<button id='btn-share' type='button' class='drawer-json-btn' data-i18n='share.button'>Share</button>
+						<button id='btn-qr' type='button' class='drawer-json-btn' data-i18n='share.qr'>QR</button>
+					</div>
+					<span id='share-feedback' class='fs-small text-neon-green font-mono hidden'></span>
+				</div>
+			</section>
+			<!-- Section 4: Display & theme -->
+			<section class='flex flex-col gap-2 bg-surface-card p-3 rounded border border-border-hairline'>
+				<div class='flex items-center justify-between gap-2'>
+					<span class='section-title' data-i18n='drawer.themeTitle'>Display &amp; theme preferences</span>
+					<span class='mono-note' data-i18n='drawer.displayMode'>Display mode</span>
+				</div>
+				<div class='drawer-theme-seg' role='group' aria-label='Theme'>
+					<button type='button' data-set-theme='oled' aria-pressed='false'><span data-i18n='drawer.themeOled'>OLED</span></button>
+					<button type='button' data-set-theme='dark' aria-pressed='true'><span data-i18n='drawer.themeDark'>Dark</span></button>
+					<button type='button' data-set-theme='light' aria-pressed='false'><span data-i18n='drawer.themeLight'>Light</span></button>
+				</div>
+				<label class='flex items-center justify-between gap-2 p-2 bg-surface-recessed rounded cursor-pointer hover:bg-surface-input transition-colors'>
+					<span class='fs-small text-text-main' data-i18n='drawer.fineGrid'>Show fine cartesian grid</span>
+					<input id='drawer-fine-grid' type='checkbox' checked class='rounded bg-surface-input border-surface-border cursor-pointer w-4 h-4' />
+				</label>
+				<label class='flex items-center justify-between gap-2 p-2 bg-surface-recessed rounded cursor-pointer hover:bg-surface-input transition-colors'>
+					<span class='fs-small text-text-main' data-i18n='drawer.snapHud'>Auto-snap cursor HUD</span>
+					<input id='drawer-snap-hud' type='checkbox' checked class='rounded bg-surface-input border-surface-border cursor-pointer w-4 h-4' />
+				</label>
+				<div class='drawer-section'>
+					<p class='drawer-label' data-i18n='nav.simulation'>Simulation</p>
+					<div class='drawer-sim-row'>
+						<span data-i18n='road.title'>Road Load</span>
+						<button type='button' class='switch' role='switch' aria-checked='true' data-drawer-sim='roadload-toggle' aria-label='Road Load'></button>
+					</div>
+					<div class='drawer-sim-row'>
+						<span data-i18n='compare.title'>Secondary Comparison</span>
+						<button type='button' class='switch' role='switch' aria-checked='false' data-drawer-sim='comparison-toggle' aria-label='Secondary Comparison'></button>
+					</div>
+				</div>
+			</section>
+			<!-- Section 5: Technical specifications -->
+			<section class='flex flex-col gap-1.5 bg-surface-card p-3 rounded border border-border-hairline'>
+				<div class='flex items-center justify-between gap-2'>
+					<span class='section-title' data-i18n='drawer.specsTitle'>Technical specifications</span>
+				</div>
+				<p class='fs-tiny font-mono leading-relaxed text-text-dim' data-i18n='drawer.specsBody'>Haguruma kinematics engine, compliant with SAE J1263 / SAE J2263 and the ISO 8855 vehicle coordinate matrix. Analytical Akima spline solver on a certified dyno base.</p>
+			</section>
+		</div>
+		<!-- Drawer footer -->
+		<div class='px-3 py-2.5 border-t border-border-hairline flex items-center justify-between gap-2 shrink-0'>
+			<span class='fs-tiny font-mono text-text-muted' data-i18n='drawer.footer'>Haguruma Telemetry Studio</span>
+			<button type='button' class='btn btn--sm btn--mono btn--solid' data-i18n='drawer.close' id='drawer-footer-close'>Close</button>
+		</div>
+	</aside>

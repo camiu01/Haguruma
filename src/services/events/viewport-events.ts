@@ -1,12 +1,12 @@
 /**
  * @file viewport-events.ts
- * @brief Canvas container ResizeObserver + debounced redraw and mobile keyboard avoidance.
+ * @brief Graph host ResizeObserver + debounced redraw and mobile keyboard avoidance.
  */
 import type { ElementRefs } from '../dom/element-refs';
 import { debounce } from '../../core/debounce';
 
 /**
- * Wire canvas container resize detection, visualViewport and keyboard-avoidance listeners.
+ * Wire graph host resize detection, visualViewport and keyboard-avoidance listeners.
  * @brief Keeps the graph crisp across layout changes, URL bar toggles and keyboard scroll.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback (normally bound to renderAll).
@@ -30,8 +30,8 @@ export const bindViewportEvents = (refs: ElementRefs, render: () => void): (() =
 };
 
 /**
- * Observe the canvas container element with a ResizeObserver.
- * @brief Primary layout-change detection — fires only when graph-wrap actually resizes.
+ * Observe the graph host element with a ResizeObserver.
+ * @brief Primary layout-change detection — fires only when the plot host actually resizes.
  * @param refs Cached DOM handles.
  * @param onResize Debounced redraw trigger.
  * @param cleanups Collector for teardown callbacks.
@@ -42,7 +42,7 @@ const bindContainerResize = (
 	onResize: () => void,
 	cleanups: (() => void)[],
 ): void => {
-	const container = refs.canvas.parentElement;
+	const container = refs.graphHost;
 
 	if (container && typeof ResizeObserver !== 'undefined') {
 		const observer = new ResizeObserver(() => {

@@ -48,6 +48,7 @@ const ROW_LEVELS: Record<string, SetupLevel> = {
 const COMP_SECTION_LEVELS: Record<string, SetupLevel> = {
 	'comp-engine': 'medium',
 	'comp-aero': 'medium',
+	'comp-gears': 'full',
 };
 
 /** Minimum comparison level per secondary control row, keyed by input id. */
@@ -121,7 +122,7 @@ const clampCompLevel = (): void => {
  */
 const applyRowLevel = (id: string, min: SetupLevel, rank: number): void => {
 	const el = document.getElementById(id);
-	const row = el?.closest('.col-span-2') ?? el;
+	const row = el?.closest('.col-span-2, .field-half') ?? el;
 	if (row) {
 		row.classList.toggle('hidden', RANK[min] > rank);
 	}

@@ -24,9 +24,10 @@ import {
  * @return void
  */
 export const bindExportEvents = (refs: ElementRefs, render: () => void): void => {
-	refs.btnExportPng.addEventListener('click', () => exportGraphPng(refs.canvas));
-	refs.btnExportSvg.addEventListener('click', () => exportGraphSvg(refs.canvas));
+	refs.btnExportPng.addEventListener('click', () => exportGraphPng(refs));
+	refs.btnExportSvg.addEventListener('click', () => exportGraphSvg(refs));
 	refs.btnPrint.addEventListener('click', () => window.print());
+	bindExportMenu(refs);
 	refs.btnExportGo.addEventListener('click', () => {
 		exportDrivetrainAs(refs.exportFormat.value);
 	});
@@ -46,6 +47,48 @@ export const bindExportEvents = (refs: ElementRefs, render: () => void): void =>
 };
 
 /**
+ * @brief Wire the compact drivetrain export menu without changing legacy IDs.
+ * @param refs Cached DOM handles containing the hidden selector and action.
+ * @return void
+ */
+const bindExportMenu = (refs: ElementRefs): void => {
+	const trigger = document.getElementById('btn-export-menu');
+	const menu = document.getElementById('export-menu');
+	const label = document.getElementById('export-menu-label');
+	if (!(trigger instanceof HTMLButtonElement) || !menu || !label) {
+		return;
+	}
+	trigger.addEventListener('click', () => toggleExportMenu(trigger, menu));
+	menu.querySelectorAll<HTMLButtonElement>('[data-export-format]').forEach((option) => {
+		option.addEventListener('click', () => {
+			const format = option.dataset.exportFormat ?? 'ini';
+			refs.exportFormat.value = format;
+			label.textContent = `${t('export.go')} ${option.textContent?.trim() ?? format.toUpperCase()}`;
+			toggleExportMenu(trigger, menu, false);
+			refs.btnExportGo.click();
+		});
+	});
+	document.addEventListener('click', (event) => {
+		if (!menu.contains(event.target as Node) && !trigger.contains(event.target as Node)) {
+			toggleExportMenu(trigger, menu, false);
+		}
+	});
+};
+
+/**
+ * @brief Show or hide the export format menu and synchronize accessibility state.
+ * @param trigger Menu trigger button.
+ * @param menu Menu popover.
+ * @param force Optional explicit open state.
+ * @return void
+ */
+const toggleExportMenu = (trigger: HTMLButtonElement, menu: HTMLElement, force?: boolean): void => {
+	const open = force ?? menu.classList.contains('hidden');
+	menu.classList.toggle('hidden', !open);
+	trigger.setAttribute('aria-expanded', String(open));
+};
+
+/**
  * @brief Snapshot the primary gears for drivetrain exchange.
  * @param none No parameters.
  * @return Export input with the live primary setup.
@@ -59,7 +102,7 @@ const currentDrivetrain = () => {
  * @param format Select value: ini, json, jbeam, motec or aim.
  * @return void
  */
-const exportDrivetrainAs = (format: string): void => {
+export const exportDrivetrainAs = (format: string): void => {
 	const input = currentDrivetrain();
 	if (format === 'json') {
 		downloadTextFile(buildDrivetrainJson(input), 'haguruma-drivetrain.json', 'application/json');
