@@ -14,7 +14,7 @@ import { prim, textPrim, type SvgPrim } from './svg-nodes';
 import { axisSpeedStep, toPowerY, toX, toY } from './svg-frame';
 
 /** Label font stack shared with the rest of the interface. */
-const FONT = 'JetBrains Mono, monospace';
+const FONT = 'Share Tech Mono, monospace';
 
 /**
  * @brief Build the plot background plate.
@@ -266,15 +266,28 @@ const powerStepFor = (maxKw: number): number => {
 
 /**
  * @brief Build the right-hand wheel-power axis for the envelope layer.
+ * @brief The axis lives in the right inset, so it is mounted outside the plot
+ * @brief clip: the plot clip would cut every tick and label away.
  * @param frame Plot geometry and limits.
  * @param style Active theme palette.
  * @param maxKw Axis ceiling in kilowatts.
  * @param unit Active power display unit.
- * @return Tick labels for the secondary axis (titles live in `buildAxisTitles`).
+ * @return Baseline, tick marks and labels (the title lives in `buildAxisTitles`).
  */
 export const buildPowerAxis = (frame: PlotFrame, style: GraphPalette, maxKw: number, unit: PowerUnit): SvgPrim[] => {
-	const nodes: SvgPrim[] = [];
 	const axisX = frame.paddingLeft + frame.plotWidth;
+	const bottom = frame.paddingTop + frame.plotHeight;
+	const nodes: SvgPrim[] = [
+		prim('line', {
+			x1: axisX,
+			y1: frame.paddingTop,
+			x2: axisX,
+			y2: bottom,
+			stroke: style.power,
+			'stroke-width': GRAPH_STROKE.axis,
+			'stroke-opacity': 0.55,
+		}),
+	];
 	const step = powerStepFor(maxKw);
 	for (let kw = step; kw <= maxKw + 1e-6; kw += step) {
 		const y = toPowerY(frame, kw, maxKw);

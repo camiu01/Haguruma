@@ -58,7 +58,7 @@ export const buildTireSection = (prefix: SetupPrefix): HTMLElement => {
 	section.className = 'flex flex-col gap-1.5';
 	section.appendChild(buildTireHead(prefix));
 	if (prefix === 'primary') {
-		const error = buildI18nText('font-mono text-[0.6875rem] text-neon-red hidden', 'primary.tireError');
+		const error = buildI18nText('font-mono fs-small text-neon-red hidden', 'primary.tireError');
 		error.id = 'tire-error';
 		section.appendChild(error);
 	}
@@ -197,8 +197,8 @@ const buildStepper = (
 	const head = document.createElement('div');
 	head.className = 'flex items-center justify-between gap-2';
 	head.append(
-		buildI18nText('text-[0.6875rem] font-medium text-text-dim', labelKey),
-		buildI18nText('font-mono text-[0.625rem] uppercase text-text-muted', hintKey),
+		buildI18nText('fs-small font-medium text-text-dim', labelKey),
+		buildI18nText('font-mono fs-tiny uppercase text-text-muted', hintKey),
 	);
 	const minusLabel = kind === 'fd' ? `-${FD_STEP.toFixed(2)}` : `-${RPM_STEP}`;
 	const plusLabel = kind === 'fd' ? `+${FD_STEP.toFixed(2)}` : `+${RPM_STEP}`;
@@ -231,7 +231,7 @@ const buildStepButton = (
 ): HTMLButtonElement => {
 	const btn = document.createElement('button');
 	btn.type = 'button';
-	btn.className = 'stepper-btn w-10 flex items-center justify-center bg-surface-subtle hover:bg-input text-text-main font-mono text-[1rem]';
+	btn.className = 'stepper-btn w-10 flex items-center justify-center bg-surface-subtle hover:bg-input text-text-main font-mono fs-body';
 	btn.dataset.stepper = kind;
 	btn.dataset.direction = direction;
 	btn.dataset.i18nTip = labelKey;
@@ -262,12 +262,12 @@ const buildValueNode = (
 	value.step = id.includes('-fd') ? String(FD_STEP) : String(RPM_STEP);
 	value.min = id.includes('-fd') ? '1' : '3000';
 	value.max = id.includes('-fd') ? '10' : '12000';
-	value.className = 'w-full bg-transparent text-center text-[0.8125rem] font-bold text-text-output tabular-nums outline-none';
+	value.className = 'w-full bg-transparent text-center fs-title font-bold text-text-output tabular-nums outline-none';
 	value.dataset.setupInput = id.includes('-fd') ? 'fd' : 'rev';
 	value.dataset.i18nTip = labelKey;
 	value.setAttribute('aria-label', t(labelKey));
 	const suffix = document.createElement('span');
-	suffix.className = 'mr-2 font-mono text-[0.625rem] text-text-muted';
+	suffix.className = 'mr-2 font-mono fs-tiny text-text-muted';
 	suffix.textContent = unit;
 	wrap.append(value, suffix);
 	return wrap;

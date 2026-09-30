@@ -6,6 +6,7 @@
  */
 import { t } from '../core/i18n/language';
 import type { DictKey } from '../core/i18n/dictionaries';
+import { buildToolShell } from './card/accordion-shell';
 
 /** Element ids fixed by the v0.6.0 pyrometer card, shared by shell and reads. */
 export const PYRO_ID = {
@@ -33,10 +34,10 @@ export const PYRO_DEFAULTS = {
 
 /** Tailwind classes shared by every numeric field in the card. */
 const FIELD_CLASSES =
-	'w-full bg-surface-input border border-border-hairline rounded px-2 py-2 pr-9 font-mono text-[0.8125rem] font-semibold text-text-output outline-none focus:border-neon-cyan';
+	'w-full bg-surface-input border border-border-hairline rounded px-2 py-2 pr-9 font-mono fs-title font-semibold text-text-output outline-none focus:border-neon-cyan';
 
 /** Shared classes of the header verdict pill, repainted by the live render. */
-export const PYRO_PILL_CLASS = 'ml-auto rounded-full border px-2 py-0.5 font-mono text-[0.625rem] font-bold uppercase tracking-wider';
+export const PYRO_PILL_CLASS = 'ml-auto rounded-full border px-2 py-0.5 font-mono fs-tiny font-bold uppercase tracking-wider';
 
 /** Definition of one labelled numeric field. */
 interface NumberField {
@@ -99,32 +100,13 @@ const makeI18n = <K extends keyof HTMLElementTagNameMap>(
 };
 
 /**
- * @brief Build the standard accordion chevron icon.
- * @return Inline SVG chevron in the expanded state.
- */
-const buildChevron = (): SVGSVGElement => {
-	const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-	chevron.setAttribute('class', 'chevron open');
-	chevron.setAttribute('data-chevron', '');
-	chevron.setAttribute('viewBox', '0 0 24 24');
-	chevron.setAttribute('fill', 'none');
-	chevron.setAttribute('stroke', 'currentColor');
-	chevron.setAttribute('stroke-width', '2');
-	chevron.setAttribute('aria-hidden', 'true');
-	const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-	poly.setAttribute('points', '6 9 12 15 18 9');
-	chevron.appendChild(poly);
-	return chevron;
-};
-
-/**
  * @brief Build one labelled number input with a unit suffix.
  * @param field Field definition: id, label key, default, unit and range.
  * @return Column element holding the label, the input and its unit.
  */
 const buildNumberField = (field: NumberField): HTMLElement => {
 	const col = makeEl('div', '');
-	const label = makeI18n('label', 'mb-1 block text-[0.6875rem] font-medium text-text-dim', field.labelKey);
+	const label = makeI18n('label', 'field-label', field.labelKey);
 	label.setAttribute('for', field.id);
 	const wrap = makeEl('div', 'relative');
 	const input = makeEl('input', FIELD_CLASSES);
@@ -135,7 +117,7 @@ const buildNumberField = (field: NumberField): HTMLElement => {
 	input.min = String(field.min);
 	input.max = String(field.max);
 	input.value = String(field.value);
-	const unit = makeEl('span', 'absolute right-2.5 top-2 text-[0.625rem] font-mono text-text-muted pointer-events-none');
+	const unit = makeEl('span', 'field-unit');
 	unit.textContent = field.unit;
 	wrap.append(input, unit);
 	col.append(label, wrap);
@@ -163,7 +145,7 @@ const buildFieldGrid = (fields: NumberField[], className: string): HTMLElement =
  * @return Row element with label and value nodes.
  */
 const buildSpreadRow = (labelKey: DictKey, valueId: string): HTMLElement => {
-	const row = makeEl('div', 'flex items-center justify-between gap-2 font-mono text-[0.75rem]');
+	const row = makeEl('div', 'flex items-center justify-between gap-2 font-mono fs-base');
 	const value = makeEl('span', 'text-text-output tabular-nums text-right');
 	value.id = valueId;
 	value.setAttribute('aria-live', 'polite');
@@ -179,18 +161,18 @@ const buildSpreadRow = (labelKey: DictKey, valueId: string): HTMLElement => {
 const buildAdviceBlock = (block: AdviceBlock): HTMLElement => {
 	const wrap = makeEl('div', 'bg-surface-recessed border border-border-hairline rounded p-2 flex flex-col gap-1');
 	const row = makeEl('div', 'flex items-baseline justify-between gap-2');
-	const advice = makeEl('p', 'font-mono text-[0.75rem]');
+	const advice = makeEl('p', 'font-mono fs-base');
 	advice.id = block.adviceId;
 	row.appendChild(advice);
 	if (block.valueId) {
-		const value = makeEl('p', 'font-mono text-[0.75rem] tabular-nums');
+		const value = makeEl('p', 'font-mono fs-base tabular-nums');
 		value.id = block.valueId;
 		row.appendChild(value);
 	}
 	wrap.append(
-		makeI18n('p', 'font-mono text-[0.625rem] uppercase tracking-wider text-text-muted', block.titleKey),
+		makeI18n('p', 'font-mono fs-tiny uppercase tracking-wider text-text-muted', block.titleKey),
 		row,
-		makeI18n('p', 'font-mono text-[0.625rem] text-text-muted', block.stepKey),
+		makeI18n('p', 'font-mono fs-tiny text-text-muted', block.stepKey),
 	);
 	return wrap;
 };
@@ -259,28 +241,22 @@ const buildBody = (): HTMLElement => {
 			stepKey: 'pyro.pressureStep',
 		}),
 		spreads,
-		makeI18n('p', 'text-[0.625rem] text-text-dim leading-relaxed', 'pyro.note.text'),
+		makeI18n('p', 'fs-tiny text-text-dim leading-relaxed', 'pyro.note.text'),
 	);
 	return body;
 };
 
 /**
- * @brief Build the accordion header: title, live verdict pill, chevron.
- * @return Header element picked up by the shared accordion binder.
+ * @brief Build the live verdict pill placed in the card header.
+ * @brief The pill keeps its id and aria-live region because the render pass
+ * @brief repaints it on every input change.
+ * @return Pill element handed to the shell as its middle slot.
  */
-const buildHeader = (): HTMLElement => {
-	const header = makeEl('div', 'section-header px-3 py-2 bg-surface-subtle border-b border-border-hairline');
-	header.setAttribute('data-accordion-header', '');
-	const left = makeEl('div', 'flex items-center gap-2');
-	left.append(
-		makeEl('span', 'w-2 h-2 rounded-full bg-neon-cyan'),
-		makeI18n('span', 'text-[0.8125rem] font-semibold uppercase tracking-wide text-text-output', 'pyro.title'),
-	);
+const buildVerdictPill = (): HTMLElement => {
 	const pill = makeEl('span', PYRO_PILL_CLASS);
 	pill.id = PYRO_ID.verdict;
 	pill.setAttribute('aria-live', 'polite');
-	header.append(left, pill, buildChevron());
-	return header;
+	return pill;
 };
 
 /**
@@ -290,14 +266,9 @@ const buildHeader = (): HTMLElement => {
  * @brief it in the standard card chrome because the mount is a card slot.
  * @return Card element with the body already populated.
  */
-export const buildPyrometerCard = (): HTMLElement => {
-	const card = makeEl('div', 'card border border-border-hairline rounded-lg p-3 flex flex-col gap-3');
-	const accordion = makeEl('div', 'bg-surface-subtle rounded border border-border-hairline overflow-hidden');
-	accordion.setAttribute('data-accordion', 'pyrometer');
-	const content = makeEl('div', 'section-content open p-3');
-	content.setAttribute('data-accordion-content', '');
-	content.appendChild(buildBody());
-	accordion.append(buildHeader(), content);
-	card.appendChild(accordion);
-	return card;
-};
+export const buildPyrometerCard = (): HTMLElement => buildToolShell({
+	id: 'pyrometer',
+	title: 'pyro.title',
+	middle: buildVerdictPill(),
+	body: buildBody(),
+});

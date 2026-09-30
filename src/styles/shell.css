@@ -115,8 +115,8 @@
 	border: 1px solid var(--border-surface-border);
 	border-radius: var(--radius-xs);
 	padding: 8px 12px;
-	font-size: 0.75rem;
-	font-family: 'JetBrains Mono', monospace;
+	font-size: var(--fs-base);
+	font-family: var(--font-mono);
 	color: var(--text-output);
 	touch-action: manipulation;
 }
@@ -146,8 +146,8 @@
 	display: flex;
 	align-items: center;
 	padding: 8px 10px;
-	font-size: 0.75rem;
-	font-family: 'JetBrains Mono', monospace;
+	font-size: var(--fs-base);
+	font-family: var(--font-mono);
 	color: var(--text-main);
 	border-radius: var(--radius-xs);
 	cursor: pointer;

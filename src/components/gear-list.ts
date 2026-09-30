@@ -16,7 +16,7 @@ type StackKind = 'primary' | 'compare';
 const MICRO_STEP = 0.005;
 
 /** Classes of one micro-stepper button. */
-const MICRO_BTN = 'gear-step-btn w-6 h-6 rounded bg-surface-subtle hover:bg-input font-mono text-[0.75rem] text-text-output flex items-center justify-center';
+const MICRO_BTN = 'gear-step-btn w-6 h-6 rounded bg-surface-subtle hover:bg-input font-mono fs-base text-text-output flex items-center justify-center';
 
 /** SVG markup of the remove-gear button icon. */
 const REMOVE_ICON = `<svg class='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12'/></svg>`;
@@ -126,10 +126,10 @@ const gearRowHtml = (binding: StackBinding, idx: number, ratio: number): string 
 	const removable = binding.gears.length > 1 ? removeButtonHtml(binding, idx) : '';
 	return (
 		`<span class='w-1.5 h-4 rounded-sm' style='background-color: ${color}'></span>` +
-		`<span class='w-5 text-center font-mono text-[0.625rem] font-bold' style='color: ${color}' title='${t('gear.prefix')} ${idx + 1}'>G${idx + 1}</span>` +
-		`<input type='number' inputmode='decimal' step='0.001' min='${GRAPH_LIMITS.minGearRatio}' max='${GRAPH_LIMITS.maxGearRatio}' value='${ratio}' data-index='${idx}' aria-label='${t('gear.prefix')} ${idx + 1}' class='${binding.inputClass} w-16 bg-transparent text-right font-mono text-[0.8125rem] font-semibold text-text-output outline-none' />` +
-		`<span class='font-mono text-[0.625rem] text-text-muted'>:1</span>` +
-		`<span class='ml-auto whitespace-nowrap font-mono text-[0.625rem] text-text-dim' data-tot-index='${idx}'>${formatTot(binding, ratio)}</span>` +
+		`<span class='w-5 text-center font-mono fs-tiny font-bold' style='color: ${color}' title='${t('gear.prefix')} ${idx + 1}'>G${idx + 1}</span>` +
+		`<input type='number' inputmode='decimal' step='0.001' min='${GRAPH_LIMITS.minGearRatio}' max='${GRAPH_LIMITS.maxGearRatio}' value='${ratio}' data-index='${idx}' aria-label='${t('gear.prefix')} ${idx + 1}' class='${binding.inputClass} w-16 bg-transparent text-right font-mono fs-title font-semibold text-text-output outline-none' />` +
+		`<span class='font-mono fs-tiny text-text-muted'>:1</span>` +
+		`<span class='ml-auto whitespace-nowrap font-mono fs-tiny text-text-dim' data-tot-index='${idx}'>${formatTot(binding, ratio)}</span>` +
 		`<button type='button' class='${MICRO_BTN}' data-index='${idx}' data-direction='-1'>-</button>` +
 		`<button type='button' class='${MICRO_BTN}' data-index='${idx}' data-direction='1'>+</button>` +
 		removable
@@ -351,7 +351,7 @@ const buildReverseRow = (): HTMLElement => {
 	const row = document.createElement('div');
 	row.className = 'flex items-center gap-2 bg-surface-recessed border border-dashed border-border-hairline px-2 py-1.5 rounded';
 	const value = state.reverseRatio === null ? '' : String(state.reverseRatio);
-	row.innerHTML = `<span class='w-2.5 h-2.5 rounded-full flex-shrink-0 bg-text-muted'></span><span class='gear-label w-16 font-mono text-[0.6875rem] font-medium text-text-dim'>${t('gear.reverse')}</span><input type='number' inputmode='decimal' step='0.01' min='1.0' max='6.0' value='${value}' placeholder='opt.' aria-label='${t('gear.reverse')}' class='reverse-input flex-1 bg-surface-input border border-border-hairline rounded px-2 py-1 font-mono text-[0.8125rem] font-semibold text-text-output text-right focus:border-neon-cyan outline-none' /><span class='text-text-muted font-mono text-[0.625rem] flex-shrink-0'>: 1</span>`;
+	row.innerHTML = `<span class='w-2.5 h-2.5 rounded-full flex-shrink-0 bg-text-muted'></span><span class='gear-label w-16 font-mono fs-small font-medium text-text-dim'>${t('gear.reverse')}</span><input type='number' inputmode='decimal' step='0.01' min='1.0' max='6.0' value='${value}' placeholder='opt.' aria-label='${t('gear.reverse')}' class='reverse-input flex-1 field-input field-input--md field-input--compact font-semibold text-right' /><span class='text-text-muted font-mono fs-tiny flex-shrink-0'>: 1</span>`;
 	return row;
 };
 

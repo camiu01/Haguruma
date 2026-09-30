@@ -10,9 +10,6 @@ import { renderSetupGuide } from '../../components/setup-guide';
 import { renderCruise } from '../../components/cruise-card';
 import { applyPowerLabels } from './unit-events';
 
-const ACTIVE_BTN = 'px-3 py-1 text-xs font-semibold rounded bg-gray-200 text-black';
-const IDLE_BTN = 'px-3 py-1 text-xs font-semibold rounded text-gray-400 hover:text-white';
-
 /**
  * @brief Paint the language toggle to match the active language.
  * @param refs Cached DOM handles.
@@ -20,8 +17,8 @@ const IDLE_BTN = 'px-3 py-1 text-xs font-semibold rounded text-gray-400 hover:te
  */
 export const syncLangToggle = (refs: ElementRefs): void => {
 	const lang = getLang();
-	refs.langEn.className = lang === 'en' ? ACTIVE_BTN : IDLE_BTN;
-	refs.langIt.className = lang === 'it' ? ACTIVE_BTN : IDLE_BTN;
+	refs.langEn.classList.toggle('is-active', lang === 'en');
+	refs.langIt.classList.toggle('is-active', lang === 'it');
 };
 
 /**

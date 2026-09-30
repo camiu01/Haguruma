@@ -6,6 +6,7 @@
 @import './base.css';
 @import './drawer.css';
 @import './components.css';
+@import './controls.css';
 @import './shell.css';
 @import './overrides.css';
 @import './setup-guide.css';
@@ -38,7 +39,8 @@
 	}
 
 	.metric-field-label {
-		@apply text-[0.5625rem] font-mono font-bold uppercase tracking-wider text-text-muted;
+		@apply font-mono font-bold uppercase tracking-wider text-text-muted;
+		font-size: var(--fs-micro);
 	}
 
 	.metric-field-control {
@@ -46,11 +48,13 @@
 	}
 
 	.metric-field-input {
-		@apply w-full bg-transparent text-[0.8125rem] font-mono font-semibold text-text-output outline-none;
+		@apply w-full bg-transparent font-mono font-semibold text-text-output outline-none;
+		font-size: var(--fs-title);
 	}
 
 	.metric-field-unit {
-		@apply text-[0.625rem] font-mono text-text-muted pointer-events-none;
+		@apply font-mono text-text-muted pointer-events-none;
+		font-size: var(--fs-tiny);
 	}
 
 	.measure-field {
@@ -58,7 +62,8 @@
 	}
 
 	.measure-field-label {
-		@apply block mb-1 text-[0.625rem] font-mono uppercase tracking-wider text-text-muted;
+		@apply block mb-1 font-mono uppercase tracking-wider text-text-muted;
+		font-size: var(--fs-tiny);
 	}
 
 	.measure-field-control {
@@ -66,27 +71,9 @@
 	}
 
 	.measure-field-input {
-		@apply w-full py-1.5 border-0 bg-transparent text-xs font-mono text-text-output outline-none;
-	}
-
-	.accordion-header {
-		@apply flex items-center justify-between gap-2;
-		cursor: pointer;
-	}
-
-	.accordion-header-bordered {
-		@apply pb-3 border-b border-border;
-	}
-
-	.accordion-header .chevron {
-		width: 1rem;
-		height: 1rem;
-		flex-shrink: 0;
-		transition: transform 200ms ease;
-	}
-
-	.accordion-header .chevron.open {
-		transform: rotate(180deg);
+		@apply w-full py-1.5 border-0 bg-transparent font-mono text-text-output outline-none;
+		font-size: var(--fs-base);
+		line-height: 1rem;
 	}
 
 	.accordion-toggle {

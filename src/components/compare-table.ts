@@ -99,13 +99,13 @@ export const renderShiftDeltas = (primaryCircM: number): void => {
 		return;
 	}
 	const title = document.createElement('div');
-	title.className = 'font-mono text-[0.625rem] uppercase tracking-wider text-text-muted';
+	title.className = 'font-mono fs-tiny uppercase tracking-wider text-text-muted';
 	title.setAttribute('data-i18n', 'compare.shiftDeltas');
 	title.textContent = t('compare.shiftDeltas');
 	box.appendChild(title);
 	for (const d of deltas) {
 		const row = document.createElement('div');
-		row.className = 'flex justify-between font-mono text-[0.6875rem]';
+		row.className = 'flex justify-between font-mono fs-small';
 		const gear = document.createElement('span');
 		gear.className = 'text-text-dim';
 		gear.textContent = `G${d.fromIndex + 1}>G${d.fromIndex + 2}`;
@@ -157,7 +157,7 @@ const buildCompareRow = (idx: number, ratio: number, top: number, primaryTop: nu
 	const delta = primaryTop === undefined ? '-' : formatDelta(top - primaryTop);
 	const deltaCls = describeDeltaClass(top, primaryTop);
 	const power = describeCompRoadLoad(top);
-	tr.innerHTML = `<td class='py-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full bg-accent-compare shrink-0'></span><span>${t('gear.prefix')} ${idx + 1}'</span></span></td><td class='py-2 whitespace-nowrap font-semibold text-text-output'>${ratio.toFixed(2)}:1</td><td class='py-2 text-right font-bold text-text-output whitespace-nowrap'>${top.toFixed(1)}</td><td class='py-2 text-right font-semibold whitespace-nowrap ${deltaCls}'>${delta}</td><td class='py-2 text-right text-text-dim whitespace-nowrap hidden md:table-cell'>${power}</td>`;
+	tr.innerHTML = `<td class='td td--tight font-semibold'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full bg-accent-compare shrink-0'></span><span>${t('gear.prefix')} ${idx + 1}'</span></span></td><td class='td td--tight font-semibold text-text-output'>${ratio.toFixed(2)}:1</td><td class='td td--right td--tight font-bold text-text-output'>${top.toFixed(1)}</td><td class='td td--right td--tight font-semibold ${deltaCls}'>${delta}</td><td class='td td--right td--tight text-text-dim hidden md:table-cell'>${power}</td>`;
 	return tr;
 };
 

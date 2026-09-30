@@ -17,7 +17,7 @@ import { maxSpeedKmh, toX } from './svg-frame';
 import { polyline, prim, textPrim, type SvgPrim } from './svg-nodes';
 
 /** Label font stack shared with the rest of the interface. */
-const FONT = 'JetBrains Mono, monospace';
+const FONT = 'Share Tech Mono, monospace';
 
 /** One sample of a force-versus-speed limit curve. */
 export interface LimitSample {

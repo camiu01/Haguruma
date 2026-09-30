@@ -122,7 +122,7 @@ const clampCompLevel = (): void => {
  */
 const applyRowLevel = (id: string, min: SetupLevel, rank: number): void => {
 	const el = document.getElementById(id);
-	const row = el?.closest('.col-span-2') ?? el;
+	const row = el?.closest('.col-span-2, .field-half') ?? el;
 	if (row) {
 		row.classList.toggle('hidden', RANK[min] > rank);
 	}

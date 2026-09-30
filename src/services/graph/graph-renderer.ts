@@ -15,6 +15,7 @@ import type { GraphLayerSettings } from '../../core/models';
 import type { ElementRefs } from '../dom/element-refs';
 import { buildSceneData, composeNodes } from './graph-scene';
 import { bindCrosshair, clearCrosshair, clearCrosshairContext, mountCrosshair, setCrosshairContext } from './graph-crosshair';
+import { syncGraphSwatches } from './graph-legend';
 import { clearChildren, mountPrims } from './svg-nodes';
 import { GRAPH_VIEWBOX } from '../../config/graph-constants';
 
@@ -104,6 +105,7 @@ const measurePlotHost = (refs: ElementRefs): { width: number; height: number } =
  */
 export const renderGraph = (refs: ElementRefs): void => {
 	syncLayerPills(refs, state.graphLayers);
+	syncGraphSwatches();
 	const tire = parseTire(state.primaryTire);
 	if (!tire) {
 		clearChildren(refs.graphSvg);

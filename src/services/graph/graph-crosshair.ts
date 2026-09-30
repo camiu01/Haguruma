@@ -3,17 +3,20 @@
  * @brief Snapping crosshair: SVG marker pair, corner HUD pill and free tooltip.
  *
  * Pointer and keyboard move one shared cursor. With `snapHud` enabled the
- * cursor locks onto the nearest shift point (nearest by X among the gear
- * redline peaks) and `#graph-hud` shows the shift telemetry; `#graph-tooltip`
- * always carries the free per-gear readout anchored to the pointer. All text
- * is written with `textContent`, never markup.
+ * marker and `#graph-hud` lock onto the nearest shift point (nearest by X
+ * among the gear redline peaks) only while the cursor is inside a small
+ * speed window around it; `#graph-tooltip` always carries the free per-gear
+ * readout built from the raw cursor position, so it tracks the pointer even
+ * while the marker is snapped. All text is written with `textContent`, never
+ * markup.
  */
 import { t } from '../../core/i18n/language';
 import { getUnitLabel } from '../../core/units/unit-utils';
-import type { PlotFrame, SpeedUnit } from '../../core/models';
+import type { PlotFrame, PowerUnit, RunningGear, SpeedUnit } from '../../core/models';
+import type { EngineCurve } from '../../core/math/engine-curve-core';
 import type { ElementRefs } from '../dom/element-refs';
-import { clampNum, speedAtX, toX } from './svg-frame';
-import { nearestShiftPoint, type ShiftPoint } from './svg-shift-drops';
+import { clampNum, rpmAtY, speedAtX, toX } from './svg-frame';
+import { snapPointFor, type ShiftPoint } from './svg-shift-drops';
 import { appendPrim, clearChildren, prim } from './svg-nodes';
 import { renderFreeTooltip } from './crosshair-tooltip';
 
@@ -27,6 +30,26 @@ export interface CrosshairCompare {
 	circM: number;
 	/** Secondary rev limiter in RPM. */
 	redline: number;
+}
+
+/** Grip-limit inputs the free tooltip evaluates at the cursor speed. */
+export interface CrosshairGrip {
+	/** Running gear (compound, layout, LSD locks). */
+	gear: RunningGear;
+	/** Vehicle mass in kilograms. */
+	massKg: number;
+	/** Active engine curve, null when the inputs are unusable. */
+	curve: EngineCurve | null;
+	/** Drivetrain efficiency between 0 and 1. */
+	eff: number;
+}
+
+/** Wheel-power inputs the free tooltip evaluates at the cursor speed. */
+export interface CrosshairPower {
+	/** Wheel-power budget in kilowatts (crank power times efficiency). */
+	capKw: number;
+	/** Active power display unit. */
+	unit: PowerUnit;
 }
 
 /** Everything the crosshair needs from the current render pass. */
@@ -49,6 +72,10 @@ export interface CrosshairContext {
 	snap: boolean;
 	/** Secondary overlay geometry, null when the comparison is hidden. */
 	compare: CrosshairCompare | null;
+	/** Grip-limit inputs for the tooltip wheelspin verdict. */
+	grip: CrosshairGrip;
+	/** Wheel-power inputs for the tooltip drivetrain readout. */
+	power: CrosshairPower;
 }
 
 /** Live SVG handles of the crosshair marker. */
@@ -159,6 +186,9 @@ const hideMarker = (): void => {
 
 /**
  * @brief Draw the vertical cursor and its dots for the current position.
+ * @brief The marker and the HUD follow the snapped shift point when snapping
+ * @brief is on; the floating tooltip always reads the raw cursor position so
+ * @brief it never freezes on the gear-end value.
  * @param refs Cached DOM handles.
  * @return void
  */
@@ -167,7 +197,7 @@ const drawCrosshair = (refs: ElementRefs): void => {
 		return;
 	}
 	const { frame, snap } = context;
-	const point = snap ? nearestShiftPoint(context.points, pointer.speed) : null;
+	const point = snap ? snapPointFor(context.points, pointer.speed, frame.maxSpeed) : null;
 	const speed = point ? point.speed : pointer.speed;
 	const x = toX(frame, speed);
 	const top = frame.paddingTop;
@@ -177,7 +207,8 @@ const drawCrosshair = (refs: ElementRefs): void => {
 	handles.line.setAttribute('y2', String(top + frame.plotHeight));
 	handles.line.setAttribute('opacity', '0.75');
 	handles.head.setAttribute('cx', String(x));
-	handles.head.setAttribute('cy', String(point ? point.redlineY : clampNum(pointer.userY, top, top + frame.plotHeight)));
+	const headY = point ? point.redlineY : clampNum(pointer.userY, top, top + frame.plotHeight);
+	handles.head.setAttribute('cy', String(headY));
 	handles.head.setAttribute('opacity', '1');
 	handles.landing.setAttribute('cx', String(x));
 	handles.landing.setAttribute('cy', String(point ? point.landingY : 0));
@@ -186,7 +217,7 @@ const drawCrosshair = (refs: ElementRefs): void => {
 		handles.landing.setAttribute('stroke', point.color);
 	}
 	updateHud(refs, speed, point);
-	updateTooltip(refs, speed);
+	updateTooltip(refs, pointer.speed, clampNum(pointer.userY, top, top + frame.plotHeight));
 };
 
 /**
@@ -219,16 +250,16 @@ const updateHud = (refs: ElementRefs, speed: number, point: ShiftPoint | null): 
 	}
 	const unit = getUnitLabel(context.unit);
 	const lines = [
-		{ text: t('graph.snapTitle'), cls: 'font-bold text-[0.625rem] tracking-wide text-cyan-400' },
-		{ text: `${speed.toFixed(1)} ${unit}`, cls: 'text-[0.75rem] font-semibold' },
+		{ text: t('graph.snapTitle'), cls: 'font-bold fs-tiny tracking-wide text-cyan-400' },
+		{ text: `${speed.toFixed(1)} ${unit}`, cls: 'fs-base font-semibold' },
 	];
 	lines.push(
 		point
 			? {
 					text: `${t('graph.snapShift')} ${point.fromGear} \u2192 ${point.toGear} \u00b7 ${t('graph.snapLands')} ${Math.round(point.landingRpm)} RPM \u00b7 ${t('graph.snapDrop')} -${Math.round(point.rpmDrop)} RPM`,
-					cls: 'text-[0.625rem] opacity-90 whitespace-nowrap',
+					cls: 'fs-tiny opacity-90 whitespace-nowrap',
 				}
-			: { text: t('graph.snapEmpty'), cls: 'text-[0.625rem] opacity-70' },
+			: { text: t('graph.snapEmpty'), cls: 'fs-tiny opacity-70' },
 	);
 	writeLines(refs.graphHud, lines);
 	refs.graphHud.setAttribute('data-empty', 'false');
@@ -236,15 +267,19 @@ const updateHud = (refs: ElementRefs, speed: number, point: ShiftPoint | null): 
 
 /**
  * @brief Refresh the free per-gear hover tooltip.
+ * @brief `speed` and `y` are always the raw cursor values, never the snapped
+ * @brief shift-point ones, so the readout tracks the pointer exactly.
  * @param refs Cached DOM handles.
  * @param speed Cursor speed in display units.
+ * @param y Cursor Y in viewBox units, converted to the readout engine speed.
  * @return void
  */
-const updateTooltip = (refs: ElementRefs, speed: number): void => {
+const updateTooltip = (refs: ElementRefs, speed: number, y: number): void => {
 	if (!context || !pointer) {
 		return;
 	}
-	renderFreeTooltip(refs, context, speed, { clientX: pointer.clientX, clientY: pointer.clientY });
+	const rpm = rpmAtY(context.frame, y);
+	renderFreeTooltip(refs, context, speed, { clientX: pointer.clientX, clientY: pointer.clientY }, rpm);
 };
 
 /**

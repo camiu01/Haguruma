@@ -202,6 +202,35 @@ Deferred (canvas-era sketches now carried on the SVG engine):
 
 ---
 
+### v0.6.0 design system, chrome recipe & graph readouts
+
+- [x] New `src/styles/controls.css` owns the type scale (`--fs-micro` → `--fs-body`, `.fs-*` utilities), the field system (`.field-label`, `.field-input` with `--compact` / `--md` / `--tall` / `--upper` / `--center` / `--recessed`, `.field-unit`, `.field-half`) and the button system (`.btn`, `.seg-btn` + `.is-active`, `.text-btn`); `main.css` stays an import hub `#theme` `#ux`
+- [x] Segmented buttons flip `.is-active` through `classList.toggle` instead of rebuilding `className` (`language-events.ts`, `unit-events.ts`); language/unit theme overrides for the old button groups dropped `#ux`
+- [x] `components/card/accordion-shell.ts` (new) exports `buildToolShell` / `buildAccordionSection` / `buildSectionHeader` / `buildChevron`; `setup-shell-card.ts` and `handbook-shell-card.ts` deleted and cruise, tire-size, pyrometer and paddock tools now delegate to the shared recipe `#ux`
+- [x] Role classes replace inline utility clusters: `.section-header`, `.section-head` (`--end`), `.section-dot`, `.section-note`, `.section-title`, tables `.th` / `.th--right` / `.th--lead` and `.td` / `.td--right` / `.td--tight` / `.td--lead`, dropdown `.menu-item`, drawer `.drawer-nav-row` / `.drawer-export-btn`, tools `.tools-stack`, card `.card--stack`; retired `.accordion-header` alias `#ux`
+- [x] Paddock guide restructured into two nested sections (setup wizard + manual handbook) built from the same accordion recipe `#ux`
+- [x] Typography swap: Inter + JetBrains Mono → **Share Tech / Share Tech Mono** in `index.html`, `tailwind.config.cjs`, `tokens.css` and the SVG plot font constants; static markup moved out of `index.html` into component-owned template modules `#theme`
+- [x] Legend sync: `graph-legend.ts` (new) exports `GEAR_GRADIENT`, `legendSwatchColors()`, `layerSwatchColors()` and `syncGraphSwatches()`, called from `renderGraph` so legend swatches and layer pill dots follow the live palette in every theme `#graph` `#ux`
+- [x] Snapping extracted to `svg-shift-drops.ts: snapPointFor()` with its own `SNAP_WINDOW`; the free hover tooltip gained the grip verdict row (`tooltip.grip` + per-wheel share + wheelspin flag) `#graph` `#physics`
+- [x] QR sharing: `share/qr-svg.ts` reduced from a hand-rolled encoder to a thin `qrcode` wrapper (EC level L, versions 1-10, latin-1 guard, path-based SVG); `qrcode` 1.5.4 + `@types/qrcode` added `#share` `#perf`
+- [x] Coverage added: `tests/accordion-chrome.test.ts` (chrome recipe), `tests/graph-legend.test.ts` (legend/pill palette per theme), `tests/crosshair-snap.test.ts` (`snapPointFor` window), `tests/crosshair-tooltip.test.ts` (grip verdict + wheel-power readout) `#tests`
+- [x] Docs: README "What's new in 0.6.0" + structure refresh, AGENTS.md chrome/graph/testing sections, MATH.md §23.1 `#docs`
+
+---
+
+### v0.6.0 polish pass — comparison layout parity & power-layer readability
+
+- [x] Secondary running gear back in two columns: `#comp-rg-mount` is `display: contents`, so the injected `.field-half` rows join the primary's `grid-cols-2`; the lateral-G slider returns to its primary slot (`running-gear-block.ts` `LATG_AFTER`, between rear spring and downforce) `#ux` `#graph`
+- [x] kW axis visible at last: `buildPowerAxis` moved out of the plot-clipped group into its own unclipped `graph-power-axis` group, because its ticks and labels live in the right inset where the clip cut every one of them away `#graph` `#ux`
+- [x] Power axis ceiling sized from the available wheel-power peak (5 % headroom, 25 kW grid) instead of the road-load demand, which was squashing the envelope into the bottom third of the plot; the demand curve may leave the plot through the top, where the clip cuts it `#graph` `#physics`
+- [x] Crossing annotation: the drag-limited speed is labelled at the envelope crossing marker, next to the wall it belongs to `#graph`
+- [x] Secondary power envelope: the comparison car's available wheel power is drawn dashed on the shared kW scale (`buildComparePowerNodes`, new `compEngineCurve()` anchors), with its own open-circle crossing marker `#graph` `#physics`
+- [x] Hover tooltip wheel-power row: one `wheelPowerAtSpeed()` sample shared by the drawn envelope and the tooltip row (`tooltip.power`, `CrosshairPower` context), so readout and curve can never disagree `#graph` `#physics`
+- [x] Coverage: `tests/graph-svg.test.ts` (ceiling rule, unclipped axis group, comparison envelope, crossing label) and `tests/crosshair-tooltip.test.ts` (wheel-power readout: budget, cap, standstill, missing curve) `#tests`
+- [x] Docs: MATH.md §23.1 (power-envelope geometry) + test-map rows, README feature bullet, AGENTS.md draw order `#docs`
+
+---
+
 ### v0.6.1 milestone — Setup consolidation & tools grid (critical refactor)
 
 Removes the duplicated legacy setup fields, mirrors the touch-first controls into the A/B comparison and gives every tool its own card.

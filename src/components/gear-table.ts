@@ -163,7 +163,7 @@ const buildTableRow = (
 	const { wheelTorqueDisplay, forceDisplay } = describeTraction(circM, gearRatio);
 	const tr = document.createElement('tr');
 	tr.className = 'hover:bg-surface-subtle transition-colors';
-	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full shrink-0' style='background-color: ${getGearColor(idx)}'></span><span data-cell='gear'></span></span></td><td class='py-2.5 whitespace-nowrap font-semibold text-text-output'>${gearRatio.toFixed(2)}:1</td><td class='py-2.5 text-text-dim whitespace-nowrap hidden md:table-cell'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-text-output whitespace-nowrap' data-cell='vmax'></td><td class='py-2.5 text-right text-neon-cyan whitespace-nowrap'>${nextRpmDisplay}</td><td class='py-2.5 text-right text-text-muted whitespace-nowrap' data-cell='drop'></td><td class='py-2.5 text-right text-text-dim whitespace-nowrap hidden md:table-cell'>${powerDisplay}</td><td class='py-2.5 text-right text-text-output whitespace-nowrap hidden md:table-cell'>${wheelTorqueDisplay}</td><td class='py-2.5 text-right font-bold text-text-output whitespace-nowrap hidden md:table-cell'>${forceDisplay}</td><td class='py-2.5 text-right text-neon-purple whitespace-nowrap' data-cell='advisory'></td>`;
+	tr.innerHTML = `<td class='td td--lead font-semibold'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full shrink-0' style='background-color: ${getGearColor(idx)}'></span><span data-cell='gear'></span></span></td><td class='td font-semibold text-text-output'>${gearRatio.toFixed(2)}:1</td><td class='td text-text-dim hidden md:table-cell'>${overallRatio}:1</td><td class='td td--right font-bold text-text-output' data-cell='vmax'></td><td class='td td--right text-neon-cyan'>${nextRpmDisplay}</td><td class='td td--right text-text-muted' data-cell='drop'></td><td class='td td--right text-text-dim hidden md:table-cell'>${powerDisplay}</td><td class='td td--right text-text-output hidden md:table-cell'>${wheelTorqueDisplay}</td><td class='td td--right font-bold text-text-output hidden md:table-cell'>${forceDisplay}</td><td class='td td--right text-neon-purple' data-cell='advisory'></td>`;
 	const label = tr.querySelector<HTMLElement>("[data-cell='gear']");
 	if (label) {
 		label.textContent = `${t('gear.prefix')} ${idx + 1}`;
@@ -217,7 +217,7 @@ const fillDropCell = (tr: HTMLElement, dropRpm: number | null): void => {
 		return;
 	}
 	const badge = document.createElement('span');
-	badge.className = 'rounded-full font-mono text-[0.625rem] font-bold text-accent-warning bg-accent-warning/10 px-2 py-0.5';
+	badge.className = 'rounded-full font-mono fs-tiny font-bold text-accent-warning bg-accent-warning/10 px-2 py-0.5';
 	badge.textContent = `-${Math.round(dropRpm)} rpm`;
 	cell.appendChild(badge);
 };
@@ -249,7 +249,7 @@ const fillAdvisoryCell = (tr: HTMLElement, advisory: GearAdvisory): void => {
  */
 const buildBadge = (key: GearStatusKey): HTMLElement => {
 	const badge = document.createElement('span');
-	badge.className = `ml-1.5 inline-flex items-center rounded-full border border-border-hairline bg-surface-recessed px-2 py-0.5 font-mono text-[0.625rem] font-bold uppercase tracking-wider ${BADGE_CLASS[key]}`;
+	badge.className = `ml-1.5 inline-flex items-center rounded-full border border-border-hairline bg-surface-recessed px-2 py-0.5 font-mono fs-tiny font-bold uppercase tracking-wider ${BADGE_CLASS[key]}`;
 	badge.textContent = t(key);
 	return badge;
 };
@@ -328,7 +328,7 @@ const buildReverseRow = (circM: number): HTMLElement => {
 	const powerDisplay = describeRoadLoad(topSpeed);
 	const tr = document.createElement('tr');
 	tr.className = 'hover:bg-surface-subtle transition-colors';
-	tr.innerHTML = `<td class='py-2.5 pr-2 font-semibold whitespace-nowrap'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full bg-text-muted shrink-0'></span><span data-cell='gear'></span></span></td><td class='py-2.5 whitespace-nowrap font-semibold text-text-output'>${ratio.toFixed(2)}:1</td><td class='py-2.5 text-text-dim whitespace-nowrap hidden md:table-cell'>${overallRatio}:1</td><td class='py-2.5 text-right font-bold text-text-output whitespace-nowrap'>${topSpeed.toFixed(1)}</td><td class='py-2.5 text-right text-text-muted whitespace-nowrap'>-</td><td class='py-2.5 text-right text-text-muted whitespace-nowrap'>—</td><td class='py-2.5 text-right text-text-dim whitespace-nowrap hidden md:table-cell'>${powerDisplay}</td><td class='py-2.5 text-right text-text-muted whitespace-nowrap hidden md:table-cell'>-</td><td class='py-2.5 text-right text-text-muted whitespace-nowrap hidden md:table-cell'>-</td><td class='py-2.5 text-right text-text-muted whitespace-nowrap'>-</td>`;
+	tr.innerHTML = `<td class='td td--lead font-semibold'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full bg-text-muted shrink-0'></span><span data-cell='gear'></span></span></td><td class='td font-semibold text-text-output'>${ratio.toFixed(2)}:1</td><td class='td text-text-dim hidden md:table-cell'>${overallRatio}:1</td><td class='td td--right font-bold text-text-output'>${topSpeed.toFixed(1)}</td><td class='td td--right text-text-muted'>-</td><td class='td td--right text-text-muted'>—</td><td class='td td--right text-text-dim hidden md:table-cell'>${powerDisplay}</td><td class='td td--right text-text-muted hidden md:table-cell'>-</td><td class='td td--right text-text-muted hidden md:table-cell'>-</td><td class='td td--right text-text-muted'>-</td>`;
 	const label = tr.querySelector<HTMLElement>("[data-cell='gear']");
 	if (label) {
 		label.textContent = t('gear.reverse');
@@ -355,7 +355,7 @@ const renderFootnote = (refs: ElementRefs): void => {
 	const foot = existing ?? document.createElement('div');
 	if (!existing) {
 		foot.id = 'gear-table-footnote';
-		foot.className = 'mt-2 pt-2 border-t border-border-hairline flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[0.625rem] text-text-muted';
+		foot.className = 'mt-2 pt-2 border-t border-border-hairline flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono fs-tiny text-text-muted';
 		host.insertBefore(foot, table.nextSibling);
 	}
 	foot.textContent = '';

@@ -15,7 +15,7 @@ import { getGraphStyle } from '../src/services/graph/graph-theme';
 import { axisSpeedStep, buildPlotFrame, plotMaxRpm, rpmAtY, speedAtX, toX, toY } from '../src/services/graph/svg-frame';
 import { buildSpeedTicks } from '../src/services/graph/svg-axes';
 import { buildGearRays, buildPrimaryLayer } from '../src/services/graph/svg-curves';
-import { buildPowerEnvelope, crossingSpeedKmh } from '../src/services/graph/svg-power';
+import { buildPowerEnvelope, buildPowerNodes, crossingSpeedKmh } from '../src/services/graph/svg-power';
 import { buildSceneData, composeNodes } from '../src/services/graph/graph-scene';
 import type { SvgPrim } from '../src/services/graph/svg-nodes';
 import type { PlotFrame, SpeedUnit } from '../src/core/models';
@@ -57,6 +57,17 @@ const groupsByClass = (nodes: SvgPrim[], cls: string): SvgPrim[] => {
 	return flatten(nodes).filter((node) => node.tag === 'g' && node.attrs?.class === cls);
 };
 
+/**
+ * @brief Collect the polylines drawn in the comparison color inside one group.
+ * @param group Group primitive, undefined when the group is missing.
+ * @return Matching polyline primitives.
+ */
+const compareCurves = (group: SvgPrim | undefined): SvgPrim[] => {
+	return flatten(group?.children ?? []).filter(
+		(node) => node.tag === 'polyline' && node.attrs?.['stroke'] === getGraphStyle().compare,
+	);
+};
+
 /** Set one layer switch for the duration of a test. */
 const setLayer = (key: keyof typeof defaultState.graphLayers, value: boolean): void => {
 	state.graphLayers = { ...defaultState.graphLayers, [key]: value };
@@ -64,6 +75,7 @@ const setLayer = (key: keyof typeof defaultState.graphLayers, value: boolean): v
 
 afterEach(() => {
 	state.graphLayers = { ...defaultState.graphLayers };
+	state.compareEnabled = defaultState.compareEnabled;
 });
 
 describe('plot frame', () => {
@@ -139,6 +151,23 @@ describe('gear rays and the aero wall fade', () => {
 });
 
 describe('power envelope crossing', () => {
+	/** Shared inputs of the default setup plus its declared power budget. */
+	const envelopeInput = {
+		frame: makeFrame(),
+		unit: 'kmh' as SpeedUnit,
+		gears: defaultState.gears,
+		finalDrive: defaultState.primaryFd,
+		circM: CIRC_M,
+		curve: { redline: 7200, peakTorqueRpm: 4500, peakTorqueNm: 180, peakPowerRpm: 6500, peakPowerKw: 110, points: null },
+		eff: defaultState.drivetrainEff,
+		capKw: 110 * defaultState.drivetrainEff,
+		massKg: ROAD.mass,
+		dragCd: ROAD.cd,
+		frontalAreaM2: ROAD.area,
+		crr: ROAD.crr,
+		gradePercent: ROAD.grade,
+	};
+
 	it('agrees with dragLimitedSpeedKmh on a constant power plateau', () => {
 		const capKw = 110 * 0.85;
 		const crossing = crossingSpeedKmh(
@@ -152,27 +181,28 @@ describe('power envelope crossing', () => {
 	});
 
 	it('places the sampled envelope crossing on the aero wall of the same setup', () => {
-		const frame = makeFrame();
-		const envelope = buildPowerEnvelope({
-			frame,
-			unit: 'kmh',
-			gears: state.gears,
-			finalDrive: state.primaryFd,
-			circM: CIRC_M,
-			curve: { redline: 7200, peakTorqueRpm: 4500, peakTorqueNm: 180, peakPowerRpm: 6500, peakPowerKw: 110, points: null },
-			eff: state.drivetrainEff,
-			capKw: 110 * state.drivetrainEff,
-			massKg: ROAD.mass,
-			dragCd: ROAD.cd,
-			frontalAreaM2: ROAD.area,
-			crr: ROAD.crr,
-			gradePercent: ROAD.grade,
-		});
-		const reference = dragLimitedSpeedKmh(110 * state.drivetrainEff, ROAD.mass, ROAD.cd, ROAD.area, ROAD.crr, ROAD.grade);
+		const envelope = buildPowerEnvelope(envelopeInput);
+		const reference = dragLimitedSpeedKmh(110 * defaultState.drivetrainEff, ROAD.mass, ROAD.cd, ROAD.area, ROAD.crr, ROAD.grade);
 		expect(envelope.available.length).toBeGreaterThan(10);
 		expect(envelope.crossingKmh).not.toBeNull();
 		expect(Math.abs((envelope.crossingKmh as number) - reference)).toBeLessThan(15);
 		expect(envelope.maxKw).toBeGreaterThan(0);
+	});
+
+	it('sizes the axis ceiling from the wheel-power peak, not the road-load demand', () => {
+		const envelope = buildPowerEnvelope(envelopeInput);
+		const peak = Math.max(...envelope.available.map((sample) => sample.kw));
+		const demand = envelope.required[envelope.required.length - 1].kw;
+		expect(envelope.maxKw).toBeGreaterThanOrEqual(peak);
+		expect(envelope.maxKw).toBeLessThanOrEqual(peak * 1.5);
+		expect(demand).toBeGreaterThan(envelope.maxKw);
+	});
+
+	it('labels the crossing speed next to its marker', () => {
+		const envelope = buildPowerEnvelope(envelopeInput);
+		const texts = buildPowerNodes(makeFrame(), 'kmh', getGraphStyle(), envelope, 'kw').filter((node) => node.tag === 'text');
+		expect(texts).toHaveLength(2);
+		expect(texts[1].text?.endsWith('km/h')).toBe(true);
 	});
 
 	it('returns no crossing when availability never covers the demand', () => {
@@ -212,6 +242,28 @@ describe('layer visibility gating', () => {
 		setLayer('powerCurve', true);
 		const withPower = composeNodes(buildSceneData(tire as NonNullable<typeof tire>));
 		expect(flatten(withPower).some((node) => node.tag === 'text' && node.text === 'WHEEL POWER (kW)')).toBe(true);
+	});
+
+	it('mounts the power axis outside the clipped plot group', () => {
+		setLayer('powerCurve', true);
+		const nodes = composeNodes(buildSceneData(tire as NonNullable<typeof tire>));
+		const axis = groupsByClass(nodes, 'graph-power-axis');
+		expect(axis).toHaveLength(1);
+		expect(axis[0].attrs?.['clip-path']).toBeUndefined();
+		const labels = flatten(axis[0].children ?? []).filter((node) => node.tag === 'text');
+		expect(labels.length).toBeGreaterThan(0);
+		const drawn = groupsByClass(nodes, 'graph-power');
+		expect(drawn).toHaveLength(1);
+		expect(drawn[0].attrs?.['clip-path']).toBe('url(#hg-plot-clip)');
+	});
+
+	it('adds the dashed secondary envelope only with the comparison on', () => {
+		setLayer('powerCurve', true);
+		const solo = groupsByClass(composeNodes(buildSceneData(tire as NonNullable<typeof tire>)), 'graph-power')[0];
+		expect(compareCurves(solo)).toHaveLength(0);
+		state.compareEnabled = true;
+		const paired = groupsByClass(composeNodes(buildSceneData(tire as NonNullable<typeof tire>)), 'graph-power')[0];
+		expect(compareCurves(paired).length).toBeGreaterThan(0);
 	});
 
 	it('drops the fine grid texture when the switch is off', () => {

@@ -14,7 +14,7 @@ import { clampNum, toX, toY } from './svg-frame';
 import { prim, textPrim, type SvgPrim } from './svg-nodes';
 
 /** Label font stack shared with the rest of the interface. */
-const FONT = 'JetBrains Mono, monospace';
+const FONT = 'Share Tech Mono, monospace';
 
 /** One upshift point on the plot, also used as a crosshair snap target. */
 export interface ShiftPoint {
@@ -153,4 +153,25 @@ export const nearestShiftPoint = (points: ShiftPoint[], speed: number): ShiftPoi
 		}
 	}
 	return best;
+};
+
+/** Snapping window as a fraction of the plot speed range. */
+export const SNAP_WINDOW = 0.025;
+
+/**
+ * @brief Resolve the crosshair snap target of a cursor speed.
+ * Snapping only engages inside `SNAP_WINDOW` of the plot speed range, so the
+ * cursor stays free in the middle of a gear and the HUD can show its "drag
+ * over a shift point" hint.
+ * @param points Shift points of the current render.
+ * @param speed Cursor speed in display units.
+ * @param maxSpeed Plot speed ceiling in display units.
+ * @return Shift point inside the window, null when none is close enough.
+ */
+export const snapPointFor = (points: ShiftPoint[], speed: number, maxSpeed: number): ShiftPoint | null => {
+	const point = nearestShiftPoint(points, speed);
+	if (!point) {
+		return null;
+	}
+	return Math.abs(point.speed - speed) <= maxSpeed * SNAP_WINDOW ? point : null;
 };

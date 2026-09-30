@@ -5,6 +5,7 @@
 import { t } from '../core/i18n/language';
 import { state } from '../core/state/app-state';
 import { parseTire } from '../core/math/tire-math';
+import { buildToolShell } from './card/accordion-shell';
 
 /** Absolute delta % rated a good match (no gearing or ABS concerns). */
 const DELTA_OK = 1.5;
@@ -16,7 +17,7 @@ const DELTA_BAD = 3;
 const SPEEDO_SPOTS = [50, 100, 130];
 
 /** Shared classes of the header verdict pill, hidden until a verdict exists. */
-const PILL_BASE = 'ml-auto rounded-full border px-2 py-0.5 font-mono text-[0.625rem] font-bold uppercase tracking-wider';
+const PILL_BASE = 'ml-auto rounded-full border px-2 py-0.5 font-mono fs-tiny font-bold uppercase tracking-wider';
 
 /** Parsed pair driving every readout row. */
 interface TirePair {
@@ -33,68 +34,23 @@ interface TirePair {
  * @brief Runs in bootstrap before refs resolve so ids exist on first paint.
  * @brief The tool owns its card chrome and accordion header because the
  * @brief sidebar hands out bare mount cells.
+ * @brief The verdict pill keeps id 'tiresize-pill' because updateTireSize()
+ * @brief repaints it on every input change.
  * @param host Mount element hosting the card.
  * @return void
  */
 export const injectTireSizeShell = (host: HTMLElement): void => {
 	host.replaceChildren();
-	const card = document.createElement('div');
-	card.className = 'card border border-border-hairline rounded-lg p-3 flex flex-col gap-3';
-	const accordion = document.createElement('div');
-	accordion.className = 'bg-surface-subtle rounded border border-border-hairline overflow-hidden';
-	accordion.setAttribute('data-accordion', 'tiresize');
-	const content = document.createElement('div');
-	content.className = 'section-content open p-3';
-	content.setAttribute('data-accordion-content', '');
-	content.appendChild(buildBody());
-	accordion.append(buildHeader(), content);
-	card.appendChild(accordion);
-	host.appendChild(card);
-	updateTireSize();
-};
-
-/**
- * @brief Build the accordion header: dot, title, verdict pill and chevron.
- * @brief The pill keeps id 'tiresize-pill' because updateTireSize() repaints it.
- * @return Header element picked up by the shared accordion binder.
- */
-const buildHeader = (): HTMLElement => {
-	const header = document.createElement('div');
-	header.className = 'section-header px-3 py-2 bg-surface-subtle border-b border-border-hairline';
-	header.setAttribute('data-accordion-header', '');
-	const left = document.createElement('div');
-	left.className = 'flex items-center gap-2';
-	const dot = document.createElement('span');
-	dot.className = 'w-2 h-2 rounded-full bg-neon-cyan';
-	const title = document.createElement('span');
-	title.className = 'text-[0.8125rem] font-semibold uppercase tracking-wide text-text-output';
-	title.setAttribute('data-i18n', 'tiretool.title');
-	title.textContent = t('tiretool.title');
-	left.append(dot, title);
 	const pill = document.createElement('span');
 	pill.id = 'tiresize-pill';
 	pill.className = `${PILL_BASE} hidden`;
-	header.append(left, pill, buildChevron());
-	return header;
-};
-
-/**
- * @brief Build the standard accordion chevron icon.
- * @return Inline SVG chevron in the expanded state.
- */
-const buildChevron = (): SVGSVGElement => {
-	const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-	chevron.setAttribute('class', 'chevron open');
-	chevron.setAttribute('data-chevron', '');
-	chevron.setAttribute('viewBox', '0 0 24 24');
-	chevron.setAttribute('fill', 'none');
-	chevron.setAttribute('stroke', 'currentColor');
-	chevron.setAttribute('stroke-width', '2');
-	chevron.setAttribute('aria-hidden', 'true');
-	const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-	poly.setAttribute('points', '6 9 12 15 18 9');
-	chevron.appendChild(poly);
-	return chevron;
+	host.appendChild(buildToolShell({
+		id: 'tiresize',
+		title: 'tiretool.title',
+		middle: pill,
+		body: buildBody(),
+	}));
+	updateTireSize();
 };
 
 /**
@@ -123,9 +79,9 @@ const buildBody = (): HTMLElement => {
  */
 const buildInput = (id: string, labelKey: 'tiretool.stock' | 'tiretool.new', value: string): HTMLElement => {
 	const col = document.createElement('div');
-	col.className = 'col-span-2 sm:col-span-1';
+	col.className = 'field-half';
 	const label = document.createElement('label');
-	label.className = 'mb-1 block text-[0.6875rem] font-medium text-text-dim';
+	label.className = 'field-label';
 	label.setAttribute('for', id);
 	label.setAttribute('data-i18n', labelKey);
 	label.textContent = t(labelKey);
@@ -136,7 +92,7 @@ const buildInput = (id: string, labelKey: 'tiretool.stock' | 'tiretool.new', val
 	input.autocomplete = 'off';
 	input.spellcheck = false;
 	input.className =
-		'w-full bg-surface-input border border-border-hairline rounded px-2 py-2 font-mono text-[0.8125rem] font-semibold uppercase text-text-output outline-none focus:border-neon-cyan';
+		'w-full field-input field-input--md field-input--upper font-semibold';
 	input.addEventListener('input', updateTireSize);
 	col.append(label, input);
 	return col;
@@ -199,11 +155,11 @@ const parsePair = (stockRaw: string, nextRaw: string): TirePair | null => {
  */
 const buildSpecTable = (pair: TirePair): HTMLElement => {
 	const table = document.createElement('div');
-	table.className = 'grid grid-cols-3 gap-x-3 gap-y-1 font-mono text-[0.75rem]';
+	table.className = 'grid grid-cols-3 gap-x-3 gap-y-1 font-mono fs-base';
 	const head = ['', pair.stock.size, pair.next.size];
 	for (const h of head) {
 		const cell = document.createElement('div');
-		cell.className = h === '' ? '' : 'truncate text-right font-mono text-[0.625rem] uppercase tracking-wider text-text-muted';
+		cell.className = h === '' ? '' : 'truncate text-right font-mono fs-tiny uppercase tracking-wider text-text-muted';
 		cell.textContent = h;
 		table.appendChild(cell);
 	}
@@ -258,7 +214,7 @@ const buildBar = (pair: TirePair, absDelta: number): HTMLElement => {
  */
 const buildRow = (label: string, value: string): HTMLElement => {
 	const row = document.createElement('div');
-	row.className = 'flex items-center justify-between gap-2 font-mono text-[0.75rem]';
+	row.className = 'flex items-center justify-between gap-2 font-mono fs-base';
 	const left = document.createElement('span');
 	left.className = 'text-text-dim';
 	left.textContent = label;
@@ -307,7 +263,7 @@ export const updateTireSize = (): void => {
 			pill.classList.add('hidden');
 		}
 		const bad = document.createElement('div');
-		bad.className = 'font-mono text-[0.75rem] text-neon-red';
+		bad.className = 'font-mono fs-base text-neon-red';
 		bad.textContent = t('tiretool.invalid');
 		out.appendChild(bad);
 		return;

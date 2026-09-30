@@ -9,8 +9,8 @@
 	border: 1px solid var(--border-surface-border);
 	border-radius: var(--radius-xs);
 	padding: 8px 12px;
-	font-size: 0.875rem;
-	font-family: 'JetBrains Mono', monospace;
+	font-size: var(--fs-lead);
+	font-family: var(--font-mono);
 	color: var(--text-output);
 }
 .input-precision:focus {
@@ -29,6 +29,21 @@
 	box-shadow: var(--shadow-card);
 	padding: var(--card-pad);
 	background-color: var(--bg-card);
+}
+
+/* Stacked tool card: the card chrome laid out as a vertical content stack. */
+.card--stack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--card-pad);
+}
+
+/* Tool cards nested in the tools card drop their own chrome. */
+.tools-stack .card {
+	border-width: 0;
+	background-color: transparent;
+	box-shadow: none;
+	padding: 0;
 }
 
 .compare-toggle-label, .road-toggle-label { display: flex; align-items: center; gap: 0.75rem; min-height: 44px; padding: 6px 0; cursor: pointer; }
@@ -54,6 +69,35 @@
 .section-header .chevron.open {
 	transform: rotate(180deg);
 }
+/* Header groups: title row on the left, readouts and chevron on the right. */
+.section-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+/* Trailing header group pushed to the right edge of the header. */
+.section-head--end {
+	flex: 1;
+	justify-content: flex-end;
+}
+/* Accent dot leading a section header: the color comes from a text-* utility
+   and paints both the disc and its glow, so every dot shares one recipe. */
+.section-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: var(--radius-pill);
+	flex-shrink: 0;
+	background-color: currentColor;
+	box-shadow: 0 0 8px currentColor;
+}
+/* Muted mono note rendered next to a section title. */
+.section-note {
+	font-family: var(--font-mono);
+	font-size: var(--fs-tiny);
+	color: var(--text-muted);
+	white-space: nowrap;
+}
 .section-content {
 	max-height: 0;
 	overflow: hidden;
@@ -67,16 +111,10 @@
 .merged-card > * + * {
 	border-top: 1px solid var(--border);
 }
-/* Native details accordion (Running Gear): same look as data-accordion. */
+/* Native details accordion (Running Gear): marker handling only, the header
+   look comes from the .section-header class on the summary itself. */
 details.accordion > summary {
 	list-style: none;
-	cursor: pointer;
-	min-height: 48px;
-	padding: 10px 0;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
 }
 details.accordion > summary::-webkit-details-marker {
 	display: none;
@@ -94,8 +132,15 @@ details.accordion:not([open]) .chevron {
 	min-width: 4.5rem;
 }
 table, .font-mono, .gear-input, .reverse-input { font-variant-numeric: tabular-nums; }
+/* Header and cell roles; the mono stack and nowrap come from .table-sticky. */
+.th { padding-bottom: 8px; font-weight: 500; }
+.th--right { text-align: right; }
+.td { padding-top: 10px; padding-bottom: 10px; }
+.td--right { text-align: right; }
+.td--tight { padding-top: 8px; padding-bottom: 8px; }
+.th--lead, .td--lead { padding-right: 8px; }
 .table-sticky { border-collapse: separate; border-spacing: 0; }
-.table-sticky th, .table-sticky td { white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; padding-left: 0.75rem; padding-right: 0.75rem; }
+.table-sticky th, .table-sticky td { white-space: nowrap; font-family: var(--font-mono); font-variant-numeric: tabular-nums; padding-left: 0.75rem; padding-right: 0.75rem; }
 .table-sticky th:first-child, .table-sticky td:first-child { min-width: 5.5rem; }
 .table-sticky th:nth-child(2), .table-sticky td:nth-child(2), .table-sticky th:nth-child(3), .table-sticky td:nth-child(3) { min-width: 4.25rem; }
 .table-sticky th:nth-child(4), .table-sticky td:nth-child(4) { min-width: 5rem; }
@@ -127,7 +172,7 @@ table, .font-mono, .gear-input, .reverse-input { font-variant-numeric: tabular-n
 	margin-left: 0.25rem;
 	border: 1px solid currentColor;
 	border-radius: var(--radius-pill);
-	font-size: 0.625rem;
+	font-size: var(--fs-tiny);
 	line-height: 1;
 	cursor: help;
 	text-decoration: underline dotted;
@@ -147,8 +192,8 @@ table, .font-mono, .gear-input, .reverse-input { font-variant-numeric: tabular-n
 	border: 1px solid #374151;
 	border-radius: var(--radius-xs);
 	color: #e5e7eb;
-	font-family: 'Inter', sans-serif;
-	font-size: 0.6875rem;
+	font-family: var(--font-sans);
+	font-size: var(--fs-small);
 	font-weight: 400;
 	padding: 6px 8px;
 	text-align: left;
@@ -185,10 +230,12 @@ table, .font-mono, .gear-input, .reverse-input { font-variant-numeric: tabular-n
 	padding: var(--card-pad);
 }
 
-/* Card-level collapse shells keep no chrome of their own. */
+/* Card-level collapse shells keep no chrome of their own: a flat title row
+   over the banded section panels it wraps (vehicle, compare, tools, setup). */
 [data-accordion='vehicle'],
 [data-accordion='compare'],
-[data-accordion='tools'] {
+[data-accordion='tools'],
+[data-accordion='setup'] {
 	background-color: transparent;
 	border: 0;
 	border-radius: 0;
@@ -196,7 +243,8 @@ table, .font-mono, .gear-input, .reverse-input { font-variant-numeric: tabular-n
 }
 [data-accordion='vehicle'] > .section-header,
 [data-accordion='compare'] > .section-header,
-[data-accordion='tools'] > .section-header {
+[data-accordion='tools'] > .section-header,
+[data-accordion='setup'] > .section-header {
 	padding: 0 0 8px;
 	min-height: 36px;
 	background-color: transparent;
@@ -204,7 +252,8 @@ table, .font-mono, .gear-input, .reverse-input { font-variant-numeric: tabular-n
 }
 [data-accordion='vehicle'] > .section-content.open,
 [data-accordion='compare'] > .section-content.open,
-[data-accordion='tools'] > .section-content.open {
+[data-accordion='tools'] > .section-content.open,
+[data-accordion='setup'] > .section-content.open {
 	padding: 0;
 }
 
@@ -243,4 +292,26 @@ details.accordion > summary {
 }
 details.accordion > *:not(summary) {
 	padding: 0 var(--card-pad) var(--card-pad);
+}
+
+/* Dropdown menu row (graph export menu). */
+.menu-item {
+	display: block;
+	width: 100%;
+	padding: 6px 8px;
+	border: 0;
+	border-radius: var(--radius-xs);
+	background: transparent;
+	text-align: left;
+	font-family: var(--font-mono);
+	font-size: var(--fs-tiny);
+	line-height: 1rem;
+	letter-spacing: 0.05em;
+	color: var(--text-main);
+	cursor: pointer;
+	transition: background-color 150ms ease;
+}
+
+.menu-item:hover {
+	background: var(--bg-surface-input);
 }

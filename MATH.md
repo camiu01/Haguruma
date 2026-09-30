@@ -794,6 +794,39 @@ point, $\Delta n$ compares the next-gear landing RPM of both setups at the
 same road speed and $\Delta v$ compares the same-gear shift-point speeds; the
 plot stays curve-only.
 
+### 23.1 Power envelope layer (v0.6.0)
+
+Available wheel power at a road speed is the strongest gear at that speed,
+capped at the declared wheel-power budget:
+
+$$
+P_{\text{avail}}(v) = \min\Big(\max_i\big[F_{\text{trac},i}(v)\cdot v_{\text{ms}}\big],\; P_{\text{engine}}\,\eta\Big)
+$$
+
+with $F_{\text{trac},i}$ from §7.1 and $\eta$ from §15. The required curve is
+the road load of §9.2. Both are sampled every 2 km/h up to $v_{\max}$
+(`wheelPowerAtSpeed` + `buildPowerEnvelope` in `svg-power.ts`).
+
+The right-hand axis ceiling follows the **available** peak,
+$\lceil 1.05\,P_{\text{peak}}/25 \rceil \cdot 25$ kW, so the envelope uses the
+full plot height. The demand curve is allowed to leave the plot through the
+top, where the plot clip cuts it — only the crossing matters, and its absolute
+value would otherwise dictate the scale (a 300 km/h road-load demand is far
+above any wheel-power peak). The crossing is bisected (2 km/h scan, then 22
+halvings) and equals `dragLimitedSpeedKmh` for the same inputs, so the crossing
+marker and the aero wall can never disagree; the marker keeps the aero color
+and carries the drag-limited speed as a label.
+
+The kW axis lives in the right inset, so `buildPowerAxis` is mounted in its own
+**unclipped** group (`graph-power-axis`): inside the plot-clipped group the
+clip would cut every tick and label away.
+
+With the comparison on, the secondary envelope is drawn dashed in the compare
+color on the same kW scale, from the secondary gearset and its own engine
+anchors (`compEngineCurve()` — a dyno CSV belongs to the primary car). The
+tooltip wheel-power row reads the same $P_{\text{avail}}$ sample as the drawn
+curve, so the readout and the envelope cannot disagree.
+
 ## 24. Extending the model
 
 When adding physics:
@@ -826,5 +859,7 @@ When adding physics:
 | `tests/cruise-math.test.ts` | gear pick, load, verdict |
 | `tests/drivetrain-eff.test.ts` | layout efficiency map |
 | `tests/unit-utils.test.ts` | axes, unit persistence, power formatting |
+| `tests/graph-svg.test.ts` | frame projections, aero-wall fade, envelope crossing + ceiling rule, unclipped power axis, comparison envelope, layer gating |
+| `tests/crosshair-tooltip.test.ts` | tooltip grip verdict plus wheel-power readout: budget at the peak-power speed, declared cap, standstill, missing curve |
 
 Run them with `npm test` (or `npx vitest run tests/<file>.test.ts`).

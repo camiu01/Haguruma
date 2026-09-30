@@ -31,7 +31,7 @@ button, select {
 	min-height: 44px;
 }
 input, select, textarea {
-	font-size: 1rem;
+	font-size: var(--fs-body);
 }
 input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; margin: 0; accent-color: #f59e0b; cursor: pointer; }
 
@@ -125,8 +125,8 @@ button, a {
 		justify-content: center;
 	}
 }
-@media (max-width: 640px) { .table-sticky { min-width: 880px; font-size: 0.6875rem; } .table-compare { min-width: 560px; font-size: 0.6875rem; } }
-@media (min-width: 641px) { .table-sticky { font-size: 0.75rem; } }
+@media (max-width: 640px) { .table-sticky { min-width: 880px; font-size: var(--fs-small); } .table-compare { min-width: 560px; font-size: var(--fs-small); } }
+@media (min-width: 641px) { .table-sticky { font-size: var(--fs-base); } }
 
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {

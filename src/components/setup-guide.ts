@@ -14,6 +14,7 @@ import { MidCornerCard } from './card/mid-corner-card';
 import { PyrometerGuideCard } from './card/pyrometer-guide-card';
 import { SetupFixCard } from './card/fix-card';
 import { SetupProcedureCard } from './card/procedure-card';
+import { buildAccordionSection, buildToolShell } from './card/accordion-shell';
 
 /** Wizard select option descriptor. */
 interface SetupGuideOption {
@@ -104,67 +105,22 @@ export const renderProcedure = (refs: ElementRefs): void => {
 /**
  * @brief Inject the setup guide tool shell into its mount point.
  * @brief Runs in bootstrap before refs resolve so ids and accordion exist.
- * @brief Mirrors the cruise/tiresize/pyrometer shape: one card, one
- * @brief data-accordion section, wizard plus handbook sections in one body.
+ * @brief Mirrors the card-level shell shape (main setup / tools card): one
+ * @brief card, a flat header reading t('setup.title'), then the wizard and
+ * @brief the manual as banded accordion sections built like the primary
+ * @brief setup inner headers.
  * @param host Mount element hosting the card.
  * @return void
  */
 export const injectSetupGuideShell = (host: HTMLElement): void => {
 	host.replaceChildren();
-	const card = document.createElement('div');
-	card.className = 'card border border-border-hairline rounded-lg p-3 flex flex-col gap-3';
-	const accordion = document.createElement('div');
-	accordion.className = 'bg-surface-subtle rounded border border-border-hairline overflow-hidden';
-	accordion.setAttribute('data-accordion', 'setup');
-	const content = document.createElement('div');
-	content.className = 'section-content open p-3 flex flex-col gap-3';
-	content.setAttribute('data-accordion-content', '');
-	content.appendChild(buildBody());
-	accordion.append(buildHeader(), content);
-	card.appendChild(accordion);
-	host.appendChild(card);
-};
-
-/**
- * @brief Build the accordion header: dot, title and chevron.
- * @param none No parameters.
- * @return Header element picked up by the shared accordion binder.
- */
-const buildHeader = (): HTMLElement => {
-	const header = document.createElement('div');
-	header.className = 'section-header px-3 py-2 bg-surface-subtle border-b border-border-hairline';
-	header.setAttribute('data-accordion-header', '');
-	const left = document.createElement('div');
-	left.className = 'flex items-center gap-2';
-	const dot = document.createElement('span');
-	dot.className = 'w-2 h-2 rounded-full bg-neon-cyan';
-	const title = document.createElement('span');
-	title.className = 'text-[0.8125rem] font-semibold uppercase tracking-wide text-text-output';
-	title.setAttribute('data-i18n', 'setup.title');
-	title.textContent = t('setup.title');
-	left.append(dot, title);
-	header.append(left, buildChevron());
-	return header;
-};
-
-/**
- * @brief Build the standard accordion chevron icon.
- * @param none No parameters.
- * @return Inline SVG chevron in the expanded state.
- */
-const buildChevron = (): SVGSVGElement => {
-	const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-	chevron.setAttribute('class', 'chevron open');
-	chevron.setAttribute('data-chevron', '');
-	chevron.setAttribute('viewBox', '0 0 24 24');
-	chevron.setAttribute('fill', 'none');
-	chevron.setAttribute('stroke', 'currentColor');
-	chevron.setAttribute('stroke-width', '2');
-	chevron.setAttribute('aria-hidden', 'true');
-	const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-	poly.setAttribute('points', '6 9 12 15 18 9');
-	chevron.appendChild(poly);
-	return chevron;
+	host.appendChild(buildToolShell({
+		id: 'setup',
+		title: 'setup.title',
+		dot: null,
+		body: buildBody(),
+		bodyClass: 'flex flex-col gap-3',
+	}));
 };
 
 /**
@@ -191,15 +147,15 @@ const buildHeading = (tag: 'h3' | 'h4', className: string, key: DictKey): HTMLEl
  */
 const buildSelect = (id: string, labelKey: DictKey, options: SetupGuideOption[]): HTMLElement => {
 	const wrap = document.createElement('div');
-	wrap.className = 'col-span-2 sm:col-span-1';
+	wrap.className = 'field-half';
 	const label = document.createElement('label');
-	label.className = 'mb-1 block text-[0.6875rem] font-medium text-text-dim';
+	label.className = 'field-label';
 	label.setAttribute('for', id);
 	label.setAttribute('data-i18n', labelKey);
 	label.textContent = t(labelKey);
 	const select = document.createElement('select');
 	select.id = id;
-	select.className = 'w-full bg-surface-input border border-border-hairline rounded px-2 py-2 font-mono text-[0.8125rem] text-text-output outline-none focus:border-neon-cyan';
+	select.className = 'w-full field-input field-input--md';
 	for (const opt of options) {
 		const node = document.createElement('option');
 		node.value = opt.value;
@@ -226,25 +182,63 @@ const buildRegion = (id: string, className: string): HTMLElement => {
 };
 
 /**
- * @brief Build the accordion body: wizard, result, handbook, feel, procedure.
- * @param none No parameters.
+ * @brief Build the accordion body: wizard and manual nested sections.
+ * @brief Both sections carry the shared inner-header style (title, chevron)
+ * @brief so the card matches the primary setup accordions.
  * @return Body element ready to append to the section content.
  */
 const buildBody = (): HTMLElement => {
 	const body = document.createElement('div');
 	body.className = 'setup-guide';
-	body.appendChild(buildHeading('h3', 'setup-h3', 'setup.wizardTitle'));
+	body.appendChild(buildSection('setup-wizard', 'setup.wizardTitle', buildWizardPanel()));
+	body.appendChild(buildSection('setup-manual', 'setup.handbookTitle', buildManualPanel()));
+	return body;
+};
+
+/**
+ * @brief Build one nested accordion section with the shared header style.
+ * @brief Delegates to the shared shell so the title and chevron land in the
+ * @brief header exactly like the primary setup inner sections; the accent dot
+ * @brief is omitted on this card.
+ * @param id data-accordion key naming the section.
+ * @param titleKey Dictionary key written to the header title.
+ * @param panel Collapsible panel content.
+ * @return Section element picked up by the shared accordion binder.
+ */
+const buildSection = (id: string, titleKey: DictKey, panel: HTMLElement): HTMLElement => buildAccordionSection({
+	id,
+	title: titleKey,
+	dot: 'bg-neon-cyan shadow-[0_0_8px_#00f0ff]',
+	body: panel,
+	bodyClass: 'flex flex-col gap-3',
+});
+
+/**
+ * @brief Build the wizard panel: phase and issue selects plus ranked fixes.
+ * @return Panel element holding the selects and the result region.
+ */
+const buildWizardPanel = (): HTMLElement => {
+	const panel = document.createElement('div');
+	panel.className = 'flex flex-col gap-3';
 	const grid = document.createElement('div');
 	grid.className = 'grid grid-cols-2 gap-3';
 	grid.append(buildSelect('setup-phase', 'setup.phaseLabel', PHASE_OPTIONS));
 	grid.append(buildSelect('setup-issue', 'setup.issueLabel', ISSUE_OPTIONS));
-	body.appendChild(grid);
-	body.appendChild(buildHeading('h4', 'setup-h4', 'setup.resultTitle'));
-	body.appendChild(buildRegion('setup-result', 'setup-result'));
-	body.appendChild(buildHeading('h3', 'setup-h3', 'setup.handbookTitle'));
-	body.appendChild(buildHeading('h3', 'setup-h3', 'setup.feelTitle'));
-	body.appendChild(buildRegion('setup-feel', 'setup-feel'));
-	body.appendChild(buildHeading('h3', 'setup-h3', 'setup.procedureTitle'));
-	body.appendChild(buildRegion('setup-procedure', 'setup-procedure'));
-	return body;
+	panel.append(grid, buildHeading('h4', 'setup-h4', 'setup.resultTitle'));
+	panel.appendChild(buildRegion('setup-result', 'setup-result'));
+	return panel;
+};
+
+/**
+ * @brief Build the manual panel: feel guide and systematic procedure.
+ * @return Panel element holding both handbook regions.
+ */
+const buildManualPanel = (): HTMLElement => {
+	const panel = document.createElement('div');
+	panel.className = 'flex flex-col gap-3';
+	panel.appendChild(buildHeading('h3', 'setup-h3', 'setup.feelTitle'));
+	panel.appendChild(buildRegion('setup-feel', 'setup-feel'));
+	panel.appendChild(buildHeading('h3', 'setup-h3', 'setup.procedureTitle'));
+	panel.appendChild(buildRegion('setup-procedure', 'setup-procedure'));
+	return panel;
 };

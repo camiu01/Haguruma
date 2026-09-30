@@ -23,7 +23,7 @@ const FADE_OPACITY = 0.32;
 const FADE_DASH = '10 8';
 
 /** Label font stack shared with the rest of the interface. */
-const FONT = 'JetBrains Mono, monospace';
+const FONT = 'Share Tech Mono, monospace';
 
 /** Geometry of one gear line on the plot. */
 export interface GearRay {

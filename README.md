@@ -10,6 +10,49 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 [![Vitest](https://img.shields.io/badge/Vitest-1.6.0-green.svg)](https://vitest.dev/)
 [![PWA](https://img.shields.io/badge/PWA-ready-purple.svg)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 
+## What's new in 0.6.0
+
+**Power envelope.** The available-vs-required wheel-power layer now scales to the
+wheel-power peak instead of the road-load demand, so the envelope fills the plot;
+the kW axis lives in its own unclipped group (it used to be cut away by the plot
+clip entirely), the crossing carries its drag-limited speed, the secondary car's
+envelope runs dashed on the same scale, and the hover tooltip reports the wheel
+power at the cursor from the very sample the curve is drawn from.
+
+**Graph readouts.** The free hover tooltip grew a grip verdict row (tire limit,
+per-wheel share, wheelspin flag) and a wheel-power row; shift-point snapping moved
+into `svg-shift-drops.ts: snapPointFor()` with its own window constant and suite.
+
+**Comparison parity.** The secondary running gear renders in the same two-column
+grid as the primary card again (`#comp-rg-mount` is `display: contents`), with the
+lateral-G slider back in its primary slot between rear spring and downforce.
+
+**Shared chrome.** One recipe builds every card and accordion: `components/card/accordion-shell.ts`
+exports `buildToolShell` / `buildAccordionSection` / `buildSectionHeader` / `buildChevron`,
+and the cruise, tire-size, pyrometer and paddock tools delegate to it instead of
+hand-rolling card, header and chevron markup. Headers moved to the `section-header` /
+`section-head` / `section-dot` / `section-note` role classes, tables to the `.th` / `.td`
+roles and inputs to `.field-*`; the retired `.accordion-header` alias is gone, locked by
+`tests/accordion-chrome.test.ts`.
+
+**Design system.** New `src/styles/controls.css` owns the type scale (`--fs-micro` →
+`--fs-body` plus the `.fs-*` utilities), the field system (`.field-label`, `.field-input`
+with its `--compact` / `--md` / `--tall` / `--upper` / `--center` / `--recessed`
+modifiers, `.field-unit`, `.field-half`) and the button system (`.btn`, `.seg-btn` with
+`.is-active`, `.text-btn`); segmented buttons flip a class instead of rebuilding their
+class list. Fonts moved from Inter / JetBrains Mono to **Share Tech / Share Tech Mono**
+(`index.html`, `tailwind.config.cjs`, theme tokens), and static markup moved out of
+`index.html` into component-owned template modules.
+
+**Legend sync.** `graph-legend.ts: syncGraphSwatches()` repaints the HTML legend swatches
+and the layer pill dots from the live plot palette on every render, so legend and graph
+cannot drift apart in any theme.
+
+**QR sharing.** The share modal's QR renderer is a thin wrapper over the `qrcode` package
+now (~430 hand-rolled encoder lines removed; EC level L, versions 1-10, path-based SVG).
+
+The full checklist lives in [TODO.md](TODO.md).
+
 ## Features
 
 - **RPM-vs-speed curves** — one per forward gear up to the rev limiter, with shift-drop connectors showing RPM landing in the next gear.
@@ -28,6 +71,9 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 - **Layout-mapped efficiency** — picking FWD/RWD/AWD in the running-gear card also sets the default drivetrain efficiency (0.90 / 0.85 / 0.80).
 - **Acceleration solver** — fixed-step Euler simulation of 0-100 km/h and the quarter mile, including optional rotating inertia (per-gear when `I` values are set), shift torque cut, and launch clutch-slip `launchRpm`. Splits follow the display unit: 0-400 m / 0-160 in km/h mode, 60 ft / 0-60 mph / 1/4-mile trap speed in mph mode.
 - **Highway cruising check** — required vs available wheel power and gear RPM at a chosen cruise speed.
+- **Wheel-power envelope** — available (max over gears) vs required (road load) wheel power on a theme-aware kW axis, scaled to the wheel-power peak: the crossing marks the drag-limited speed, the secondary car's envelope runs dashed alongside on the same scale, and the hover tooltip reads the wheel power at the cursor speed.
+- **Graph layer toggles & legend** — four toolbar pills (shift drops, aero wall, grip limit, power curve) bound to `state.graphLayers`, with the legend swatches and pill dots repainted from the live plot palette on every render (`graph-legend.ts`).
+- **Hover tooltip** — free readout beside the crosshair: RPM per primary (and secondary) gear with over-rev flags, the wheel power at that speed, and the grip verdict (tire limit, per-wheel share, wheelspin).
 - **Graph export** — PNG and SVG downloads rendered from the SVG plot; print stylesheet for PDF via the browser print dialog.
 - **Sim & telemetry export** — one dropdown for Assetto Corsa `.ini`, drivetrain `.json`, BeamNG `.jbeam`, and tabular CSV for MoTeC / AiM Race Studio.
 - **KPI strip** — 8 live cells: redline, top speed, aero wall, grip limit, wheel power, unit-aware 0-100/0-60 cell, quarter-mile/trap pair.
@@ -132,21 +178,24 @@ src/
     share/share-utils.ts         # verbose URL hash encode/decode
     share/share-compact.ts       # packed Base64URL full-state codec
     share/running-gear-share.ts  # rg_/crg_ block + numeric range table
+    share/qr-svg.ts              # share-modal SVG QR (qrcode package, EC level L)
   config/                        # presets, glob catalog loader, cars/, diff-presets,
                                  # tire-compounds, drivetrain-eff, gear colors, graph constants
   services/
     dom/element-refs.ts          # typed DOM handles
     graph/                       # svg-frame geometry + projection, defs, axes, curves,
-                                 # shift drops, limits, power envelope, prim mount,
-                                 # scene + renderer, crosshair + tooltip, theme,
-                                 # export, drivetrain-export
+                                 # shift drops (+ snapPointFor), limits, power envelope,
+                                 # prim mount, scene + renderer, crosshair + tooltip,
+                                 # legend swatch sync, theme, export, drivetrain-export
     events/                      # one binder per control group
   components/                    # gear list, breakdown table, compare table, running-gear-block,
                                  # tire-size tool, custom car, cruise card, preset search
-  components/card/               # base Card + one file per specialized card + barrel
+  components/card/               # base Card + accordion-shell recipe + one file per
+                                 # specialized card + barrel
+  templates/                     # static shell fragments injected by app-shell.ts
   views/render-all.ts            # single refresh entry
-  styles/                        # main.css hub + tokens/base/drawer/components/shell/overrides/
-                                 # setup-guide/telemetry/print
+  styles/                        # main.css hub + tokens/base/drawer/components/controls/shell/
+                                 # overrides/setup-guide/telemetry/print
 capacitor.config.ts              # native wrapper (webDir dist)
 android/                         # committed Capacitor scaffold
 tests/                           # vitest suites mirroring src/

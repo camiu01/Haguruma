@@ -8,13 +8,13 @@ module.exports = {
 	theme: {
 		extend: {
 			fontFamily: {
-				mono: ['"JetBrains Mono"', 'monospace'],
-				sans: ['Inter', 'sans-serif'],
-				display: ['Inter', 'sans-serif'],
-				'badge-mono': ['"JetBrains Mono"', 'monospace'],
-				'field-label': ['Inter', 'sans-serif'],
-				'input-mono': ['"JetBrains Mono"', 'monospace'],
-				'unit-annotation': ['"JetBrains Mono"', 'monospace'],
+				mono: ['"Share Tech Mono"', 'monospace'],
+				sans: ['"Share Tech"', 'sans-serif'],
+				display: ['"Share Tech"', 'sans-serif'],
+				'badge-mono': ['"Share Tech Mono"', 'monospace'],
+				'field-label': ['"Share Tech"', 'sans-serif'],
+				'input-mono': ['"Share Tech Mono"', 'monospace'],
+				'unit-annotation': ['"Share Tech Mono"', 'monospace'],
 			},
 			fontSize: {
 				'badge-mono': ['0.625rem', { lineHeight: '1rem', letterSpacing: '0.05em' }],

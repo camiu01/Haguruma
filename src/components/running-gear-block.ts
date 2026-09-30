@@ -40,6 +40,9 @@ interface NumField {
 /** Suffixes owned by the accordions' static markup (grid skips their rows). */
 const EXTERNAL_SUFFIXES = new Set<string>(['tire', 'weight']);
 
+/** Field owning the lateral-G slider slot, matching the primary card order. */
+const LATG_AFTER = 'spring-r';
+
 /** Numeric rows in primary-card order. */
 const NUM_FIELDS: NumField[] = [
 	{ suffix: 'weight', labelKey: 'setupctl.weightTitle', min: 40, max: 70, scale: 0.01, step: '0.5', unit: '%', external: true, get: (rg) => rg.frontWeightDistribution * 100, set: (rg, v) => { rg.frontWeightDistribution = v; } },
@@ -76,15 +79,15 @@ const clamp = (v: number, min: number, max: number): number => {
  */
 const buildSelectRow = (prefix: string, suffix: string, labelKey: DictKey): { row: HTMLElement; select: HTMLSelectElement } => {
 	const row = document.createElement('div');
-	row.className = 'col-span-2 sm:col-span-1';
+	row.className = 'field-half';
 	const label = document.createElement('label');
-	label.className = 'mb-1 block text-[0.6875rem] font-medium text-text-dim';
+	label.className = 'field-label';
 	label.setAttribute('for', `${prefix}-${suffix}`);
 	label.setAttribute('data-i18n', labelKey);
 	label.textContent = t(labelKey);
 	const select = document.createElement('select');
 	select.id = `${prefix}-${suffix}`;
-	select.className = 'w-full bg-surface-recessed border border-border-hairline rounded px-2 py-2 font-mono text-[0.8125rem] text-text-output outline-none focus:border-neon-cyan';
+	select.className = 'w-full field-input field-input--md field-input--recessed';
 	row.append(label, select);
 	return { row, select };
 };
@@ -97,9 +100,9 @@ const buildSelectRow = (prefix: string, suffix: string, labelKey: DictKey): { ro
  */
 const buildNumRow = (prefix: string, field: NumField): HTMLElement => {
 	const row = document.createElement('div');
-	row.className = 'col-span-2 sm:col-span-1';
+	row.className = 'field-half';
 	const label = document.createElement('label');
-	label.className = 'mb-1 block text-[0.6875rem] font-medium text-text-dim';
+	label.className = 'field-label';
 	label.setAttribute('for', `${prefix}-${field.suffix}`);
 	label.setAttribute('data-i18n', field.labelKey);
 	label.textContent = t(field.labelKey);
@@ -112,9 +115,9 @@ const buildNumRow = (prefix: string, field: NumField): HTMLElement => {
 	input.min = String(field.min);
 	input.max = String(field.max);
 	input.id = `${prefix}-${field.suffix}`;
-	input.className = 'w-full bg-surface-recessed border border-border-hairline rounded px-2 py-2 font-mono text-[0.8125rem] text-text-output outline-none focus:border-neon-cyan';
+	input.className = 'w-full field-input field-input--md field-input--recessed';
 	const unit = document.createElement('span');
-	unit.className = 'absolute right-2.5 top-2 text-[0.625rem] font-mono text-text-muted pointer-events-none';
+	unit.className = 'field-unit';
 	unit.textContent = field.unit;
 	wrap.append(input, unit);
 	row.append(label, wrap);
@@ -128,9 +131,9 @@ const buildNumRow = (prefix: string, field: NumField): HTMLElement => {
  */
 const buildLatgRow = (prefix: string): HTMLElement => {
 	const row = document.createElement('div');
-	row.className = 'col-span-2 sm:col-span-1';
+	row.className = 'field-half';
 	const label = document.createElement('label');
-	label.className = 'mb-1 block text-[0.6875rem] font-medium text-text-dim';
+	label.className = 'field-label';
 	label.setAttribute('for', `${prefix}-latg`);
 	label.setAttribute('data-i18n', 'running.latg');
 	label.textContent = t('running.latg');
@@ -145,7 +148,7 @@ const buildLatgRow = (prefix: string): HTMLElement => {
 	input.className = 'flex-1';
 	const val = document.createElement('span');
 	val.id = `${prefix}-latg-val`;
-	val.className = 'whitespace-nowrap font-mono text-[0.75rem] text-text-output tabular-nums';
+	val.className = 'whitespace-nowrap font-mono fs-base text-text-output tabular-nums';
 	val.textContent = '0.60 G';
 	wrap.append(input, val);
 	row.append(label, wrap);
@@ -165,10 +168,10 @@ const buildLockRows = (prefix: string): DocumentFragment => {
 	];
 	for (const def of defs) {
 		const row = document.createElement('div');
-		row.className = 'col-span-2 sm:col-span-1';
+		row.className = 'field-half';
 		row.id = `${prefix}-${def.suffix}-wrap`;
 		const label = document.createElement('label');
-		label.className = 'mb-1 block text-[0.6875rem] font-medium text-text-dim';
+		label.className = 'field-label';
 		label.setAttribute('for', `${prefix}-${def.suffix}`);
 		label.setAttribute('data-i18n', def.labelKey);
 		label.textContent = t(def.labelKey);
@@ -181,9 +184,9 @@ const buildLockRows = (prefix: string): DocumentFragment => {
 		input.min = '0';
 		input.max = '100';
 		input.id = `${prefix}-${def.suffix}`;
-		input.className = 'w-full bg-surface-recessed border border-border-hairline rounded px-2 py-2 font-mono text-[0.8125rem] text-text-output outline-none focus:border-neon-cyan';
+		input.className = 'w-full field-input field-input--md field-input--recessed';
 		const unit = document.createElement('span');
-		unit.className = 'absolute right-2.5 top-2 text-[0.625rem] font-mono text-text-muted pointer-events-none';
+		unit.className = 'field-unit';
 		unit.textContent = '%';
 		wrap.append(input, unit);
 		row.append(label, wrap);
@@ -234,8 +237,10 @@ export const buildRunningGearBlock = (prefix: string): DocumentFragment => {
 			continue;
 		}
 		frag.appendChild(buildNumRow(prefix, field));
+		if (field.suffix === LATG_AFTER) {
+			frag.appendChild(buildLatgRow(prefix));
+		}
 	}
-	frag.appendChild(buildLatgRow(prefix));
 	return frag;
 };
 

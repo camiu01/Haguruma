@@ -31,7 +31,7 @@ src/
     share/share-utils.ts          # URL hash encode/decode (verbose keys, compact `c` token, curve, rg_/crg_ running gear)
     share/running-gear-share.ts   # rg_/crg_ encode/decode block + numeric param helper
     share/share-compact.ts        # Packed Base64URL full-state codec (v1) + legacy primary token, no dependencies
-    share/qr-svg.ts               # Dependency-free QR encoder rendering an SVG for the share modal
+    share/qr-svg.ts               # QR SVG renderer for the share modal (qrcode lib, EC level L, versions 1-10)
   config/
     presets.ts                    # preset maps built from the catalog loader
     car-catalog.ts                # CarCatalogEntry model + import.meta.glob loader + validateCatalogEntry() contract
@@ -62,7 +62,7 @@ src/
     cruise-card.ts                # Tools card: cruise accordion + render only
     tire-size-tool.ts             # Tools card: stock vs plus-size comparator (own accordion + verdict pill)
     running-gear-readouts.ts      # Downforce + coast lock-up/downforce readouts
-    card/                         # base Card + one file per specialized card + index.ts barrel
+    card/                         # base Card + shared accordion-shell builder + one file per specialized card + index.ts barrel
   views/render-all.ts             # renderGraph + renderTable + KPI/readout syncs
   styles/
     main.css                      # Hub only: @imports below, no rules
@@ -70,6 +70,7 @@ src/
     base.css                      # Base elements, safe-area, scrollbars, small viewports
     drawer.css                    # Slide-over drawer + relocated header controls
     components.css                # Cards, accordions, tables, inputs, help-dot
+    controls.css                  # Type scale (--fs-*), field labels/inputs, titles, captions
     shell.css                     # Header controls, modal, preset combobox
     overrides.css                 # OLED + light Tailwind overrides
     setup-guide.css               # Wizard badges, feel cues, procedure steps
@@ -103,10 +104,24 @@ android/                          # Committed Capacitor scaffold (generated outp
 - Toggle cycles dark → oled → light. Persisted in localStorage.
 - CSS uses `[data-theme='dark']`, `[data-theme='oled']`, `[data-theme='light']` selectors.
 - **Every Tailwind text/background/border class needs a light-mode override** in `overrides.css` (e.g. `[data-theme='light'] .text-gray-300 { color: #334155 !important; }`).
-- New feature CSS goes in its own `styles/<feature>.css` module (theme tokens only) and is wired via `@import` in `main.css`, keeping hub order: tokens, base, drawer, components, shell, overrides, feature.
+- New feature CSS goes in its own `styles/<feature>.css` module (theme tokens only) and is wired via `@import` in `main.css`, keeping hub order: tokens, base, drawer, components, controls, shell, overrides, feature.
 - Same for OLED: `bg-gauge/80`, `bg-gauge/50` need explicit OLED overrides.
 - `document.documentElement.classList.toggle('dark', currentTheme !== 'light')` controls Tailwind dark mode.
 - Graph has separate palettes per theme in `graph-theme.ts`.
+
+## Type scale & fonts
+- `src/styles/controls.css` owns the **type scale**: `--fs-micro` (9px) → `--fs-body` (16px) plus `--fs-label`, the `.fs-*` size utilities, and the shared control classes `.field-label` / `.field-label--mono`, `.field-input` (modifiers `--compact`, `--md`, `--tall`, `--upper`, `--center`, `--recessed`), `.field-unit`, `.field-half`, `.card-title`, `.section-title`, `.mono-cap`, `.mono-note`.
+- The same file owns the shared **button system**: `.btn` (sizes `--xs`, `--sm`, `--md`; variants `--mono`, `--solid`, `--recessed`, `--icon`), `.seg-btn` (drawer language/unit/power segments, `--mono`, active state `.is-active`) and `.text-btn` (variants `--compare`, `--accent`, `--danger`). `components.css` adds `.menu-item` for dropdown rows; `drawer.css` adds `.drawer-nav-row` (`.is-active`) and `.drawer-export-btn`. Never rebuild these looks with inline utilities and never reassign `className` on a segmented button: flip `is-active` with `classList.toggle` (`language-events.ts`, `unit-events.ts`).
+- Do not inline arbitrary sizes (`text-[…]`, `text-xs`, `text-sm`) in markup or TS class strings: use the `.fs-*` utilities or the role classes above, and change sizes only through the `--fs-*` variables.
+- Fonts are declared once in `src/styles/tokens.css`: `--font-sans` (Share Tech) and `--font-mono` (Share Tech Mono), loaded from Google Fonts by `index.html`; `tailwind.config.cjs` mirrors them for `font-sans` / `font-mono`. Both families ship weight 400 only, so heavier weights render synthesized.
+- SVG graph text uses `'Share Tech Mono, monospace'` (the `FONT` constants in `src/services/graph/svg-*.ts`).
+- HTML legend swatches and layer pill dots are painted from the plot palette: `graph-legend.ts: syncGraphSwatches()` runs inside `renderGraph` and reads `[data-graph-legend]` / `[data-graph-layer]` hosts plus their `[data-graph-swatch]` child (`data-swatch='border'` for dashed lines).
+
+## Card & section chrome
+- One recipe builds every accordion: `components/card/accordion-shell.ts` exports `buildToolShell()` (stacked card wrapper), `buildAccordionSection()` for nested sections, plus `buildSectionHeader()` and `buildChevron()`; the panel chrome itself comes from the shared `[data-accordion]` rule in `components.css`. Tool modules (`setup-guide.ts`, `cruise-card.ts`, `tire-size-tool.ts`, `pyrometer-shell.ts`) only pass `{ id, title, note?, dot?, middle?, body }` — never hand-roll the card/accordion/header markup again.
+- Header role classes live in `components.css`: `.section-header` (padding, background and bottom border come from the `[data-accordion] > .section-header` rule, so headers carry no spacing/background utilities), `.section-head` (+ `.section-head--end` for the trailing group), `.section-dot` (accent color from a `bg-*` utility), `.section-note`, `.section-title`, and `card card-container card--stack` for tool cards; `.tools-stack .card` strips the nested chrome inside the tools card. Card-level shells that wrap sibling sections (`vehicle`, `compare`, `tools`, `setup`) are exempt from the panel chrome: transparent box, flat `0 0 8px` header with a hairline underline, `0` content padding — only their inner sections carry the banded header. The retired `.accordion-header` alias is gone.
+- Table role classes: `.th` / `.th--right` / `.th--lead` and `.td` / `.td--right` / `.td--tight` / `.td--lead` in `components.css`; mono, `nowrap` and inline padding come from `.table-sticky`, so never repeat `pb-2 font-medium … whitespace-nowrap` or `py-2.5 … whitespace-nowrap` clusters in markup or `innerHTML` strings.
+- `tests/accordion-chrome.test.ts` locks the recipe in place: no retired `accordion-header` alias, every `data-accordion-header` header carries `section-header`, tool modules delegate to `buildToolShell`, table cells use the role classes.
 
 ## Graph render order (must maintain in renderGraph)
 The plot is a declarative SVG rebuild: every render clears `#graph-svg` and remounts the primitives composed by `graph-scene.ts: composeNodes` (no bitmap cache, no HiDPI work). The viewBox is pinned to the measured host in CSS pixels (`graph-renderer.ts`), so text keeps its real size on every viewport; `svg-frame.ts: buildPlotFrame` scales the insets with the host width.
@@ -116,7 +131,7 @@ Draw order:
 3. Primary gear rays with aero-wall fade split, gear tags, reverse ray (`svg-curves.ts`)
 4. Shift-drop connectors, markers and labels (`svg-shift-drops.ts`, layer-gated)
 5. Aero-wall shading, line and callout (`svg-limits.ts`, drawn only when the wall is inside the plot)
-6. Power envelope + right-hand power axis (`svg-power.ts`, layer-gated)
+6. Power envelope + comparison envelope + right-hand power axis (`svg-power.ts`, `svg-axes.ts: buildPowerAxis`, layer-gated). The ceiling follows the available peak; the road-load curve may leave the plot through the top. The axis nodes are mounted in their own **unclipped** group (`graph-power-axis`) because they live in the right inset, where the plot clip would cut every tick.
 7. Comparison rays and comparison aero wall (`svg-curves.ts`, `svg-limits.ts`)
 8. Grip limit curves + launch wheelspin bands (`svg-limits.ts`, layer-gated)
 9. Axis titles (`svg-axes.ts`), then the crosshair group (`graph-crosshair.ts`)
@@ -144,7 +159,7 @@ Layer switches live in `state.graphLayers` (`core/models.ts`). The four `[data-g
 - Run single file: `npx vitest run tests/tire-math.test.ts`.
 - Always run `npx tsc --noEmit` + `npm test` before committing.
 - Coverage for the chassis/aero pass: `tests/dynamics-math.test.ts` (load transfer, friction circle, dyno taper, coast lock, compound gain), `tests/drivetrain-eff.test.ts`, `tests/dyno-csv.test.ts`, `tests/setup-matrix.test.ts`, `tests/brake-math.test.ts`, `tests/recovery-math.test.ts`, `tests/tire-compounds.test.ts`.
-- Coverage for the physics/share/sim passes: `tests/engine-curve-akima.test.ts`, `tests/graph-svg.test.ts` (frame math, fade rule, envelope crossing, layer gating), `tests/pyrometer-math.test.ts`, `tests/kpi-strip.test.ts` (WALL/OVERDRIVE/ECO classifiers), `tests/share-compact.test.ts`, `tests/catalog-validation.test.ts`, `tests/drivetrain-export.test.ts`, `tests/presets.test.ts`, `tests/qr-svg.test.ts`, `tests/accel-math.test.ts` (splits + reaction), `tests/accordion-height.test.ts` (no height cap).
+- Coverage for the physics/share/sim passes: `tests/engine-curve-akima.test.ts`, `tests/graph-svg.test.ts` (frame math, fade rule, envelope crossing + ceiling, unclipped power axis, comparison envelope, layer gating), `tests/crosshair-tooltip.test.ts` (grip verdict + wheel-power readout), `tests/pyrometer-math.test.ts`, `tests/kpi-strip.test.ts` (WALL/OVERDRIVE/ECO classifiers), `tests/share-compact.test.ts`, `tests/catalog-validation.test.ts`, `tests/drivetrain-export.test.ts`, `tests/presets.test.ts`, `tests/qr-svg.test.ts`, `tests/accel-math.test.ts` (splits + reaction), `tests/accordion-height.test.ts` (no height cap), `tests/accordion-chrome.test.ts` (header/table role classes).
 
 ## Share/URL
 - Full setup encoded in URL hash, restored on page load via `restoreFromUrl()`.

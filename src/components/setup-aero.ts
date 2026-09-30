@@ -40,10 +40,10 @@ export const injectAeroReadout = (host: HTMLElement, prefix: SetupPrefix): void 
 	const head = document.createElement('div');
 	head.className = 'flex items-center gap-1';
 	const icon = document.createElement('span');
-	icon.className = 'material-symbols-outlined text-accent-aero text-[0.875rem]';
+	icon.className = 'material-symbols-outlined text-accent-aero fs-lead';
 	icon.setAttribute('aria-hidden', 'true');
 	icon.textContent = 'air';
-	head.append(icon, buildI18nText('font-mono text-[0.625rem] font-bold uppercase tracking-wider text-accent-aero', 'setupctl.aeroReadout'));
+	head.append(icon, buildI18nText('font-mono fs-tiny font-bold uppercase tracking-wider text-accent-aero', 'setupctl.aeroReadout'));
 	const ids = DRAG_IDS[prefix];
 	box.append(
 		head,
@@ -62,10 +62,10 @@ export const injectAeroReadout = (host: HTMLElement, prefix: SetupPrefix): void 
 const buildDragLine = (labelKey: 'setupctl.drag' | 'setupctl.dragPower', id: string): HTMLElement => {
 	const line = document.createElement('div');
 	line.className = 'flex items-baseline justify-between gap-2';
-	const label = buildI18nText('font-mono text-[0.625rem] uppercase text-text-muted', labelKey);
+	const label = buildI18nText('font-mono fs-tiny uppercase text-text-muted', labelKey);
 	const value = document.createElement('span');
 	value.id = id;
-	value.className = 'font-mono text-[0.75rem] font-bold text-text-output tabular-nums';
+	value.className = 'font-mono fs-base font-bold text-text-output tabular-nums';
 	value.textContent = '—';
 	line.append(label, value);
 	return line;

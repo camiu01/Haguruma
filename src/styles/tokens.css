@@ -2,10 +2,16 @@
  * @file tokens.css
  * @brief Theme tokens for dark, OLED and light themes.
  */
+/* Type families — single source of truth; Tailwind stacks mirror these. */
+:root {
+	--font-sans: 'Share Tech', system-ui, sans-serif;
+	--font-mono: 'Share Tech Mono', monospace;
+}
+
 body {
 	background-color: var(--bg-page);
 	color: var(--text-main);
-	font-family: 'Inter', system-ui, sans-serif;
+	font-family: var(--font-sans);
 }
 
 /* Corner radii and card metrics — one scale shared by every surface.

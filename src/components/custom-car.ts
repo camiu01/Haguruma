@@ -124,7 +124,7 @@ export const renderCustomList = (refs: ElementRefs, render: () => void): void =>
 	refs.customList.innerHTML = '';
 	if (names.length === 0) {
 		const empty = document.createElement('p');
-		empty.className = 'font-mono text-[0.75rem] text-text-muted';
+		empty.className = 'font-mono fs-base text-text-muted';
 		empty.textContent = t('custom.empty');
 		refs.customList.appendChild(empty);
 		return;
@@ -134,12 +134,12 @@ export const renderCustomList = (refs: ElementRefs, render: () => void): void =>
 		const row = document.createElement('div');
 		row.className = 'flex items-center gap-2 rounded border border-border-hairline bg-surface-recessed px-2 py-1.5';
 		const label = document.createElement('span');
-		label.className = 'flex-1 truncate font-mono text-[0.75rem] text-text-output';
+		label.className = 'flex-1 truncate font-mono fs-base text-text-output';
 		label.textContent = name;
 		label.title = name;
 		const loadPrimary = document.createElement('button');
 		loadPrimary.type = 'button';
-		loadPrimary.className = 'font-mono text-[0.6875rem] text-text-dim hover:text-text-output transition-colors';
+		loadPrimary.className = 'text-btn';
 		loadPrimary.textContent = t('custom.load');
 		loadPrimary.title = t('custom.loadPrimary');
 		loadPrimary.addEventListener('click', () => {
@@ -148,14 +148,14 @@ export const renderCustomList = (refs: ElementRefs, render: () => void): void =>
 		});
 		const loadComp = document.createElement('button');
 		loadComp.type = 'button';
-		loadComp.className = 'font-mono text-[0.6875rem] text-accent-compare hover:text-neon-yellow transition-colors';
+		loadComp.className = 'text-btn text-btn--compare';
 		loadComp.textContent = t('custom.loadCompare');
 		loadComp.addEventListener('click', () => {
 			applyCustomToSlot(refs, preset, 'compare', render);
 		});
 		const exportBtn = document.createElement('button');
 		exportBtn.type = 'button';
-		exportBtn.className = 'font-mono text-[0.6875rem] text-text-muted hover:text-neon-cyan transition-colors';
+		exportBtn.className = 'text-btn text-btn--accent';
 		exportBtn.textContent = t('custom.export');
 		exportBtn.addEventListener('click', () => {
 			const blob = new Blob([JSON.stringify(preset, null, 2)], { type: 'application/json' });
@@ -168,7 +168,7 @@ export const renderCustomList = (refs: ElementRefs, render: () => void): void =>
 		});
 		const remove = document.createElement('button');
 		remove.type = 'button';
-		remove.className = 'font-mono text-[0.6875rem] text-text-muted hover:text-neon-red transition-colors';
+		remove.className = 'text-btn text-btn--danger';
 		remove.textContent = t('custom.delete');
 		remove.addEventListener('click', () => {
 			deleteCustomPreset(name);
