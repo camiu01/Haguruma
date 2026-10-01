@@ -84,12 +84,11 @@ the rim diameter (inches). Output is the geometric circumference
 
 $$
 C_{\text{eff}} = C_{\text{geo}} \cdot f_{\text{roll}}, \qquad
-f_{\text{roll}} = \operatorname{clamp}(f, 0.9, 1.0),\quad f_{\text{default}} = 0.975
+f_{\text{roll}} = \mathrm{clamp}(f, 0.9, 1.0),\quad f_{\text{default}} = 0.975
 $$
 
 The 0.975 factor is the ISO/ETRTO loaded-tire baseline (≈2.5 % squash). The
 static load deflection is folded into this constant factor.
-
 ### 3.3 Centrifugal growth
 
 $$
