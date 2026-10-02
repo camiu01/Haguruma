@@ -249,18 +249,24 @@ Removes the duplicated legacy setup fields, mirrors the touch-first controls int
 
 Focus on tire physics evolution, wheel tractive-force curves and the dynamic vertical-load model.
 
-- [ ] Switchable tractive force graph view: commutable wheel-force mode ($F_x$ in N vs km/h) with per-gear curves and the total resistance parabola overlaid ($F_{\text{drag}} + F_{rr}$) for a visual Vmax `#graph` `#physics`
-- [ ] Live load transfer inside the accel solver: feed the instantaneous acceleration back into `maxDriveForceAtSpeed` (currently called with `accelMps2 = 0`) so grip and wheelspin respond to the real transfer `#physics` `#simulation`
-- [ ] Rev-limiter and fuel-cut model: bounce/hard-cut behavior at the limiter plus per-gear shift time (synchro vs dog box) instead of one global value `#physics` `#simulation`
-- [ ] Braking model with wheel lock and ABS: deceleration profile from mu, load transfer and optional ABS cycling, with a 100-0 km/h stopping-distance KPI `#physics` `#dynamics`
-- [ ] Downshift and rev-match simulation: engine-braking deceleration and the rev-match blip so the solver can model a full lap-style sequence `#physics` `#simulation`
-- [ ] Dense drivetrain efficiency map: replace the constant `eta` with a lookup verified against torque/load rather than the single layout default `#physics` `#powertrain`
-- [ ] Traction margin readout: per-gear excess of wheel force over grip ($F_x - F_{\text{limit}}$) as a table column and optional graph overlay `#physics` `#ux`
-- [ ] Braking distance and deceleration overlay: 100-0 and 200-0 km/h stopping curves on the canvas corrected by road mu plus the aero drag contribution `#graph` `#physics`
-- [ ] Torque-vectoring and active center differential: variable AWD front/rear bias beyond the fixed split (DCCD/ACD style) with handbrake-disengage behavior on turn-in `#physics` `#dynamics`
-- [ ] LSD clutch preload and breakaway torque: static preload parameter (Nm before plate slip) for mechanical clutch LSDs (KAAZ, Cusco, OS Giken) `#physics` `#dynamics`
-- [ ] Apex speed to shift advisor: corner radius plus max lateral G give cornering speed and recommend holding the gear vs downshifting to avoid shifts mid-corner `#physics` `#simulation`
-- [ ] Accel solver benchmark suite: vitest bench on the `accel-math.ts` Euler loop (dt=0.01s) guarding sub-3ms runs even with 64-point dyno curves `#tests` `#perf`
+- [x] Switchable tractive force graph view: SVG wheel-force mode (N vs speed), per-gear and dashed comparison curves, total road resistance and force-based Vmax marker (`dynamics-graph.ts`, `force-profile.ts`) `#graph` `#physics`
+- [x] Live load transfer inside the accel solver: self-consistent acceleration/grip feedback, analytical straight-line path, bounded general solve and zero-grip clamp (`drive-force.ts`, `accel-step.ts`) `#physics` `#simulation`
+- [x] Rev-limiter and fuel-cut model: hard cut or 150 RPM hysteretic bounce, per-departing-gear delays, selectable synchro/dog defaults and explicit global fallback (`powertrain-control.ts`) `#physics` `#simulation`
+- [x] Braking model with wheel lock and ABS: individual-wheel friction budgets, dynamic load transfer, 12 Hz ABS modulation, sliding friction and 100-0 distance/time KPI (`braking-simulation.ts`, `dynamics-tool.ts`) `#physics` `#dynamics`
+- [x] Downshift and rev-match simulation: editable timed throttle/coast/brake sequences, coast-side grip, unmatched clutch drag, rev-match blips and rejected over-rev downshifts (`lap-sequence.ts`) `#physics` `#simulation`
+- [x] Dense drivetrain efficiency map: 5×5 RPM/torque-load bilinear lookup, normalized to nominal efficiency, used by force/acceleration/shift/power models and tested at every node; explicitly an engineering approximation, not manufacturer-measured data (`drivetrain-map.ts`) `#physics` `#powertrain`
+- [x] Traction margin readout: transferred wheel-force excess at peak torque in the breakdown table, plus optional per-gear force-view overlay `#physics` `#ux`
+- [x] Braking distance and deceleration overlay: 100-0 and 200-0 km/h SVG speed/distance profiles with road friction, aero, downforce, rolling resistance and grade; deceleration on the right axis `#graph` `#physics`
+- [x] Torque-vectoring and active center differential: fixed-to-adaptive AWD torque split bounded by both axle budgets, vectoring authority and handbrake center-release controls mirrored in A/B (`active-differential.ts`, `active-diff-controls.ts`) `#physics` `#dynamics`
+- [x] LSD clutch preload and breakaway torque: axle preload in Nm converted through the rolling radius, bounded by both tire budgets, active only for mechanical clutch LSDs `#physics` `#dynamics`
+- [x] Apex speed to shift advisor: radius/lateral-g speed, usable-RPM gear selection and a 10% hold preference, with shifts advised before the corner (`corner-advisor.ts`) `#physics` `#simulation`
+- [x] Accel solver benchmark suite: `npm run bench` for anchors, 64-point dyno and active AWD; cached immutable Akima coefficients and warm-median <3 ms regression guards (`accel-math.bench.ts`, `accel-performance.test.ts`) `#tests` `#perf`
+
+Integration: localized EN/IT dynamics tool and graph controls, Full-level A/B
+differential fields, backward-compatible non-default URL sidecars, active-view
+SVG/PNG export, physics assumptions in MATH.md, and version files set to
+0.7.0-alpha.1 (Android versionCode 9). This is an alpha preview, not a stable
+release. Release tagging and publishing are separate actions.
 
 ---
 

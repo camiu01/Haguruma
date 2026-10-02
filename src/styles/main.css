@@ -11,6 +11,7 @@
 @import './overrides.css';
 @import './setup-guide.css';
 @import './telemetry.css';
+@import './dynamics.css';
 @import './print.css';
 
 @tailwind base;

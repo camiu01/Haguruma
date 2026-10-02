@@ -188,7 +188,8 @@ export const wheelPowerReadout = (context: CrosshairContext, speed: number): num
 		return null;
 	}
 	const kmh = fromDisplaySpeed(speed, context.unit);
-	return wheelPowerAtSpeed(kmh, context.gears, context.finalDrive, context.circM, curve, eff, context.power.capKw);
+	return wheelPowerAtSpeed(kmh, context.gears, context.finalDrive, context.circM, curve, eff, context.power.capKw,
+		context.grip.mapped ? context.grip.gear.drivetrainLayout : undefined);
 };
 
 /**
@@ -244,7 +245,8 @@ export const gripReadout = (
 		return null;
 	}
 	const speedKmh = fromDisplaySpeed(speed, unit);
-	const demandN = tractiveForceAt(first.rpm, first.ratio, finalDrive, radius, grip.curve, grip.eff);
+	const demandN = tractiveForceAt(first.rpm, first.ratio, finalDrive, radius, grip.curve, grip.eff,
+		grip.mapped ? grip.gear.drivetrainLayout : undefined);
 	return maxDriveForceAtSpeed(grip.gear, grip.massKg, speedKmh, demandN, 0);
 };
 

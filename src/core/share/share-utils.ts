@@ -7,10 +7,10 @@ import type { AppState, TorqueCurvePoint } from '../models';
 import { parseCompGears } from '../compare/compare-utils';
 import { parseTire } from '../math/tire-math';
 import { defaultRunningGear } from '../state/app-state';
-import { sanitizeTorquePoints } from '../math/engine-curve-core';
-import { MAX_CURVE_POINTS, resampleTorquePoints } from '../math/dyno-csv';
+import { decodeCurvePoints, encodeCurvePoints } from './curve-share';
 import { decodeGripParams, encodeRunningGear, numParam } from './running-gear-share';
 import { decodeCompactHash, decodeCompactSetup, encodeCompactHash } from './share-compact';
+import { decodeDynamicsParams, encodeDynamicsParams } from './dynamics-share';
 
 /**
  * @brief Serialize current state into a compact hash string.
@@ -21,6 +21,7 @@ import { decodeCompactHash, decodeCompactSetup, encodeCompactHash } from './shar
  */
 export const encodeState = (s: AppState): string => {
 	const p = new URLSearchParams();
+	encodeDynamicsParams(p, s);
 	if (encodeCompactPrimary(p, s)) {
 		return p.toString();
 	}
@@ -64,15 +65,6 @@ const encodeCompactPrimary = (p: URLSearchParams, s: AppState): boolean => {
 };
 
 /**
- * @brief Serialize dyno points as rpm:torque pairs joined by semicolons.
- * @param points Dyno torque points (already sanitized).
- * @return Compact string such as 1500:190.0;2500:210.0.
- */
-const encodeCurvePoints = (points: TorqueCurvePoint[]): string => {
-	return points.map((p) => `${Math.round(p.rpm)}:${p.torqueNm.toFixed(1)}`).join(';');
-};
-
-/**
  * @brief Build a full shareable URL for the current state.
  * @return Absolute URL with the setup in the hash.
  */
@@ -111,7 +103,7 @@ export const decodeState = (hash: string): Partial<AppState> => {
 	} catch {
 		return {};
 	}
-	return {
+	const base: Partial<AppState> = {
 		...decodeCompactParams(params),
 		...decodePrimaryParams(params),
 		...decodeCompareParams(params),
@@ -119,6 +111,7 @@ export const decodeState = (hash: string): Partial<AppState> => {
 		...decodeEngineParams(params),
 		...decodeGripParams(params),
 	};
+	return { ...base, ...decodeDynamicsParams(params, base) };
 };
 
 /**
@@ -344,29 +337,6 @@ const decodeEngineParams = (params: URLSearchParams): Partial<AppState> => {
 };
 
 /**
- * @brief Parse the curve param back into sanitized dyno points.
- * @param raw Raw rpm:torque;rpm:torque string from the hash.
- * @return Sanitized points capped at MAX_CURVE_POINTS, or null when unusable.
- */
-const decodeCurvePoints = (raw: string): TorqueCurvePoint[] | null => {
-	const points: TorqueCurvePoint[] = [];
-	for (const pair of raw.split(';')) {
-		const cells = pair.split(':');
-		if (cells.length !== 2) {
-			continue;
-		}
-		const rpm = Number(cells[0]);
-		const nm = Number(cells[1]);
-		if (!Number.isFinite(rpm) || !Number.isFinite(nm)) {
-			continue;
-		}
-		points.push({ rpm, torqueNm: nm });
-	}
-	const sanitized = sanitizeTorquePoints(points);
-	return sanitized ? resampleTorquePoints(sanitized, MAX_CURVE_POINTS) : null;
-};
-
-/**
  * @brief Apply a decoded partial state to the live store.
  * @param patch Validated fields from the URL.
  * @return True when at least one field was applied.
@@ -403,6 +373,11 @@ const applySharedKey = (key: keyof AppState, value: Partial<AppState>[keyof AppS
 	}
 	if (key === 'runningGear' || key === 'compRunningGear') {
 		(state[key] as unknown) = { ...(value as object) };
+		return;
+	}
+	if (key === 'dynamics') {
+		const d = value as AppState['dynamics'];
+		state.dynamics = { ...d, shiftTimesS: [...d.shiftTimesS] };
 		return;
 	}
 	(state[key] as unknown) = value;

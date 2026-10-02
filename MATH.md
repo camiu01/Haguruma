@@ -829,6 +829,85 @@ curve, so the readout and the envelope cannot disagree.
 
 ## 24. Extending the model
 
+### v0.7 dynamics models
+
+**Self-consistent drive transfer.** Acceleration now satisfies
+
+$$
+a = \frac{\min(F_{\mathrm{engine}}, F_{\mathrm{grip}}(v,a))-F_{\mathrm{road}}(v)}
+{m+m_{\mathrm{rot}}}.
+$$
+
+The straight-line FWD/RWD grip relation is linear in acceleration and is solved
+analytically. Fully adaptive straight-line AWD uses the combined axle budget;
+other states use a bounded relaxed iteration. A zero tire budget always clamps
+drive to zero. Lateral transfer is bounded by each axle's load so an airborne
+inside wheel cannot create extra vertical force.
+
+**Efficiency map.** `drivetrain-map.ts` interpolates a 5×5 table of relative
+efficiency against $n/n_{\mathrm{lim}}$ and $T/T_{\mathrm{peak}}$, clamped to
+the table edges. Nominal efficiency scales the table, with layout-specific loss
+sensitivity. The table is an explicit engineering approximation; node,
+interpolation and force tests validate the implementation, not measured
+manufacturer efficiency. The same mapped model feeds acceleration, optimal
+shifts, the force plot and the power-envelope/tooltip pair. The legacy aero-wall
+KPI remains a nominal peak-wheel-power estimate and can differ from a
+gear-dependent force crossing.
+
+**Limiter and shifts.** Hard cut interrupts torque at or above the limiter.
+Bounce latches fuel cut until wheel-implied RPM falls at least 150 RPM below it.
+Shifts use the departing gear's explicit delay, then either gearbox defaults
+(0.30 s synchro, 0.08 s dog) or the legacy global delay. Delays are quantized
+up to the 0.01 s Euler step; zero remains an instantaneous shift.
+Landing RPM is recalculated from the newly engaged ratio, never reused from the
+departing gear.
+
+**Stopping integration.** Each wheel has a friction-circle budget with dynamic
+longitudinal load transfer, lateral demand and aero downforce. Hydraulic force
+is split by front bias; engine braking, when present in a lap sequence, shares
+the same wheel budgets rather than adding a second friction allowance.
+Over-demand without ABS uses kinetic friction at 75% of peak capacity.
+With ABS, modulation is
+$0.94+0.06\cos(2\pi\cdot12t)$ of capacity. These are declared modeling assumptions,
+not vehicle-specific controller calibration. Signed road loads contribute to
+deceleration. Speed integrates at 0.01 s; distance uses trapezoidal velocity,
+and the final interval is truncated at exactly zero speed. Incomplete runs
+return null metrics rather than an invented stopping distance.
+
+**Downshift sequence.** Unsafe wheel-implied over-rev commands are rejected.
+Rev matching supplies the positive target-minus-old RPM blip during interruption.
+Without matching, reflected engine inertia adds a bounded clutch drag impulse,
+decaying over a nominal 0.20 s engagement window and limited by coast-side grip.
+The sequence input accepts up to 32 rows and 60 s total:
+`duration_s, gear_1_based, throttle_fraction, brake_g`. This is a timed vehicle
+sequence, not a track-geometry or full-lap optimizer.
+
+**Differentials.** Axle clutch preload adds $T_{\mathrm{preload}}/r$ to the
+outer-wheel force-transfer allowance before plate slip. Clutch and Torsen
+capacity never exceed the sum of the two tire budgets. Vectoring blends the
+passive axle capacity toward that sum. AWD front share interpolates between
+the configured fixed split and the split proportional to available axle grip;
+the total is bounded independently by both axles. Handbrake center release
+interrupts coupled AWD drive, without pretending to simulate a rear-wheel
+handbrake torque or controller-specific DCCD/ACD hardware.
+
+**Corner advice.** Apex speed is $v=\sqrt{r\,g\,G_{\max}}$. Eligible gears must
+land between 1000 RPM and the limiter. The best wheel-force gear is selected,
+but the approach gear is retained when it provides at least 90% of the best
+force. A change is advised before the corner, never midway through it.
+
+**Graph semantics.** The force view uses newtons on Y and display speed on X;
+road resistance includes aerodynamic drag, speed-sensitive rolling resistance
+and signed grade. Positive traction margin means engine demand exceeds the
+transferred tire limit. The force Vmax marker searches all usable gear ranges
+and bisects steady-force/resistance crossings. The braking view uses metres on
+X, display speed on the left Y axis, and deceleration in m/s² on the right.
+
+**Performance.** `npm run bench` exercises anchors, 64-point Akima dyno and
+active AWD. A warm-run median test guards the 3 ms target on the test machine.
+Only validated, deeply frozen dyno arrays cache their coefficients; mutable
+public arrays are re-evaluated to avoid stale interpolation.
+
 When adding physics:
 
 1. Put pure math in a new `src/core/math/<name>-math.ts` (`@file` + `@brief`).
@@ -843,6 +922,12 @@ When adding physics:
 
 | Suite | Covers |
 |:--|:--|
+| `tests/vehicle-dynamics.test.ts` | mapped efficiency, transfer feedback, fuel cut, per-gear delays, preload/vectoring/center coupling |
+| `tests/braking-simulation.test.ts` | constant-deceleration reference, wheel lock, ABS, aero/grade, stopping telemetry |
+| `tests/lap-sequence.test.ts` | timed commands, safe downshifts, unmatched clutch drag, rev matching and apex advice |
+| `tests/dynamics-share.test.ts` | sidecar round trips, validation, compact/verbose chassis preservation |
+| `tests/dynamics-graph.test.ts` | force-unit curves, resistance, margins, display-unit boundary, stopping/deceleration axes |
+| `tests/accel-performance.test.ts`, `tests/accel-math.bench.ts` | 64-point dyno 3 ms warm-median guard and benchmark cases |
 | `tests/tire-math.test.ts` | parsing, rolling factor, centrifugal growth, load-sensitive radius |
 | `tests/tire-compounds.test.ts` | compound catalog order, gains, i18n labels, legacy fallback |
 | `tests/speed-math.test.ts` | SI conversions, mph boundary |

@@ -7,11 +7,11 @@ import { effectiveCircumferenceM, parseTire } from '../core/math/tire-math';
 import { calculateSpeed, toDisplaySpeed } from '../core/math/speed-math';
 import { maxDriveForceAtSpeed } from '../core/math/dynamics-math';
 import { simulateAcceleration, type SimResult } from '../core/math/accel-math';
-import { activeEngineCurve } from '../core/state/engine-curve';
 import { availableWheelKw, dragLimitedSpeedKmh } from '../core/math/aero-math';
 import { formatPower } from '../core/units/unit-utils';
 import { t } from '../core/i18n/language';
 import type { DictKey } from '../core/i18n/dictionaries';
+import { primarySimInput } from '../core/state/dynamics-input';
 
 /** Em dash shown when a KPI has no computable value. */
 const NO_VALUE = '—';
@@ -145,6 +145,7 @@ const buildAccelKey = (): string => {
 		state.roadGradePercent,
 		state.runningGear,
 		state.torqueCurvePoints,
+		state.dynamics,
 	]);
 };
 
@@ -157,21 +158,7 @@ const accelResult = (circM: number): SimResult | null => {
 	const key = buildAccelKey();
 	if (key !== accelCacheKey) {
 		accelCacheKey = key;
-		accelCache = simulateAcceleration({
-			massKg: state.vehicleMassKg,
-			gears: state.gears,
-			fd: state.primaryFd,
-			circM,
-			curve: activeEngineCurve(),
-			drivetrainEff: state.drivetrainEff,
-			rotatingMassKg: state.rotatingMassKg,
-			shiftTimeS: state.shiftTimeS,
-			runningGear: state.runningGear ?? defaultRunningGear,
-			dragCd: state.dragCd,
-			frontalAreaM2: state.frontalAreaM2,
-			rollingCrr: state.rollingCrr,
-			roadGradePercent: state.roadGradePercent,
-		});
+		accelCache = simulateAcceleration({ ...primarySimInput(), circM });
 	}
 	return accelCache;
 };

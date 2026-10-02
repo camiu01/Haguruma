@@ -12,8 +12,7 @@ import { availableWheelKw, dragLimitedSpeedKmh } from '../../core/math/aero-math
 import { rpmFromKmh, toDisplaySpeed } from '../../core/math/speed-math';
 import { dynamicRadiusM, tractiveForceAt } from '../../core/math/traction-math';
 import { maxDriveForceAtSpeed } from '../../core/math/dynamics-math';
-import { activeEngineCurve, compEngineCurve } from '../../core/state/engine-curve';
-import type { EngineCurve } from '../../core/math/engine-curve-core';
+import { activeEngineCurve } from '../../core/state/engine-curve';
 import type { GraphLayerSettings, PlotFrame, SpeedUnit, TireSpec } from '../../core/models';
 import { GRAPH_DEFS, buildDefs } from './svg-defs';
 import { getGraphStyle, type GraphPalette } from './graph-theme';
@@ -31,9 +30,11 @@ import { buildPlotFrame, plotMaxRpm } from './svg-frame';
 import { buildCompareLayer, buildPrimaryLayer, buildReverseLayer } from './svg-curves';
 import { buildShiftDropNodes, buildShiftPoints, type ShiftPoint } from './svg-shift-drops';
 import { buildForceSamples, buildGripNodes, buildSpinNodes, buildWallNodes, samplePeak, spinBands } from './svg-limits';
-import { buildPowerEnvelope, buildPowerNodes, buildComparePowerNodes, type PowerEnvelope } from './svg-power';
+import { buildPowerNodes, buildComparePowerNodes, type PowerEnvelope } from './svg-power';
 import { group, type SvgPrim } from './svg-nodes';
 import type { CrosshairCompare, CrosshairContext } from './graph-crosshair';
+import { buildCrosshairContext } from './graph-crosshair-context';
+import { powerEnvelopes } from './graph-power-scene';
 
 /** Everything one render pass needs to compose the plot. */
 export interface SceneData {
@@ -63,24 +64,6 @@ export interface SceneData {
 	compareEnvelope: PowerEnvelope | null;
 	/** Context handed to the crosshair module. */
 	crosshair: CrosshairContext;
-}
-
-/** One power-envelope slot: gearing, engine curve and road-load inputs. */
-interface PowerSlot {
-	/** Gear ratios of the slot. */
-	gears: number[];
-	/** Differential ratio of the slot. */
-	finalDrive: number;
-	/** Validated engine curve of the slot, null when the anchors are unusable. */
-	curve: EngineCurve | null;
-	/** Crank power in kilowatts of the slot. */
-	powerKw: number;
-	/** Vehicle mass in kilograms. */
-	massKg: number;
-	/** Drag coefficient. */
-	dragCd: number;
-	/** Frontal area in square metres. */
-	areaM2: number;
 }
 
 /**
@@ -202,73 +185,6 @@ const gripLayerNodes = (frame: PlotFrame, unit: SpeedUnit, style: GraphPalette, 
 };
 
 /**
- * @brief Sample one slot's available-versus-required power envelope.
- * @param frame Plot geometry and limits.
- * @param unit Active display unit.
- * @param circM Rolling circumference of the slot in metres.
- * @param slot Gearing, engine curve and road-load inputs of the slot.
- * @return Envelope with its ceiling and crossing speed.
- */
-const powerEnvelopeFor = (frame: PlotFrame, unit: SpeedUnit, circM: number, slot: PowerSlot): PowerEnvelope => {
-	return buildPowerEnvelope({
-		frame,
-		unit,
-		gears: slot.gears,
-		finalDrive: slot.finalDrive,
-		circM,
-		curve: slot.curve,
-		eff: state.drivetrainEff,
-		capKw: availableWheelKw(slot.powerKw, state.drivetrainEff),
-		massKg: slot.massKg,
-		dragCd: slot.dragCd,
-		frontalAreaM2: slot.areaM2,
-		crr: state.rollingCrr,
-		gradePercent: state.roadGradePercent,
-	});
-};
-
-/**
- * @brief Sample the power envelopes of both slots for the current render.
- * @param frame Plot geometry and limits.
- * @param unit Active display unit.
- * @param circM Primary rolling circumference in metres.
- * @param compareCircM Secondary circumference, null when the overlay is hidden.
- * @return Primary envelope plus the secondary one, both null when the layer is off.
- */
-const powerEnvelopes = (
-	frame: PlotFrame,
-	unit: SpeedUnit,
-	circM: number,
-	compareCircM: number | null,
-): { primary: PowerEnvelope | null; compare: PowerEnvelope | null } => {
-	if (!state.graphLayers.powerCurve) {
-		return { primary: null, compare: null };
-	}
-	const primary: PowerSlot = {
-		gears: state.gears,
-		finalDrive: state.primaryFd,
-		curve: activeEngineCurve(),
-		powerKw: state.enginePowerKw,
-		massKg: state.vehicleMassKg,
-		dragCd: state.dragCd,
-		areaM2: state.frontalAreaM2,
-	};
-	const secondary: PowerSlot = {
-		gears: state.compGears,
-		finalDrive: state.compFd,
-		curve: compEngineCurve(),
-		powerKw: state.compPowerKw,
-		massKg: state.compMassKg,
-		dragCd: state.compCd,
-		areaM2: state.compFrontalAreaM2,
-	};
-	return {
-		primary: powerEnvelopeFor(frame, unit, circM, primary),
-		compare: compareCircM === null ? null : powerEnvelopeFor(frame, unit, compareCircM, secondary),
-	};
-};
-
-/**
  * @brief Assemble every input of one render pass from the shared state.
  * @brief Width and height come from the measured plot host, so the viewBox
  * @brief units match CSS pixels and text never scales down on small screens.
@@ -289,24 +205,7 @@ export const buildSceneData = (tire: TireSpec, width?: number, height?: number):
 	const unit = state.unit;
 	const circM = effectiveCircumferenceM(tire, state.rollingFactor);
 	const walls = resolveWalls(frame, unit, layers);
-	const primary = buildPrimaryLayer({
-		frame,
-		gears: state.gears,
-		finalDrive: state.primaryFd,
-		circM,
-		redline: state.primaryRedline,
-		unit,
-		wallSpeed: walls.primary,
-	});
-	const primaryNodes = [...primary.nodes];
-	if (state.reverseRatio !== null && state.reverseRatio > 0) {
-		primaryNodes.push(
-			...buildReverseLayer(
-				{ frame, finalDrive: state.primaryFd, circM, redline: state.primaryRedline, unit },
-				state.reverseRatio,
-			),
-		);
-	}
+	const primaryNodes = primarySceneNodes(frame, circM, walls.primary);
 	const compare = compareGeometry();
 	const envelopes = powerEnvelopes(frame, unit, circM, compare ? compare.circM : null);
 	const points = buildShiftPoints(frame, state.gears, state.primaryFd, circM, state.primaryRedline, unit);
@@ -336,28 +235,25 @@ export const buildSceneData = (tire: TireSpec, width?: number, height?: number):
 		compareWall: compare ? walls.compare : null,
 		envelope: envelopes.primary,
 		compareEnvelope: envelopes.compare,
-		crosshair: {
-			frame,
-			points,
-			gears: state.gears,
-			finalDrive: state.primaryFd,
-			circM,
-			redline: state.primaryRedline,
-			unit,
-			snap: layers.snapHud,
-			compare: compare ? compare.crosshair : null,
-			grip: {
-				gear: state.runningGear ?? defaultRunningGear,
-				massKg: state.vehicleMassKg,
-				curve: activeEngineCurve(),
-				eff: state.drivetrainEff,
-			},
-			power: {
-				capKw: availableWheelKw(state.enginePowerKw, state.drivetrainEff),
-				unit: state.powerUnit,
-			},
-		},
+		crosshair: buildCrosshairContext(frame, points, circM, compare?.crosshair ?? null),
 	};
+};
+
+/**
+ * @brief Build primary gear rays and the optional reverse ray.
+ * @param frame Plot geometry.
+ * @param circM Rolling circumference.
+ * @param wallSpeed Visible aero wall in display units.
+ * @return Mountable primary primitives.
+ */
+const primarySceneNodes = (frame: PlotFrame, circM: number, wallSpeed: number | null): SvgPrim[] => {
+	const slot = { frame, gears: state.gears, finalDrive: state.primaryFd, circM,
+		redline: state.primaryRedline, unit: state.unit, wallSpeed };
+	const nodes = buildPrimaryLayer(slot).nodes;
+	if (state.reverseRatio !== null && state.reverseRatio > 0) {
+		nodes.push(...buildReverseLayer(slot, state.reverseRatio));
+	}
+	return nodes;
 };
 
 /**

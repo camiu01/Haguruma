@@ -8,9 +8,7 @@ import { calculateSpeed, fromDisplaySpeed } from '../core/math/speed-math';
 import { describeUpshift } from '../core/math/shift-math';
 import {
 	dynamicRadiusM,
-	engineTorqueAt,
 	optimalShiftsForAll,
-	tractiveForceAt,
 	type OptimalShift,
 } from '../core/math/traction-math';
 import { availableWheelKw, dragLimitedSpeedKmh, roadLoadPowerKw } from '../core/math/aero-math';
@@ -29,6 +27,10 @@ import {
 } from './gear-status';
 import { renderCompareTable, updateComparisonInfo } from './compare-table';
 import { renderKpis } from './kpi-strip';
+import { primaryForceInput } from '../core/state/dynamics-input';
+import { forceReadoutAt } from '../core/math/force-profile';
+import { speedKmh } from '../core/math/speed-math';
+import { wheelForceAt } from '../core/math/drive-force';
 
 /** Colour token per badge key. */
 const BADGE_CLASS: Record<GearStatusKey, string> = {
@@ -62,6 +64,7 @@ export const renderTable = (refs: ElementRefs): void => {
 		activeEngineCurve(),
 		state.drivetrainEff,
 		state.unit,
+		state.dynamics.efficiencyMap ? state.runningGear.drivetrainLayout : undefined,
 	);
 	refs.breakdownBody.innerHTML = '';
 	state.gears.forEach((gearRatio, idx) => {
@@ -171,6 +174,13 @@ const buildTableRow = (
 	fillVmaxCell(tr, status);
 	fillDropCell(tr, dropRpm);
 	fillAdvisoryCell(tr, advisory);
+	const margin = document.createElement('td');
+	margin.className = 'td td--right hidden md:table-cell';
+	const reading = forceReadoutAt(primaryForceInput(), idx, speedKmh(state.peakTorqueRpm, gearRatio, state.primaryFd, circM));
+	margin.textContent = `${reading.marginN > 0 ? '+' : ''}${Math.round(reading.marginN)}`;
+	margin.title = t('dynamics.margin');
+	if (reading.marginN > 0) margin.classList.add('text-neon-yellow');
+	tr.insertBefore(margin, tr.lastElementChild);
 	return tr;
 };
 
@@ -298,8 +308,7 @@ const describeShift = (circM: number, idx: number): { nextRpmDisplay: string; dr
 
 /**
  * Describe wheel torque and traction for one gear.
- * @brief Wheel torque is engine torque at the torque peak times the overall ratio;
- * @brief traction turns torque into wheel force through the dynamic tyre radius.
+ * @brief Wheel torque and force share the same mapped transmission losses.
  * @param circM Effective rolling circumference in metres.
  * @param gearRatio Selected gear ratio.
  * @return Display strings for the wheel-torque and traction columns.
@@ -310,9 +319,9 @@ const describeTraction = (circM: number, gearRatio: number): { wheelTorqueDispla
 		return { wheelTorqueDisplay: '-', forceDisplay: '-' };
 	}
 	const radius = dynamicRadiusM(circM);
-	const wheelTorque = engineTorqueAt(state.peakTorqueRpm, curve) * gearRatio * state.primaryFd;
-	const force = tractiveForceAt(state.peakTorqueRpm, gearRatio, state.primaryFd, radius, curve, state.drivetrainEff);
-	return { wheelTorqueDisplay: `${Math.round(wheelTorque)} Nm`, forceDisplay: `${Math.round(force)} N` };
+	const force = wheelForceAt(state.peakTorqueRpm, gearRatio, state.primaryFd, radius,
+		curve, state.drivetrainEff, state.runningGear, state.dynamics.efficiencyMap);
+	return { wheelTorqueDisplay: `${Math.round(force * radius)} Nm`, forceDisplay: `${Math.round(force)} N` };
 };
 
 /**
@@ -333,6 +342,10 @@ const buildReverseRow = (circM: number): HTMLElement => {
 	if (label) {
 		label.textContent = t('gear.reverse');
 	}
+	const margin = document.createElement('td');
+	margin.className = 'td td--right hidden md:table-cell';
+	margin.textContent = '—';
+	tr.insertBefore(margin, tr.lastElementChild);
 	return tr;
 };
 

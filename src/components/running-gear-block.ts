@@ -12,49 +12,14 @@ import { DEFAULT_TIRE_COMPOUND_ID, TIRE_COMPOUNDS, findTireCompound } from '../c
 import { t } from '../core/i18n/language';
 import type { DictKey } from '../core/i18n/dictionaries';
 import type { DrivetrainLayout, RunningGear } from '../core/models';
-
-/** Numeric field descriptor driving one labeled input row. */
-interface NumField {
-	/** Id suffix appended to the block prefix. */
-	suffix: string;
-	/** i18n label key. */
-	labelKey: DictKey;
-	/** Minimum accepted value. */
-	min: number;
-	/** Maximum accepted value. */
-	max: number;
-	/** State multiplier applied to the raw input (percent inputs use 0.01). */
-	scale: number;
-	/** Input step attribute. */
-	step: string;
-	/** Unit adornment shown at the row edge. */
-	unit: string;
-	/** True when the input lives in static markup instead of the injected grid. */
-	external?: boolean;
-	/** State reader with legacy default. */
-	get: (rg: RunningGear) => number;
-	/** State writer receiving the scaled value. */
-	set: (rg: RunningGear, v: number) => void;
-}
+import { buildActiveDiffControls, bindActiveDiffControls, syncActiveDiffControls } from './active-diff-controls';
+import { NUM_FIELDS, buildNumRow, buildLatgRow } from './running-gear-fields';
 
 /** Suffixes owned by the accordions' static markup (grid skips their rows). */
 const EXTERNAL_SUFFIXES = new Set<string>(['tire', 'weight']);
 
 /** Field owning the lateral-G slider slot, matching the primary card order. */
 const LATG_AFTER = 'spring-r';
-
-/** Numeric rows in primary-card order. */
-const NUM_FIELDS: NumField[] = [
-	{ suffix: 'weight', labelKey: 'setupctl.weightTitle', min: 40, max: 70, scale: 0.01, step: '0.5', unit: '%', external: true, get: (rg) => rg.frontWeightDistribution * 100, set: (rg, v) => { rg.frontWeightDistribution = v; } },
-	{ suffix: 'cog', labelKey: 'running.cog', min: 300, max: 700, scale: 1, step: '5', unit: 'mm', get: (rg) => rg.centerOfGravityHeightMm, set: (rg, v) => { rg.centerOfGravityHeightMm = v; } },
-	{ suffix: 'wheelbase', labelKey: 'running.wheelbase', min: 2200, max: 3300, scale: 1, step: '10', unit: 'mm', get: (rg) => rg.wheelbaseMm, set: (rg, v) => { rg.wheelbaseMm = v; } },
-	{ suffix: 'track', labelKey: 'running.track', min: 1300, max: 1800, scale: 1, step: '5', unit: 'mm', get: (rg) => rg.trackWidthMm, set: (rg, v) => { rg.trackWidthMm = v; } },
-	{ suffix: 'spring-f', labelKey: 'running.springF', min: 10, max: 120, scale: 1, step: '1', unit: 'N/mm', get: (rg) => rg.springRateFrontNmm, set: (rg, v) => { rg.springRateFrontNmm = v; } },
-	{ suffix: 'spring-r', labelKey: 'running.springR', min: 10, max: 120, scale: 1, step: '1', unit: 'N/mm', get: (rg) => rg.springRateRearNmm, set: (rg, v) => { rg.springRateRearNmm = v; } },
-	{ suffix: 'lift', labelKey: 'running.lift', min: 0, max: 4, scale: 1, step: '0.05', unit: 'CL', get: (rg) => rg.liftCoefficient ?? 0.15, set: (rg, v) => { rg.liftCoefficient = v; } },
-	{ suffix: 'lift-area', labelKey: 'running.liftArea', min: 0.5, max: 5, scale: 1, step: '0.05', unit: 'm²', get: (rg) => rg.liftReferenceAreaM2 ?? 2, set: (rg, v) => { rg.liftReferenceAreaM2 = v; } },
-	{ suffix: 'lift-share', labelKey: 'running.liftShare', min: 20, max: 80, scale: 0.01, step: '1', unit: '%', get: (rg) => Math.round((rg.downforceFrontShare ?? rg.frontWeightDistribution) * 100), set: (rg, v) => { rg.downforceFrontShare = v; } },
-];
 
 /**
  * @brief Clamp a finite number into [min, max].
@@ -90,69 +55,6 @@ const buildSelectRow = (prefix: string, suffix: string, labelKey: DictKey): { ro
 	select.className = 'w-full field-input field-input--md field-input--recessed';
 	row.append(label, select);
 	return { row, select };
-};
-
-/**
- * @brief Build one labeled numeric input row.
- * @param prefix Block id prefix.
- * @param field Field descriptor.
- * @return Row element.
- */
-const buildNumRow = (prefix: string, field: NumField): HTMLElement => {
-	const row = document.createElement('div');
-	row.className = 'field-half';
-	const label = document.createElement('label');
-	label.className = 'field-label';
-	label.setAttribute('for', `${prefix}-${field.suffix}`);
-	label.setAttribute('data-i18n', field.labelKey);
-	label.textContent = t(field.labelKey);
-	const wrap = document.createElement('div');
-	wrap.className = 'relative';
-	const input = document.createElement('input');
-	input.type = 'number';
-	input.inputMode = 'decimal';
-	input.step = field.step;
-	input.min = String(field.min);
-	input.max = String(field.max);
-	input.id = `${prefix}-${field.suffix}`;
-	input.className = 'w-full field-input field-input--md field-input--recessed';
-	const unit = document.createElement('span');
-	unit.className = 'field-unit';
-	unit.textContent = field.unit;
-	wrap.append(input, unit);
-	row.append(label, wrap);
-	return row;
-};
-
-/**
- * @brief Build the lateral-G slider row.
- * @param prefix Block id prefix.
- * @return Row element.
- */
-const buildLatgRow = (prefix: string): HTMLElement => {
-	const row = document.createElement('div');
-	row.className = 'field-half';
-	const label = document.createElement('label');
-	label.className = 'field-label';
-	label.setAttribute('for', `${prefix}-latg`);
-	label.setAttribute('data-i18n', 'running.latg');
-	label.textContent = t('running.latg');
-	const wrap = document.createElement('div');
-	wrap.className = 'flex items-center gap-2';
-	const input = document.createElement('input');
-	input.type = 'range';
-	input.min = '0';
-	input.max = '1.3';
-	input.step = '0.05';
-	input.id = `${prefix}-latg`;
-	input.className = 'flex-1';
-	const val = document.createElement('span');
-	val.id = `${prefix}-latg-val`;
-	val.className = 'whitespace-nowrap font-mono fs-base text-text-output tabular-nums';
-	val.textContent = '0.60 G';
-	wrap.append(input, val);
-	row.append(label, wrap);
-	return row;
 };
 
 /**
@@ -232,6 +134,7 @@ export const buildRunningGearBlock = (prefix: string): DocumentFragment => {
 		frag.appendChild(tire.row);
 	}
 	frag.appendChild(buildLockRows(prefix));
+	frag.appendChild(buildActiveDiffControls(prefix));
 	for (const field of NUM_FIELDS) {
 		if (field.external) {
 			continue;
@@ -338,6 +241,8 @@ export const bindRunningGearBlock = (
 	render: () => void,
 	hooks: BlockHooks = {},
 ): void => {
+	bindActiveDiffControls(prefix, getRg, render);
+	bindNumericControls(prefix, getRg, render);
 	const layout = byId<HTMLSelectElement>(prefix, 'layout');
 	layout?.addEventListener('change', (e) => {
 		const v = (e.target as HTMLSelectElement).value;
@@ -367,26 +272,30 @@ export const bindRunningGearBlock = (
 			render();
 		}
 	});
-	const bias = byId<HTMLInputElement>(prefix, 'bias');
-	bias?.addEventListener('input', (e) => {
-		const v = parseFloat((e.target as HTMLInputElement).value);
-		if (!Number.isFinite(v)) {
-			return;
-		}
-		const rg = getRg();
-		rg.differentialBias = clamp(v, 0, 100) / 100;
-		rg.differentialModelId = rg.differentialModelId || 'lsd_custom';
-		render();
-	});
-	const coast = byId<HTMLInputElement>(prefix, 'coast');
-	coast?.addEventListener('input', (e) => {
-		const v = parseFloat((e.target as HTMLInputElement).value);
-		if (!Number.isFinite(v)) {
-			return;
-		}
-		getRg().differentialCoastBias = clamp(v, 0, 100) / 100;
-		render();
-	});
+};
+
+/**
+ * @brief Bind lock percentages, numeric geometry and lateral-g fields.
+ * @param prefix Running-gear prefix.
+ * @param getRg Live setup accessor.
+ * @param render Full refresh callback.
+ * @return void
+ */
+const bindNumericControls = (prefix: string, getRg: () => RunningGear, render: () => void): void => {
+	for (const suffix of ['bias', 'coast']) {
+		byId<HTMLInputElement>(prefix, suffix)?.addEventListener('input', (event) => {
+			const value = parseFloat((event.target as HTMLInputElement).value);
+			if (!Number.isFinite(value)) return;
+			const rg = getRg();
+			if (suffix === 'bias') {
+				rg.differentialBias = clamp(value, 0, 100) / 100;
+				rg.differentialModelId ||= 'lsd_custom';
+			} else {
+				rg.differentialCoastBias = clamp(value, 0, 100) / 100;
+			}
+			render();
+		});
+	}
 	for (const field of NUM_FIELDS) {
 		const input = byId<HTMLInputElement>(prefix, field.suffix);
 		input?.addEventListener('input', (e) => {
@@ -422,6 +331,7 @@ export const bindRunningGearBlock = (
  * @return void
  */
 export const syncRunningGearBlock = (prefix: string, rg: RunningGear): void => {
+	syncActiveDiffControls(prefix, rg);
 	const layout = byId<HTMLSelectElement>(prefix, 'layout');
 	if (layout) {
 		layout.value = rg.drivetrainLayout;

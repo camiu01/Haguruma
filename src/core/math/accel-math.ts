@@ -13,19 +13,15 @@
  * solver never throws.
  */
 
-import { dragForce, gradeForce, rollingForceAtSpeed } from './aero-math';
-import { maxDriveForceAtSpeed } from './dynamics-math';
-import { equivalentRotatingMassKg } from './inertia-math';
-import { rpmFromKmh } from './speed-math';
+import { advanceAccelStep, type AccelRun } from './accel-step';
 import {
 	CURVE_MIN_RPM,
 	dynamicRadiusM,
 	optimalShiftFor,
-	tractiveForceAt,
 	validateCurve,
 	type EngineCurve,
 } from './traction-math';
-import type { RunningGear } from '../models';
+import type { DrivetrainLayout, RunningGear } from '../models';
 
 /** One quarter mile in metres (statute mile / 4). */
 export const QUARTER_MILE_M = 402.33928;
@@ -42,14 +38,20 @@ const SIM_DT = 0.01;
 /** Hard time cap so pathological inputs cannot hang the UI. */
 const SIM_MAX_TIME_S = 60;
 
-/** Speed ceiling above which the run is treated as divergent. */
-const SIM_MAX_SPEED_KMH = 500;
 
 /**
  * Inputs for one acceleration run.
  * @brief Everything the integrator needs; road loads and launch/inertia are optional.
  */
 export interface SimInput {
+	/** Per-departing-gear interruption overrides in seconds. */
+	shiftTimesS?: number[];
+	/** Gearbox delay default when no global delay is provided. */
+	gearbox?: 'synchro' | 'dog';
+	/** Fuel-cut behavior at the limiter. */
+	limiter?: 'hard' | 'bounce';
+	/** Enable normalized torque/load transmission losses. */
+	efficiencyMap?: boolean;
 	/** Curb mass in kilograms (excludes rotating inertia). */
 	massKg: number;
 	/** Forward gear ratios from first to top gear. */
@@ -149,41 +151,6 @@ const validateSimInput = (input: SimInput): EngineCurve | null => {
 };
 
 /**
- * @brief Resolve rotating mass for the currently engaged gear.
- * @brief Uses per-gear inertia reflection when physical inertias are valid,
- *        otherwise falls back to the static rotatingMassKg input.
- * @param input Simulation input.
- * @param gearRatio Currently engaged gear ratio.
- * @param radius Dynamic rolling radius in metres.
- * @return Rotating equivalent mass in kilograms (>= 0).
- */
-const resolveRotatingMass = (input: SimInput, gearRatio: number, radius: number): number => {
-	const engineI = input.engineInertiaKgM2;
-	const wheelI = input.wheelInertiaKgM2;
-	const hasInertias =
-		typeof engineI === 'number' &&
-		Number.isFinite(engineI) &&
-		engineI >= 0 &&
-		typeof wheelI === 'number' &&
-		Number.isFinite(wheelI) &&
-		wheelI >= 0;
-	if (hasInertias) {
-		const reflected = equivalentRotatingMassKg({
-			engineInertiaKgM2: engineI as number,
-			wheelInertiaKgM2: wheelI as number,
-			gearRatio,
-			fd: input.fd,
-			dynRadiusM: radius,
-		});
-		if (reflected > 0) {
-			return reflected;
-		}
-	}
-	const fallback = input.rotatingMassKg;
-	return typeof fallback === 'number' && Number.isFinite(fallback) ? Math.max(0, fallback) : 0;
-};
-
-/**
  * @brief Resolve and clamp the optional clutch-slip launch RPM.
  * @param launchRpm Candidate launch RPM from SimInput.
  * @param redline Validated rev limiter used as the upper bound.
@@ -205,12 +172,12 @@ const resolveLaunchRpm = (launchRpm: number | undefined, redline: number): numbe
  * @param eff Drivetrain efficiency.
  * @return One target RPM per gear; Infinity for the top gear.
  */
-const buildShiftTargets = (gears: number[], fd: number, circM: number, curve: EngineCurve, eff: number): number[] => {
+const buildShiftTargets = (gears: number[], fd: number, circM: number, curve: EngineCurve, eff: number, layout?: DrivetrainLayout): number[] => {
 	return gears.map((_, index) => {
 		if (index >= gears.length - 1) {
 			return Number.POSITIVE_INFINITY;
 		}
-		const opt = optimalShiftFor(gears, index, fd, circM, curve, eff);
+		const opt = optimalShiftFor(gears, index, fd, circM, curve, eff, 'kmh', layout);
 		return Math.min(curve.redline, opt ? opt.shiftRpm : curve.redline);
 	});
 };
@@ -232,141 +199,57 @@ const crossingTime = (before: number, after: number, target: number, timeNow: nu
 };
 
 /**
- * @brief Engine RPM used for torque lookup in the current step.
- * @brief Holds launchRpm during clutch slip, otherwise floors at idle.
- * @param rpmRaw Wheel-implied RPM for the engaged gear.
- * @param launchRpm Resolved launch RPM, or null when slip is disabled.
- * @return RPM passed to tractiveForceAt.
- */
-const torqueLookupRpm = (rpmRaw: number, launchRpm: number | null): number => {
-	if (launchRpm !== null && rpmRaw < launchRpm) {
-		return launchRpm;
-	}
-	return Math.max(rpmRaw, CURVE_MIN_RPM);
-};
-
-/**
  * @brief Run the fixed-step acceleration solver.
  * @param input Simulation inputs (validated up front).
  * @return SimResult with whatever metrics were crossed before exit.
  */
 export const simulateAcceleration = (input: SimInput): SimResult => {
 	const curve = validateSimInput(input);
-	if (!curve) {
-		return nullResult();
-	}
+	if (!curve) return nullResult();
 	const radius = dynamicRadiusM(input.circM);
-	if (radius <= 0) {
-		return nullResult();
-	}
-	const shiftTime = Number.isFinite(input.shiftTimeS as number) ? Math.min(3, Math.max(0, input.shiftTimeS as number)) : 0;
-	const launchRpm = resolveLaunchRpm(input.launchRpm, curve.redline);
-	const targets = buildShiftTargets(input.gears, input.fd, input.circM, curve, input.drivetrainEff);
+	if (radius <= 0) return nullResult();
+	const context = { input, curve, radius,
+		launchRpm: resolveLaunchRpm(input.launchRpm, curve.redline),
+		targets: buildShiftTargets(input.gears, input.fd, input.circM, curve, input.drivetrainEff,
+			input.efficiencyMap ? input.runningGear?.drivetrainLayout ?? 'RWD' : undefined) };
 	const reaction = Number.isFinite(input.reactionS as number) ? Math.min(5, Math.max(0, input.reactionS as number)) : 0;
+	const run: AccelRun = { v: 0, dist: 0, t: 0, gear: 0, cooldown: 0, pendingGear: -1, cut: false };
+	const result = nullResult();
+	while (run.t < SIM_MAX_TIME_S) {
+		const beforeSpeed = run.v * 3.6;
+		const beforeDistance = run.dist;
+		if (!advanceAccelStep(context, run)) return nullResult();
+		recordSplits(result, run, beforeSpeed, beforeDistance);
+		if (result.time0To100S !== null && result.t60ftS !== null && result.t060mphS !== null
+			&& result.t0160S !== null && result.quarterMileS !== null) break;
+	}
+	for (const key of ['time0To100S', 't60ftS', 't060mphS', 't0160S', 'quarterMileS'] as const) {
+		if (result[key] !== null) result[key]! += reaction;
+	}
+	result.distanceM = run.dist;
+	result.timeS = run.t;
+	return result;
+};
 
-	let v = 0;
-	let dist = 0;
-	let t = 0;
-	let gear = 0;
-	let cooldown = 0;
-	let pendingGear = -1;
-	let t100: number | null = null;
-	let t60ft: number | null = null;
-	let t60mph: number | null = null;
-	let t160: number | null = null;
-	let tQ: number | null = null;
-	let trap: number | null = null;
-
-	while (t < SIM_MAX_TIME_S) {
-		const speedBefore = v * 3.6;
-		const rpmRaw = rpmFromKmh(speedBefore, input.gears[gear], input.fd, input.circM);
-
-		let shifting = false;
-		if (cooldown > 0) {
-			cooldown -= SIM_DT;
-			shifting = true;
-			if (cooldown <= 0 && pendingGear >= 0) {
-				gear = pendingGear;
-				pendingGear = -1;
-				cooldown = 0;
-				shifting = false;
-			}
-		} else if (gear < input.gears.length - 1 && rpmRaw >= targets[gear]) {
-			if (shiftTime <= 0) {
-				gear += 1;
-			} else {
-				pendingGear = gear + 1;
-				cooldown = shiftTime;
-				shifting = true;
-			}
-		}
-
-		let drive = 0;
-		if (!shifting) {
-			const rpm = torqueLookupRpm(rpmRaw, launchRpm);
-			drive = tractiveForceAt(rpm, input.gears[gear], input.fd, radius, curve, input.drivetrainEff);
-			if (input.runningGear && drive > 0) {
-				const grip = maxDriveForceAtSpeed(input.runningGear, input.massKg, speedBefore, drive, 0);
-				if (grip.limitN > 0 && drive > grip.limitN) {
-					drive = grip.limitN;
-				}
-			}
-		}
-		const mEff = input.massKg + resolveRotatingMass(input, input.gears[gear], radius);
-		const loads =
-			dragForce(speedBefore, input.dragCd ?? 0, input.frontalAreaM2 ?? 0) +
-			rollingForceAtSpeed(input.massKg, input.rollingCrr ?? 0, speedBefore) +
-			gradeForce(input.massKg, input.roadGradePercent ?? 0);
-		let accel = (drive - loads) / mEff;
-		if (!Number.isFinite(accel)) {
-			return nullResult();
-		}
-		if (v <= 0 && accel < 0) {
-			accel = 0;
-		}
-		v = Math.max(0, v + accel * SIM_DT);
-		const stepDist = v * SIM_DT;
-		const distBefore = dist;
-		dist += stepDist;
-		t += SIM_DT;
-
-		const speedAfter = v * 3.6;
-		if (speedAfter > SIM_MAX_SPEED_KMH) {
-			return nullResult();
-		}
-		if (t100 === null) {
-			t100 = crossingTime(speedBefore, speedAfter, 100, t);
-		}
-		if (t60mph === null) {
-			t60mph = crossingTime(speedBefore, speedAfter, SIXTY_MPH_KMH, t);
-		}
-		if (t160 === null) {
-			t160 = crossingTime(speedBefore, speedAfter, 160, t);
-		}
-		if (t60ft === null && dist >= SIXTY_FT_M) {
-			t60ft = crossingTime(distBefore, dist, SIXTY_FT_M, t);
-		}
-		if (tQ === null && dist >= QUARTER_MILE_M) {
-			tQ = crossingTime(distBefore, dist, QUARTER_MILE_M, t);
-			if (tQ !== null && stepDist > 0) {
-				const frac = (QUARTER_MILE_M - distBefore) / stepDist;
-				trap = speedBefore + frac * (speedAfter - speedBefore);
-			}
-		}
-		if (t100 !== null && t60ft !== null && t60mph !== null && t160 !== null && tQ !== null) {
-			break;
+/**
+ * @brief Record interpolated speed/distance crossings without per-step arrays.
+ * @param result Mutable split result.
+ * @param run Current step state.
+ * @param beforeSpeed Previous speed in km/h.
+ * @param beforeDistance Previous distance in metres.
+ * @return void
+ */
+const recordSplits = (result: SimResult, run: AccelRun, beforeSpeed: number, beforeDistance: number): void => {
+	const speed = run.v * 3.6;
+	if (result.time0To100S === null) result.time0To100S = crossingTime(beforeSpeed, speed, 100, run.t);
+	if (result.t060mphS === null) result.t060mphS = crossingTime(beforeSpeed, speed, SIXTY_MPH_KMH, run.t);
+	if (result.t0160S === null) result.t0160S = crossingTime(beforeSpeed, speed, 160, run.t);
+	if (result.t60ftS === null && run.dist >= SIXTY_FT_M) result.t60ftS = crossingTime(beforeDistance, run.dist, SIXTY_FT_M, run.t);
+	if (result.quarterMileS === null && run.dist >= QUARTER_MILE_M) {
+		result.quarterMileS = crossingTime(beforeDistance, run.dist, QUARTER_MILE_M, run.t);
+		if (result.quarterMileS !== null && run.dist > beforeDistance) {
+			const fraction = (QUARTER_MILE_M - beforeDistance) / (run.dist - beforeDistance);
+			result.trapSpeedKmh = beforeSpeed + fraction * (speed - beforeSpeed);
 		}
 	}
-
-	const withReaction = (raw: number | null): number | null => (raw === null ? null : raw + reaction);
-	return {
-		time0To100S: withReaction(t100),
-		t60ftS: withReaction(t60ft),
-		t060mphS: withReaction(t60mph),
-		t0160S: withReaction(t160),
-		quarterMileS: withReaction(tQ),
-		trapSpeedKmh: trap,
-		distanceM: dist,
-		timeS: t,
-	};
 };

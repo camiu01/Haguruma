@@ -10,7 +10,8 @@
  */
 import { rpmFromKmh, speedKmh, toDisplaySpeed } from './speed-math';
 import { CURVE_MIN_RPM, clamp, engineTorqueAt, type EngineCurve } from './engine-curve-core';
-import type { SpeedUnit } from '../models';
+import type { DrivetrainLayout, SpeedUnit } from '../models';
+import { drivetrainEfficiencyAt } from './drivetrain-map';
 
 export {
 	KW_TO_NM,
@@ -60,6 +61,7 @@ export interface OptimalShift {
  * @param dynRadiusM Dynamic rolling radius in metres.
  * @param curve Validated engine anchors.
  * @param drivetrainEff Drivetrain efficiency between 0 and 1.
+ * @param mappedLayout Optional layout enabling torque/load-sensitive efficiency.
  * @return Wheel force in newtons, 0 when invalid.
  */
 export const tractiveForceAt = (
@@ -69,6 +71,7 @@ export const tractiveForceAt = (
 	dynRadiusM: number,
 	curve: EngineCurve,
 	drivetrainEff: number,
+	mappedLayout?: DrivetrainLayout,
 ): number => {
 	if (!Number.isFinite(rpm) || rpm <= 0 || !Number.isFinite(gearRatio) || gearRatio <= 0) {
 		return 0;
@@ -81,7 +84,8 @@ export const tractiveForceAt = (
 		return 0;
 	}
 	const torque = engineTorqueAt(rpm, curve);
-	return (torque * gearRatio * finalDrive * eff) / dynRadiusM;
+	const mapped = mappedLayout ? drivetrainEfficiencyAt(eff, rpm, curve.redline, torque, curve.peakTorqueNm, mappedLayout) : eff;
+	return (torque * gearRatio * finalDrive * mapped) / dynRadiusM;
 };
 
 /**
@@ -114,6 +118,7 @@ export const dynamicRadiusM = (circM: number): number => {
  * @param curve Validated engine anchors (null makes the function return null).
  * @param drivetrainEff Drivetrain efficiency between 0 and 1.
  * @param unit Display unit for the shift speed.
+ * @param mappedLayout Optional layout enabling torque/load-sensitive efficiency.
  * @return Optimal shift prescription.
  */
 export const optimalShiftFor = (
@@ -124,19 +129,16 @@ export const optimalShiftFor = (
 	curve: EngineCurve | null,
 	drivetrainEff: number,
 	unit: SpeedUnit = 'kmh',
+	mappedLayout?: DrivetrainLayout,
 ): OptimalShift | null => {
-	if (!Array.isArray(gears) || fromIndex < 0 || fromIndex >= gears.length - 1) {
-		return null;
-	}
+	if (!Array.isArray(gears) || fromIndex < 0 || fromIndex >= gears.length - 1) return null;
 	const current = gears[fromIndex];
 	const next = gears[fromIndex + 1];
 	const radius = dynamicRadiusM(circM);
 	if (!radius || !Number.isFinite(current) || current <= 0 || !Number.isFinite(next) || next <= 0) {
 		return null;
 	}
-	if (!Number.isFinite(finalDrive) || finalDrive <= 0) {
-		return null;
-	}
+	if (!Number.isFinite(finalDrive) || finalDrive <= 0) return null;
 	const redline = curve?.redline ?? 0;
 	if (!curve || redline <= 0) {
 		return null;
@@ -147,8 +149,8 @@ export const optimalShiftFor = (
 		if (!Number.isFinite(landing) || landing < CURVE_MIN_RPM) {
 			return Number.NaN;
 		}
-		const forceNow = tractiveForceAt(rpm, current, finalDrive, radius, curve, drivetrainEff);
-		const forceNext = tractiveForceAt(landing, next, finalDrive, radius, curve, drivetrainEff);
+		const forceNow = tractiveForceAt(rpm, current, finalDrive, radius, curve, drivetrainEff, mappedLayout);
+		const forceNext = tractiveForceAt(landing, next, finalDrive, radius, curve, drivetrainEff, mappedLayout);
 		if (!Number.isFinite(forceNow) || !Number.isFinite(forceNext)) {
 			return Number.NaN;
 		}
@@ -250,6 +252,7 @@ const refineCrossing = (loRpm: number, hiRpm: number, deltaForce: (rpm: number) 
  * @param curve Validated engine anchors (or null when invalid).
  * @param drivetrainEff Drivetrain efficiency between 0 and 1.
  * @param unit Display unit for shift speeds.
+ * @param mappedLayout Optional layout enabling torque/load-sensitive efficiency.
  * @return One prescription per gear change.
  */
 export const optimalShiftsForAll = (
@@ -259,13 +262,14 @@ export const optimalShiftsForAll = (
 	curve: EngineCurve | null,
 	drivetrainEff: number,
 	unit: SpeedUnit = 'kmh',
+	mappedLayout?: DrivetrainLayout,
 ): OptimalShift[] => {
 	const out: OptimalShift[] = [];
 	if (!Array.isArray(gears) || !curve) {
 		return out;
 	}
 	for (let i = 0; i < gears.length - 1; i += 1) {
-		const shift = optimalShiftFor(gears, i, finalDrive, circM, curve, drivetrainEff, unit);
+		const shift = optimalShiftFor(gears, i, finalDrive, circM, curve, drivetrainEff, unit, mappedLayout);
 		if (shift) {
 			out.push(shift);
 		}

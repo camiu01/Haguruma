@@ -17,6 +17,9 @@ import { renderPyrometer } from '../components/pyrometer-tool';
 import { renderSetupGuide } from '../components/setup-guide';
 import { syncDrawerDisplay } from '../services/events/drawer-display-events';
 import { syncOpenAccordionHeights } from '../services/dom/accordion-height';
+import { renderDynamics } from '../components/dynamics-tool';
+import { syncActiveDiffControls } from '../components/active-diff-controls';
+import { state } from '../core/state/app-state';
 
 /**
  * Refresh the plot, table and readouts from current state.
@@ -40,5 +43,8 @@ export const renderAll = (refs: ElementRefs): void => {
 	renderSetupGuide(refs);
 	syncDrawerDisplay();
 	syncEngineCsvStatus(refs);
+	renderDynamics();
+	syncActiveDiffControls('rg', state.runningGear);
+	syncActiveDiffControls('crg', state.compRunningGear);
 	syncOpenAccordionHeights();
 };

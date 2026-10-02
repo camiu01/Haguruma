@@ -3,6 +3,7 @@
  * @brief Shared domain models for HAGURUMA.
  */
 import type { CornerPhase, HandlingIssue } from './setup/setup-matrix';
+import type { DynamicsSettings } from './state/dynamics-settings';
 
 /** Supported speed display units. */
 export type SpeedUnit = 'kmh' | 'mph';
@@ -51,6 +52,18 @@ export type DifferentialType = 'open' | 'clutch_lsd' | 'torsen' | 'spool';
  * @brief Weight distribution, geometry, grip and suspension inputs.
  */
 export interface RunningGear {
+	/** Mechanical clutch preload at the axle, Nm; zero preserves legacy behavior. */
+	differentialPreloadNm?: number;
+	/** Nominal AWD front torque fraction, defaults to 0.5. */
+	awdFrontShare?: number;
+	/** Active center coupling strength, zero fixed split, one adaptive split. */
+	centerDiffLock?: number;
+	/** Lateral torque vectoring authority, [0, 1]. */
+	torqueVectoring?: number;
+	/** Disengage center coupling while the handbrake is applied. */
+	handbrakeDisengage?: boolean;
+	/** Current handbrake application for turn-in simulation. */
+	handbrakeApplied?: boolean;
 	/** Front static weight share, range [0.3, 0.7]. */
 	frontWeightDistribution: number;
 	/** Center-of-gravity height in mm, range [200, 800]. */
@@ -165,6 +178,8 @@ export interface SetupGuideSelection {
  * @brief Single source of truth shared by all renderers.
  */
 export interface AppState {
+	/** Extended dynamics controls, carried separately from the frozen v1 token. */
+	dynamics: DynamicsSettings;
 	/** Active display unit. */
 	unit: SpeedUnit;
 	/** Active power display unit (state stores kW). */

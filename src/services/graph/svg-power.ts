@@ -19,10 +19,12 @@ import { dynamicRadiusM, tractiveForceAt, type EngineCurve } from '../../core/ma
 import { rpmFromKmh, toDisplaySpeed } from '../../core/math/speed-math';
 import { formatPower, getUnitLabel } from '../../core/units/unit-utils';
 import { t } from '../../core/i18n/language';
-import type { PlotFrame, PowerUnit, SpeedUnit } from '../../core/models';
+import type { DrivetrainLayout, PlotFrame, PowerUnit, SpeedUnit } from '../../core/models';
 import type { GraphPalette } from './graph-theme';
 import { clampNum, maxSpeedKmh, toPowerY, toX } from './svg-frame';
 import { polygon, polyline, prim, textPrim, type SvgPrim } from './svg-nodes';
+import { crossingSpeedKmh } from './power-crossing';
+export { crossingSpeedKmh } from './power-crossing';
 
 /** Label font stack shared with the rest of the interface. */
 const FONT = 'Share Tech Mono, monospace';
@@ -40,6 +42,8 @@ export interface PowerSample {
 
 /** Inputs of the available-versus-required wheel-power envelope. */
 export interface PowerEnvelopeInput {
+	/** Optional layout enabling torque/load-sensitive losses. */
+	mappedLayout?: DrivetrainLayout;
 	/** Plot geometry and limits. */
 	frame: PlotFrame;
 	/** Active display unit. */
@@ -81,58 +85,6 @@ export interface PowerEnvelope {
 }
 
 /**
- * @brief Bisect the first downward crossing of two power curves.
- * @param loKmh Lower bracket in km/h (available at or above required).
- * @param hiKmh Upper bracket in km/h (required above available).
- * @param gapAt Signed gap (available minus required) at a speed.
- * @return Crossing speed in km/h, midpoint after 22 halvings.
- */
-const bisectCrossing = (loKmh: number, hiKmh: number, gapAt: (vKmh: number) => number): number => {
-	let lo = loKmh;
-	let hi = hiKmh;
-	for (let i = 0; i < 22; i += 1) {
-		const mid = (lo + hi) / 2;
-		if (gapAt(mid) >= 0) {
-			lo = mid;
-		} else {
-			hi = mid;
-		}
-	}
-	return (lo + hi) / 2;
-};
-
-/**
- * @brief Solve the speed where required power overtakes available power.
- * @param availableKwAt Available wheel power in kW at a speed in km/h.
- * @param requiredKwAt Required road-load power in kW at a speed in km/h.
- * @param hiKmh Upper scan bound in km/h.
- * @param stepKmh Scan step in km/h.
- * @return Crossing speed in km/h, or null when the curves never cross.
- */
-export const crossingSpeedKmh = (
-	availableKwAt: (vKmh: number) => number,
-	requiredKwAt: (vKmh: number) => number,
-	hiKmh: number,
-	stepKmh: number = 2,
-): number | null => {
-	if (!Number.isFinite(hiKmh) || hiKmh <= 0 || !(stepKmh > 0)) {
-		return null;
-	}
-	const gapAt = (v: number): number => availableKwAt(v) - requiredKwAt(v);
-	if (gapAt(0) < 0) {
-		return null;
-	}
-	let lo = 0;
-	for (let v = stepKmh; v <= hiKmh + 1e-6; v += stepKmh) {
-		if (gapAt(v) < 0) {
-			return bisectCrossing(lo, v, gapAt);
-		}
-		lo = v;
-	}
-	return null;
-};
-
-/**
  * @brief Round a power ceiling up to a readable grid value.
  * @param kw Raw ceiling in kilowatts.
  * @return Ceiling on a 25 kW grid, at least 25 kW.
@@ -155,6 +107,7 @@ const niceCeiling = (kw: number): number => {
  * @param curve Active engine curve, null when the anchors are unusable.
  * @param eff Drivetrain efficiency between 0 and 1.
  * @param capKw Declared wheel-power budget in kilowatts; caps the result.
+ * @param mappedLayout Optional layout enabling torque/load-sensitive losses.
  * @return Wheel power in kilowatts at that speed, 0 when nothing is usable.
  */
 export const wheelPowerAtSpeed = (
@@ -165,6 +118,7 @@ export const wheelPowerAtSpeed = (
 	curve: EngineCurve | null,
 	eff: number,
 	capKw: number = Number.POSITIVE_INFINITY,
+	mappedLayout?: DrivetrainLayout,
 ): number => {
 	const radius = dynamicRadiusM(circM);
 	if (!curve || radius <= 0 || vKmh <= 0 || gears.length === 0) {
@@ -173,7 +127,7 @@ export const wheelPowerAtSpeed = (
 	let best = 0;
 	for (const gear of gears) {
 		const rpm = rpmFromKmh(vKmh, gear, finalDrive, circM);
-		const force = tractiveForceAt(rpm, gear, finalDrive, radius, curve, eff);
+		const force = tractiveForceAt(rpm, gear, finalDrive, radius, curve, eff, mappedLayout);
 		const kw = (force * (vKmh / 3.6)) / 1000;
 		if (kw > best) {
 			best = kw;
@@ -200,7 +154,7 @@ export const buildPowerEnvelope = (input: PowerEnvelopeInput): PowerEnvelope => 
 	const curve = input.curve;
 	const usable = curve !== null && radius > 0 && input.gears.length > 0;
 	const availableKwAt = (vKmh: number): number => {
-		return wheelPowerAtSpeed(vKmh, input.gears, input.finalDrive, input.circM, curve, input.eff, cap);
+		return wheelPowerAtSpeed(vKmh, input.gears, input.finalDrive, input.circM, curve, input.eff, cap, input.mappedLayout);
 	};
 	const requiredKwAt = (vKmh: number): number => {
 		return roadLoadPowerKw(vKmh, input.massKg, input.dragCd, input.frontalAreaM2, input.crr, input.gradePercent);

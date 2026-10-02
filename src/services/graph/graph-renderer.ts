@@ -18,6 +18,7 @@ import { bindCrosshair, clearCrosshair, clearCrosshairContext, mountCrosshair, s
 import { syncGraphSwatches } from './graph-legend';
 import { clearChildren, mountPrims } from './svg-nodes';
 import { GRAPH_VIEWBOX } from '../../config/graph-constants';
+import { buildDynamicsGraph } from './dynamics-graph';
 
 /** Settings key behind each `[data-graph-layer]` button. */
 const LAYER_SETTINGS: Record<string, keyof GraphLayerSettings> = {
@@ -115,6 +116,7 @@ export const renderGraph = (refs: ElementRefs): void => {
 	}
 	const { width, height } = measurePlotHost(refs);
 	refs.graphSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+	if (renderDynamicsGraph(refs, width, height)) return;
 	const scene = buildSceneData(tire, width, height);
 	clearChildren(refs.graphSvg);
 	mountPrims(refs.graphSvg, composeNodes(scene));
@@ -153,6 +155,51 @@ const bindLayerPills = (refs: ElementRefs): void => {
 export const bindGraphInteractions = (refs: ElementRefs): void => {
 	bindCrosshair(refs);
 	bindLayerPills(refs);
+	const view = refs.graphView;
+	view?.addEventListener('change', () => {
+		const value = view.value;
+		if (value !== 'rpm' && value !== 'force' && value !== 'braking') return;
+		state.dynamics.graphView = value;
+		renderGraph(refs);
+	});
+	refs.graphTractionOverlay.addEventListener('click', () => {
+		state.dynamics.tractionOverlay = !state.dynamics.tractionOverlay;
+		renderGraph(refs);
+	});
+};
+
+/**
+ * @brief Render alternate physical-unit plots and avoid misleading RPM crosshair readouts.
+ * @param refs Cached graph handles.
+ * @param width Plot width.
+ * @param height Plot height.
+ * @return True when the alternate view was rendered.
+ */
+const renderDynamicsGraph = (refs: ElementRefs, width: number, height: number): boolean => {
+	const view = state.dynamics.graphView;
+	const select = refs.graphView;
+	if (select) select.value = view;
+	const toggle = refs.graphTractionOverlay;
+	toggle?.setAttribute('aria-pressed', String(state.dynamics.tractionOverlay));
+	if (toggle) toggle.hidden = view !== 'force';
+	const title = document.getElementById('graph-title');
+	const legend = refs.graphSvg.closest('.graph-card')?.querySelector<HTMLElement>('.graph-legend');
+	if (legend) legend.hidden = view !== 'rpm';
+	for (const button of refs.graphLayerButtons) {
+		const key = LAYER_SETTINGS[layerSlug(button.dataset.graphLayer)];
+		button.hidden = view === 'braking' || (view === 'force' && key !== 'gripLimit');
+	}
+	if (title) {
+		const key = view === 'force' ? 'dynamics.forceView' : view === 'braking' ? 'dynamics.brakingView' : 'graph.title';
+		title.dataset.i18n = key;
+		title.textContent = t(key);
+	}
+	if (view === 'rpm') return false;
+	clearCrosshairContext();
+	clearCrosshair(refs);
+	clearChildren(refs.graphSvg);
+	mountPrims(refs.graphSvg, buildDynamicsGraph(width, height));
+	return true;
 };
 
 /**

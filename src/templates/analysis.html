@@ -4,7 +4,14 @@
 			<div class='card card-container graph-card flex flex-col'>
 				<div class='flex items-center justify-between mb-3 gap-2 flex-wrap'>
 					<h2 id='graph-title' class='card-title' data-i18n='graph.title'>Engine RPM vs Vehicle Speed</h2>
-					<div class='flex items-center gap-1'>
+					<div class='flex flex-wrap items-center gap-1'>
+						<label for='graph-view' class='field-label' data-i18n='dynamics.view'>Graph view</label>
+						<select id='graph-view' class='field-input field-input--compact'>
+							<option value='rpm' data-i18n='dynamics.rpmView'>RPM / speed</option>
+							<option value='force' data-i18n='dynamics.forceView'>Wheel force / speed</option>
+							<option value='braking' data-i18n='dynamics.brakingView'>Braking / distance</option>
+						</select>
+						<button id='graph-traction-overlay' type='button' class='btn btn--sm' aria-pressed='false' data-i18n='dynamics.marginToggle'>Traction excess overlay</button>
 						<button id='btn-expand-graph' type='button' class='btn-badge flex items-center gap-1' data-i18n-tip='graph.expandTip' title='Expand graph fullscreen' data-tip='Expand graph fullscreen' aria-label='Expand graph fullscreen' aria-expanded='false'>
 							<span class='material-symbols-outlined fs-lead' aria-hidden='true'>fullscreen</span>
 							<span data-i18n='graph.expand'>Expand</span>
@@ -104,6 +111,7 @@
 								<th class='th th--right text-neon-cyan hidden md:table-cell'><span data-i18n='th.power'>Pwr Req</span> (<span class='power-unit-label'>kW</span>) <span class='help-dot' tabindex='0' data-i18n-tip='th.powerTip' title='Required wheel power at this gear peak from weight, aero drag and rolling resistance.' data-tip='Required wheel power at this gear peak from weight, aero drag and rolling resistance.' aria-label='Required wheel power at this gear peak from weight, aero drag and rolling resistance.'>?</span></th>
 								<th class='th th--right text-neon-yellow hidden md:table-cell' data-i18n='th.wheelTorque'>Wheel Torque (Nm)</th>
 								<th class='th th--right text-neon-green hidden md:table-cell' data-i18n='th.force'>Traction (N)</th>
+								<th class='th th--right hidden md:table-cell' data-i18n='dynamics.margin'>Excess over grip (N)</th>
 								<th class='th th--right text-neon-purple'><span data-i18n='th.shift'>Shift Advisory</span> <span class='help-dot' tabindex='0' data-i18n-tip='th.shiftTip' title='LIMIT = shift at redline (optimal shift point hits the rev limiter).' data-tip='LIMIT = shift at redline (optimal shift point hits the rev limiter).' aria-label='LIMIT = shift at redline.'>?</span></th>
 							</tr>
 						</thead>

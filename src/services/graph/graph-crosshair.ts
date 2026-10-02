@@ -12,71 +12,13 @@
  */
 import { t } from '../../core/i18n/language';
 import { getUnitLabel } from '../../core/units/unit-utils';
-import type { PlotFrame, PowerUnit, RunningGear, SpeedUnit } from '../../core/models';
-import type { EngineCurve } from '../../core/math/engine-curve-core';
 import type { ElementRefs } from '../dom/element-refs';
 import { clampNum, rpmAtY, speedAtX, toX } from './svg-frame';
 import { snapPointFor, type ShiftPoint } from './svg-shift-drops';
 import { appendPrim, clearChildren, prim } from './svg-nodes';
 import { renderFreeTooltip } from './crosshair-tooltip';
-
-/** Secondary overlay geometry used by the free tooltip readout. */
-export interface CrosshairCompare {
-	/** Secondary gear ratios. */
-	gears: number[];
-	/** Secondary differential ratio. */
-	finalDrive: number;
-	/** Secondary rolling circumference in metres. */
-	circM: number;
-	/** Secondary rev limiter in RPM. */
-	redline: number;
-}
-
-/** Grip-limit inputs the free tooltip evaluates at the cursor speed. */
-export interface CrosshairGrip {
-	/** Running gear (compound, layout, LSD locks). */
-	gear: RunningGear;
-	/** Vehicle mass in kilograms. */
-	massKg: number;
-	/** Active engine curve, null when the inputs are unusable. */
-	curve: EngineCurve | null;
-	/** Drivetrain efficiency between 0 and 1. */
-	eff: number;
-}
-
-/** Wheel-power inputs the free tooltip evaluates at the cursor speed. */
-export interface CrosshairPower {
-	/** Wheel-power budget in kilowatts (crank power times efficiency). */
-	capKw: number;
-	/** Active power display unit. */
-	unit: PowerUnit;
-}
-
-/** Everything the crosshair needs from the current render pass. */
-export interface CrosshairContext {
-	/** Plot geometry and limits of the current frame. */
-	frame: PlotFrame;
-	/** Shift points of the primary gearset, the snap targets. */
-	points: ShiftPoint[];
-	/** Primary gear ratios. */
-	gears: number[];
-	/** Primary differential ratio. */
-	finalDrive: number;
-	/** Primary rolling circumference in metres. */
-	circM: number;
-	/** Primary rev limiter in RPM. */
-	redline: number;
-	/** Active display unit. */
-	unit: SpeedUnit;
-	/** True while the HUD snaps to shift points. */
-	snap: boolean;
-	/** Secondary overlay geometry, null when the comparison is hidden. */
-	compare: CrosshairCompare | null;
-	/** Grip-limit inputs for the tooltip wheelspin verdict. */
-	grip: CrosshairGrip;
-	/** Wheel-power inputs for the tooltip drivetrain readout. */
-	power: CrosshairPower;
-}
+import type { CrosshairContext } from './graph-crosshair-context';
+export type { CrosshairCompare, CrosshairGrip, CrosshairPower, CrosshairContext } from './graph-crosshair-context';
 
 /** Live SVG handles of the crosshair marker. */
 interface MarkerHandles {

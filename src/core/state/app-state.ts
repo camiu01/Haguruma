@@ -3,6 +3,7 @@
  * @brief Default state and mutable singleton store.
  */
 import type { AppState, RunningGear } from '../models';
+import { defaultDynamicsSettings } from './dynamics-settings';
 
 /**
  * Default chassis and running-gear parameters.
@@ -34,6 +35,7 @@ export const defaultRunningGear: RunningGear = {
  * @returns Default AppState value.
  */
 export const defaultState: AppState = {
+	dynamics: { ...defaultDynamicsSettings, shiftTimesS: [] },
 	unit: 'kmh',
 	powerUnit: 'kw',
 	primaryTire: '205/55R16',
@@ -90,6 +92,7 @@ export const defaultState: AppState = {
  */
 export const state: AppState = {
 	...defaultState,
+	dynamics: { ...defaultDynamicsSettings, shiftTimesS: [] },
 	gears: [...defaultState.gears],
 	compGears: [...defaultState.compGears],
 	runningGear: { ...defaultRunningGear },

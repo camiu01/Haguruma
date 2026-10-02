@@ -12,6 +12,7 @@ import { rpmFromKmh, speedKmh, toDisplaySpeed } from './speed-math';
 import { dynamicRadiusM, tractiveForceAt } from './traction-math';
 import { kmhToMs } from './aero-math';
 import { gripGainFor } from '../../config/tire-compounds';
+import { axleCapacityN, centerCapacityN } from './active-differential';
 import type { DifferentialType, RunningGear, SpeedUnit } from '../models';
 
 /** Standard gravity in m/s2. */
@@ -112,8 +113,8 @@ export const wheelLoads = (rg: RunningGear, massKg: number, accelMps2: number): 
 	const frontAxle = clampNum(stat.frontN - dLong, 0, total);
 	const rearAxle = clampNum(total - frontAxle, 0, total);
 	const dLat = lateralTransfer(massKg, rg.lateralG, rg.centerOfGravityHeightMm, rg.trackWidthMm);
-	const fLat = dLat * dist;
-	const rLat = dLat * (1 - dist);
+	const fLat = clampNum(dLat * dist, -frontAxle / 2, frontAxle / 2);
+	const rLat = clampNum(dLat * (1 - dist), -rearAxle / 2, rearAxle / 2);
 	return { fl: Math.max(0, frontAxle / 2 - fLat), fr: Math.max(0, frontAxle / 2 + fLat), rl: Math.max(0, rearAxle / 2 - rLat), rr: Math.max(0, rearAxle / 2 + rLat) };
 };
 
@@ -158,7 +159,7 @@ export const diffLimit = (type: DifferentialType, bias: number, fxInner: number,
 	const inner = Number.isFinite(fxInner) && fxInner > 0 ? fxInner : 0;
 	const outer = Number.isFinite(fxOuter) && fxOuter > 0 ? fxOuter : 0;
 	if (type === 'spool') return inner + outer;
-	if (type === 'torsen') return inner * (1 + TORSEN_TBR);
+	if (type === 'torsen') return Math.min(inner + outer, Math.min(inner, outer) * (1 + TORSEN_TBR));
 	if (type === 'clutch_lsd') return inner + Math.min(outer, inner + clampNum(bias, 0, 1) * (outer - inner));
 	return 2 * inner;
 };
@@ -176,9 +177,10 @@ export const diffLimit = (type: DifferentialType, bias: number, fxInner: number,
  * each wheel's longitudinal capacity comes from the Kamm circle.
  * @param rg Setup, massKg mass, speedKmh speed, accelMps2 signed accel.
  * @param bias Lock fraction applied to the clutch-LSD model.
+ * @param radiusM Rolling radius converting axle preload to wheel force.
  * @return Total driven-axle force limit in newtons.
  */
-const drivenAxleLimitN = (rg: RunningGear, massKg: number, speedKmh: number, accelMps2: number, bias: number): number => {
+const drivenAxleLimitN = (rg: RunningGear, massKg: number, speedKmh: number, accelMps2: number, bias: number, radiusM: number): number => {
 	const loads = wheelLoads(rg, massKg, accelMps2);
 	const vKmh = Number.isFinite(speedKmh) && speedKmh > 0 ? speedKmh : 0;
 	const cl = Number.isFinite(rg.liftCoefficient) ? (rg.liftCoefficient as number) : 0;
@@ -197,7 +199,27 @@ const drivenAxleLimitN = (rg: RunningGear, massKg: number, speedKmh: number, acc
 	const fyOuter = latSum > 0 ? axleFy * driven.outerN / latSum : 0;
 	const fxIn = kammLimit(muOf(rg), driven.innerN, fyInner);
 	const fxOut = kammLimit(muOf(rg), driven.outerN, fyOuter);
-	return Math.max(0, diffLimit(rg.differentialType, bias, fxIn, fxOut));
+	if (!awd) return axleCapacityN(rg, fxIn, fxOut, bias, radiusM);
+	const front = axleGripN(rg, fz.fl, fz.fr, totalLat * dist, bias, radiusM);
+	const rear = axleGripN(rg, fz.rl, fz.rr, totalLat * (1 - dist), bias, radiusM);
+	return centerCapacityN(rg, front, rear).limitN;
+};
+
+/**
+ * @brief Resolve lateral friction budgets independently for each AWD axle.
+ * @param rg Running gear.
+ * @param leftN Left normal load.
+ * @param rightN Right normal load.
+ * @param lateralN Axle lateral demand.
+ * @param bias Selected differential lock.
+ * @param radiusM Rolling radius converting axle preload to wheel force.
+ * @return Axle drive capacity in newtons.
+ */
+const axleGripN = (rg: RunningGear, leftN: number, rightN: number, lateralN: number, bias: number, radiusM: number): number => {
+	const sum = leftN + rightN;
+	const leftFy = sum > 0 ? lateralN * leftN / sum : 0;
+	const rightFy = sum > 0 ? lateralN * rightN / sum : 0;
+	return axleCapacityN(rg, kammLimit(muOf(rg), leftN, leftFy), kammLimit(muOf(rg), rightN, rightFy), bias, radiusM);
 };
 
 /**
@@ -225,13 +247,14 @@ const muOf = (rg: RunningGear): number => {
  * @param rg Setup, massKg mass, speedKmh speed, engineForceN force, accelMps2 accel.
  * @param liftCd Lift coefficient override (NaN falls back to rg).
  * @param liftAreaM2 Reference area override (NaN falls back to rg).
+ * @param radiusM Rolling radius for axle preload, defaults to 0.3 m for legacy callers.
  * @return Limit, per-wheel share and wheelspin flag.
  */
-export const maxDriveForceAtSpeed = (rg: RunningGear, massKg: number, speedKmh: number, engineForceN: number, accelMps2: number, liftCd?: number, liftAreaM2?: number): { limitN: number; perWheelN: number; isSpin: boolean } => {
+export const maxDriveForceAtSpeed = (rg: RunningGear, massKg: number, speedKmh: number, engineForceN: number, accelMps2: number, liftCd?: number, liftAreaM2?: number, radiusM = 0.3): { limitN: number; perWheelN: number; isSpin: boolean } => {
 	if (!rg || !Number.isFinite(massKg) || massKg <= 0) return { limitN: 0, perWheelN: 0, isSpin: false };
 	if (muOf(rg) <= 0) return { limitN: 0, perWheelN: 0, isSpin: false };
 	const withOverrides = liftCd !== undefined || liftAreaM2 !== undefined ? { ...rg, liftCoefficient: Number.isFinite(liftCd as number) ? (liftCd as number) : rg.liftCoefficient, liftReferenceAreaM2: Number.isFinite(liftAreaM2 as number) ? (liftAreaM2 as number) : rg.liftReferenceAreaM2 } : rg;
-	const limitN = drivenAxleLimitN(withOverrides, massKg, speedKmh, accelMps2, rg.differentialBias);
+	const limitN = drivenAxleLimitN(withOverrides, massKg, speedKmh, accelMps2, rg.differentialBias, radiusM);
 	const force = Number.isFinite(engineForceN) ? engineForceN : 0;
 	return { limitN, perWheelN: limitN / (rg.drivetrainLayout === 'AWD' ? 4 : 2), isSpin: force > limitN };
 };
@@ -248,12 +271,13 @@ export const maxDriveForceAtSpeed = (rg: RunningGear, massKg: number, speedKmh: 
  * exacerbates off-throttle.
  * @param rg Setup, massKg mass, speedKmh speed, demandN engine-brake force.
  * @param decelMps2 Deceleration magnitude causing the forward transfer.
+ * @param radiusM Rolling radius for axle preload, defaults to 0.3 m for legacy callers.
  * @return Limit, per-wheel share and inside-wheel lockup flag.
  */
-export const maxCoastForceAtSpeed = (rg: RunningGear, massKg: number, speedKmh: number, demandN: number, decelMps2: number): { limitN: number; perWheelN: number; isLockup: boolean } => {
+export const maxCoastForceAtSpeed = (rg: RunningGear, massKg: number, speedKmh: number, demandN: number, decelMps2: number, radiusM = 0.3): { limitN: number; perWheelN: number; isLockup: boolean } => {
 	if (!rg || !Number.isFinite(massKg) || massKg <= 0) return { limitN: 0, perWheelN: 0, isLockup: false };
 	if (muOf(rg) <= 0) return { limitN: 0, perWheelN: 0, isLockup: false };
-	const limitN = drivenAxleLimitN(rg, massKg, speedKmh, -Math.abs(decelMps2), rg.differentialCoastBias ?? 0);
+	const limitN = drivenAxleLimitN(rg, massKg, speedKmh, -Math.abs(decelMps2), rg.differentialCoastBias ?? 0, radiusM);
 	const demand = Number.isFinite(demandN) ? Math.abs(demandN) : 0;
 	return { limitN, perWheelN: limitN / (rg.drivetrainLayout === 'AWD' ? 4 : 2), isLockup: demand > limitN };
 };
@@ -340,7 +364,7 @@ const coastLockupForGear = (gear: number, fd: number, circM: number, radius: num
 		const rpm = rpmFromKmh(vKmh, gear, fd, circM);
 		if (!Number.isFinite(rpm) || rpm < 1000 || rpm > curve.redline) continue;
 		const demand = engineBrakeForceAt(rpm, gear, fd, radius, curve, eff);
-		const limit = maxCoastForceAtSpeed(rg, massKg, vKmh, demand, demand / massKg).limitN;
+		const limit = maxCoastForceAtSpeed(rg, massKg, vKmh, demand, demand / massKg, radius).limitN;
 		if (demand > limit) return toDisplaySpeed(vKmh, unit);
 	}
 	return null;

@@ -214,3 +214,15 @@ Layer switches live in `state.graphLayers` (`core/models.ts`). The four `[data-g
 - `vite.config.ts` uses `base: './'` for GitHub Pages deployment.
 - `tsconfig.json`: strict mode, `noEmit`, `moduleResolution: bundler`.
 - Tailwind loaded via CDN (`cdn.tailwindcss.com`) with custom colors in `index.html`.
+
+## v0.7 dynamics
+- `state.dynamics` owns limiter/gearbox timing, mapped efficiency, ABS/brake settings, apex inputs, timed sequence CSV and graph view. `dynamics-input.ts` builds shared primary simulation/braking/force inputs.
+- `drive-force.ts` and `force-profile.ts` share wheel force and transfer feedback between solver, table and force graph. `accel-step.ts` owns mutable per-run gear/limiter state; no application state is written by a solver.
+- `braking-simulation.ts` owns per-wheel ABS/lock integration and combines hydraulic and engine-braking demand in one tire budget. `lap-sequence.ts` rejects over-rev commands; `corner-advisor.ts` recommends a pre-corner gear.
+- `active-diff-controls.ts` adds mirrored optional preload/vectoring/AWD fields; the primary static running-gear grid receives its rows before refs resolve. New fields gate at Full and are disabled when the layout/model makes them irrelevant.
+- `dynamics-tool.ts` delegates chrome to `buildToolShell`. It shows stopping-distance KPIs and apex/sequence results. Braking and sequence results memoize on all relevant physical inputs.
+- `dynamics-graph.ts` renders force or stopping-distance views on the same SVG host. RPM crosshair/legend layers are disabled outside RPM view; axes must never display RPM for force or distance data. Exports clone the active view.
+- `graph-power-scene.ts` composes mapped power envelopes; `graph-crosshair-context.ts` builds the matching tooltip context. The legacy aero-wall KPI uses nominal peak wheel power, while the force graph marks the per-gear achievable crossing.
+- `dynamics-share.ts` appends validated non-default `d_*`, `rg_dp/af/cl/tv/hd/ha` and `crg_*` sidecars. Never change the frozen v1 compact payload; merge sidecars after decoding its running-gear blocks.
+- The efficiency map and ABS/kinetic-slip constants are engineering assumptions, not manufacturer-verified data. Keep that caveat in the UI and MATH.md.
+- Run `npm run bench` for anchor/64-point dyno/active-AWD timings; `tests/accel-performance.test.ts` guards a warm median below 3 ms.

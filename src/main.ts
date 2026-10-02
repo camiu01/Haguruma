@@ -28,6 +28,9 @@ import { initSetupLevel, syncSetupLevel } from './services/events/setup-level-ev
 import { state } from './core/state/app-state';
 import { injectAppShell } from './components/app-shell';
 import { injectMetricFields } from './components/metric-fields';
+import { injectDynamicsShell } from './components/dynamics-tool';
+import { bindDynamicsControls } from './components/dynamics-controls';
+import { injectPrimaryActiveDiffControls } from './components/active-diff-controls';
 
 /**
  * Bootstrap HAGURUMA.
@@ -46,6 +49,8 @@ const bootstrap = (): void => {
 	injectSetupBaseBlock(requireMount('comp-setup-controls-mount'), 'compare');
 	injectAeroReadout(requireMount('comp-aero-controls-mount'), 'compare');
 	injectPyrometerShell(requireMount('pyrometer-mount'));
+	injectDynamicsShell(requireMount('dynamics-mount'));
+	injectPrimaryActiveDiffControls();
 	const refs = getElementRefs();
 	const render = (): void => renderAll(refs);
 	state.unit = initUnit();
@@ -53,6 +58,7 @@ const bootstrap = (): void => {
 	initSetupLevel();
 	initTheme();
 	bindAllEvents(refs, render);
+	bindDynamicsControls(render);
 	syncLangToggle(refs);
 	syncThemeToggle(refs);
 	syncUnitToggle(refs);

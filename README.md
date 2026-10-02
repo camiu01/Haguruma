@@ -10,7 +10,35 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 [![Vitest](https://img.shields.io/badge/Vitest-1.6.0-green.svg)](https://vitest.dev/)
 [![PWA](https://img.shields.io/badge/PWA-ready-purple.svg)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 
-## What's new in 0.6.0
+## What's new in 0.7.0-alpha.1
+
+This is an alpha preview of the v0.7.0 milestone, not a stable release.
+
+- **Graph views:** switch between RPM/speed, per-gear wheel force/speed, and
+  stopping speed/distance. The force view overlays road resistance, a force-based
+  Vmax marker, optional traction excess, and dashed comparison curves. Braking
+  shows 100–0 and 200–0 km/h profiles with deceleration on the right axis.
+- **Live acceleration physics:** grip feeds instantaneous longitudinal transfer
+  back into the Euler solver, including zero-grip states. Hard fuel cut or
+  hysteretic limiter bounce, synchro/dog defaults and per-gear delays are selectable.
+- **Dynamics tool:** ABS, brake bias/demand, stopping-distance KPIs, corner-radius
+  apex advice and editable throttle/coast/brake/downshift sequences with rev matching.
+  Sequence rows are `seconds, one-based gear, throttle (0–1), brake demand (g)`;
+  total duration is limited to 60 seconds and over-rev downshifts are rejected.
+- **Differentials:** mirrored axle preload, torque vectoring, adaptive AWD
+  front/rear coupling and handbrake-disengage controls in both running-gear setups.
+- **Mapped losses:** a bilinear RPM/torque-load efficiency map, normalized to the
+  nominal efficiency input. This is an engineering approximation, **not a
+  manufacturer-measured map**; disable it to retain constant-efficiency calculations.
+- **Sharing and performance:** v0.7 controls use validated sidecar keys beside
+  the unchanged v1 compact token. Frozen dyno curves reuse Akima coefficients.
+  `npm run bench` measures anchors, 64-point dyno and active-AWD runs; a warm-median
+  regression test guards the 3 ms target.
+
+These estimates are intended for setup exploration, not safety-critical braking
+predictions. See [MATH.md](MATH.md) for assumptions and equations.
+
+## Previously in 0.6.0
 
 **Power envelope.** The available-vs-required wheel-power layer now scales to the
 wheel-power peak instead of the road-load demand, so the envelope fills the plot;
@@ -93,9 +121,9 @@ The full checklist lives in [TODO.md](TODO.md).
 - **Theme system** — three-way toggle: dark (default) → oled (pure black) → light (white). Persisted in localStorage. The SVG plot palette follows the theme through CSS tokens.
 - **Mobile-first layout** — universal slide-over drawer (nav, units/language, export & data pipeline, display preferences, technical specs), 64px fixed header, 16/9 SVG cartesian plot with layer toggles and snapping crosshair HUD, horizontal-scroll tables with sticky first column, 44px touch targets, `visualViewport` keyboard-avoidance.
 - **Touch-first setup controls** — tire geometry pills (width/aspect/rim), tactile final-drive and rev-limiter steppers with live circumference, diameter and 200 km/h aero drag readouts. The A/B comparison mirrors the same controls with amber accents, and the gear stack rows carry micro ±0.005 steppers with per-row overall-ratio readouts.
-- **Breakdown table** — 10 columns (gear, ratio, overall ratio, v-max, next-gear RPM, RPM-drop badge, required power, wheel torque, tractive force, shift advisory), per-gear WALL (drag-limited) and OVERDRIVE flags plus ECO cruising advisories, and the SAE J1263 coastdown formula footnote.
+- **Breakdown table** — 11 columns including peak-torque traction excess (`wheel force − transferred grip`), per-gear WALL and OVERDRIVE flags plus ECO cruising advisories.
 - **3-zone pyrometer calculator** — inner/middle/outer tread temperatures with camber and hot-pressure advisories (bar steps, clamped), inner-outer and center-edge spread readouts, and a cold/optimal/hot working-window verdict.
-- **Tools grid** — four self-contained cards below the workbench: highway cruising check, plus-size tire delta, 3-zone pyrometer and the paddock guide with the setup wizard.
+- **Tools** — cruising check, tire-size comparator, pyrometer, vehicle dynamics and the paddock setup guide.
 
 ## Physics engine
 
@@ -103,6 +131,10 @@ HAGURUMA uses strict SI discipline internally:
 
 | Module | Key physics |
 |---|---|
+| `drive-force.ts`, `force-profile.ts` | Shared mapped force, self-consistent axle transfer, per-gear traction margin and force-based Vmax |
+| `drivetrain-map.ts`, `powertrain-control.ts` | Bilinear loss map, limiter hysteresis and per-departing-gear interruption |
+| `braking-simulation.ts` | Individual wheel budgets, combined service/engine braking, ABS cycling, sliding friction and stopping profiles |
+| `lap-sequence.ts`, `corner-advisor.ts` | Downshift clutch impulse, rev-match blip, timed commands and apex gear advice |
 | `tire-math.ts` | `205/55R16` parsing, loaded rolling circumference, centrifugal growth, load-sensitive dynamic radius |
 | `engine-curve-core.ts` | Single source of truth for `engineTorqueAt` / `tractiveForceAt` / optimal shift; Akima interpolation over measured dyno nodes with linear fallback, dyno-tail taper |
 | `traction-math.ts` | Engine torque from power anchors (`KW_TO_NM = 30000/π` ≈ 9549.3); linear torque interpolation below peak torque; tractive force `F = T × i × η / r_dyn`; optimal shift via force-curve crossing with backward scan |

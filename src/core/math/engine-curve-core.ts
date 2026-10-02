@@ -34,6 +34,9 @@ const ANCHOR_SCAN_RPM = 25;
 
 /** Power taper (fraction) applied past the last measured dyno point. */
 const POINT_TAIL_TAPER = 0.1;
+/** Cache only frozen validated arrays, so mutable public input never becomes stale. */
+const TANGENT_CACHE = new WeakMap<TorqueCurvePoint[], number[]>();
+const VALIDATED_POINTS = new WeakSet<TorqueCurvePoint[]>();
 
 /**
  * Engine anchors defining the power curve shape.
@@ -157,6 +160,19 @@ const akimaTangents = (slopes: number[]): number[] => {
 };
 
 /**
+ * @brief Reuse Akima coefficients for immutable sanitized engine curves.
+ * @param points Dyno points, mutable arrays deliberately bypass the cache.
+ * @return Tangents matching the current points.
+ */
+const tangentsFor = (points: TorqueCurvePoint[]): number[] => {
+	const cached = TANGENT_CACHE.get(points);
+	if (cached) return cached;
+	const result = akimaTangents(segmentSlopes(points));
+	if (VALIDATED_POINTS.has(points)) TANGENT_CACHE.set(points, result);
+	return result;
+};
+
+/**
  * @brief Cubic Hermite evaluation on one interval.
  * @param x0 Left RPM bound.
  * @param y0 Left torque in Nm.
@@ -201,7 +217,7 @@ export const torqueAtRpm = (points: TorqueCurvePoint[], rpm: number): number => 
 		const k = span > 0 ? (rpm - points[0].rpm) / span : 0;
 		return points[0].torqueNm + (last.torqueNm - points[0].torqueNm) * k;
 	}
-	const tangents = akimaTangents(segmentSlopes(points));
+	const tangents = tangentsFor(points);
 	for (let i = 1; i < points.length; i += 1) {
 		const hi = points[i];
 		if (rpm <= hi.rpm) {
@@ -253,6 +269,9 @@ export const validateCurve = (curve: EngineCurve): EngineCurve | null => {
 	}
 	const points = sanitizeTorquePoints(curve.points);
 	if (points) {
+		points.forEach(Object.freeze);
+		Object.freeze(points);
+		VALIDATED_POINTS.add(points);
 		return { redline: curve.redline, ...anchorsFromPoints(points), points };
 	}
 	if (!Number.isFinite(curve.peakPowerKw) || curve.peakPowerKw <= 0) {
