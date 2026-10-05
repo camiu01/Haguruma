@@ -167,19 +167,33 @@ Docs consolidation, physics polish, chassis convergence and trackside utilities 
 
 ---
 
-### v0.6.0 milestone — Canvas interactivity & mobile refinement
+### v0.6.0 milestone — Cinematic workbench redesign (SVG plot)
 
-Focus on visual responsiveness, touch ergonomics for portrait/landscape screens and rendering polish.
+Focus on the v0.6.0 visual overhaul: SVG cartesian plot, universal drawer, 8-cell KPI strip, pyrometer and touch-first setup controls.
 
-- [ ] OffscreenCanvas migration: move the cached static bitmap in `graph-layers.ts` from a detached canvas element to a pure `OffscreenCanvas` (worker-ready), keeping a single `drawImage` per frame `#graph` `#perf`
-- [ ] Sub-pixel alignment on HiDPI: force half-pixel offsets (`Math.floor(v) + 0.5`) on 1px axes and grids in `canvas-setup.ts` to remove blur and uneven stroke widths `#graph` `#hidpi`
-- [ ] Magnetic crosshair snapping: auto-snap along the X axis to the nearest gear curve with a contextual readout (rpm, km/h, N) in `graph-tooltip.ts` `#graph` `#ux`
-- [ ] Pinch-to-zoom and multi-touch pan: touch gestures (`PointerEvents`) on the canvas to zoom into speed windows and scroll the RPM range, with instant double-tap reset `#graph` `#mobile`
-- [ ] Dynamic CSS palette sync: `graph-theme.ts` reads custom properties via `getComputedStyle(document.documentElement)` so theme switches propagate to the canvas instantly with no reload `#theme`
-- [ ] Color-coded gear badges in `comp-gear-grid.ts`: visually align the comparison table with the colored dots of the primary grid via `gear-colors.ts` `#ux` `#theme`
-- [ ] Compact mobile landscape layout: `@media (max-height: 500px) and (orientation: landscape)` in `shell.css` / `drawer.css` to shrink the drawers and expand the canvas full-viewport for in-cabin use `#mobile` `#ux`
-- [ ] Per-gear gradient fill: translucent vertical fill fading to zero toward the X axis in `graph-curves.ts` to highlight the useful power band and the rpm drop `#graph` `#ux`
-- [ ] Keyboard-accessible tooltip: arrow-key navigation along the active curve, a focusable readout and an `aria-live` region so the graph is usable without a pointer `#a11y` `#graph`
+- [x] SVG cartesian plot engine: canvas stack replaced by declarative SVG layers (`svg-frame`, `svg-defs`, `svg-axes`, `svg-curves`, `svg-shift-drops`, `svg-limits`, `svg-power`, `svg-nodes`, `graph-scene.ts`, `graph-crosshair.ts`, `crosshair-tooltip.ts`); host-measured viewBox keeps fonts at CSS-pixel size and the plot undistorted on every viewport `#graph` `#ux`
+- [x] Graph layer toggles: four toolbar pills (shift drops, aero wall, grip limit, power curve) bound to `state.graphLayers` with pressed-state sync on every render `#graph` `#ux`
+- [x] Magnetic crosshair snapping: pointer/keyboard crosshair snaps to the nearest shift point with gear, landing RPM and drop telemetry in the corner HUD pill plus a free per-gear hover tooltip; drawer fine-grid and snap-HUD switches `#graph` `#ux`
+- [x] Aero-wall fade split: gear rays cut solid at the drag-limited wall, dashed (`10 8`, 0.32) past it; wall shading, callout and amber comparison wall `#graph` `#physics`
+- [x] Power envelope layer: available-vs-required wheel-power curves with right-hand power axis; the envelope crossing lands on the same wall speed as the aero-wall line `#graph` `#physics`
+- [x] Theme palettes follow the SVG engine: per-theme palettes in `graph-theme.ts` repaint instantly on theme change with no reload `#theme`
+- [x] 64px fixed header: MENU & NAV trigger, HG badge, solver dot, subtitle, unit/level chip and active-car trigger jumping to the preset anchor `#ux`
+- [x] Universal drawer: workspace nav (workbench, A/B comparison, dyno, paddock, presets), unit and language segments, export & data pipeline (PNG/SVG/INI/JSON/JBeam/MoTeC quick actions), display preferences and technical specs, footer close `#ux` `#export`
+- [x] 8-cell KPI strip: redline, top speed, aero wall, grip limit, unit-aware 0-100/0-60 cell, quarter-mile + trap speed, wheel power; logic split into `kpi-strip.ts` with pure classifiers in `gear-status.ts` `#ux`
+- [x] Touch-first setup controls: tire geometry pills (width/aspect/rim), 44px final-drive and rev-limiter steppers, live circumference/diameter readouts and a 200 km/h aero drag readout `#ux` `#mobile`
+- [x] Gear stack readouts: per-row overall ratio and RPM-drop landing next to each editable gear ratio `#ux`
+- [x] Breakdown table verdicts: WALL (wall speed shown), OVERDRIVE (struck-through theoretical) and ECO cruising advisories, plus the speed formula and SAE J1263 coastdown footnotes under the table `#ux` `#physics`
+- [x] 3-zone pyrometer calculator: inner/middle/outer tread temperatures with camber and hot-pressure advisories (0.05 bar steps, 0.30 bar and 1.0 bar clamps), spread readouts and a cold/optimal/hot working-window verdict `#setup` `#ux`
+- [x] v0.6.0 design tokens + `telemetry.css`: surface-recessed, canvas-plot, border-hairline, focus-ring, accent-kinematic/aero/warning/compare and gear-1..8 palette in all three themes; graph pills, tire pills, steppers and status badges `#theme` `#ux`
+- [x] Release bump 0.5.1 -> 0.6.0 (`package.json`, `package-lock.json`, `build.gradle` `versionName` + `versionCode` 6 -> 7) `#release`
+
+Deferred (canvas-era sketches now carried on the SVG engine):
+
+- [ ] Pinch-to-zoom and multi-touch pan: touch gestures (`PointerEvents`) on the plot to zoom into speed windows and scroll the RPM range, with instant double-tap reset `#graph` `#mobile`
+- [ ] Color-coded gear badges in the comparison table: visually align the comparison rows with the colored dots of the primary gear stack via `gear-colors.ts` `#ux` `#theme`
+- [ ] Compact mobile landscape layout: `@media (max-height: 500px) and (orientation: landscape)` in `shell.css` / `drawer.css` to shrink the drawers and expand the plot full-viewport for in-cabin use `#mobile` `#ux`
+- [ ] Per-gear gradient fill: translucent vertical fill fading to zero toward the X axis to highlight the useful power band and the rpm drop `#graph` `#ux`
+- [ ] Keyboard-accessible tooltip readout: `aria-live` region so the snapping HUD is announced without a pointer `#a11y` `#graph`
 - [ ] Zoom/pan window in the share URL: encode the visible speed window (`z_` keys) next to the existing compact token so a zoomed view can be shared and restored `#share` `#graph`
 - [ ] Axis auto-fit: recompute `maxGraphSpeed` from the tallest gear's redline speed plus a configurable margin instead of relying on the manual value alone `#graph` `#ux`
 - [ ] First-paint theme flash guard: apply the stored theme and language before first paint to remove the flash of the default theme on cold start `#theme` `#perf`
@@ -188,22 +202,71 @@ Focus on visual responsiveness, touch ergonomics for portrait/landscape screens 
 
 ---
 
+### v0.6.0 design system, chrome recipe & graph readouts
+
+- [x] New `src/styles/controls.css` owns the type scale (`--fs-micro` → `--fs-body`, `.fs-*` utilities), the field system (`.field-label`, `.field-input` with `--compact` / `--md` / `--tall` / `--upper` / `--center` / `--recessed`, `.field-unit`, `.field-half`) and the button system (`.btn`, `.seg-btn` + `.is-active`, `.text-btn`); `main.css` stays an import hub `#theme` `#ux`
+- [x] Segmented buttons flip `.is-active` through `classList.toggle` instead of rebuilding `className` (`language-events.ts`, `unit-events.ts`); language/unit theme overrides for the old button groups dropped `#ux`
+- [x] `components/card/accordion-shell.ts` (new) exports `buildToolShell` / `buildAccordionSection` / `buildSectionHeader` / `buildChevron`; `setup-shell-card.ts` and `handbook-shell-card.ts` deleted and cruise, tire-size, pyrometer and paddock tools now delegate to the shared recipe `#ux`
+- [x] Role classes replace inline utility clusters: `.section-header`, `.section-head` (`--end`), `.section-dot`, `.section-note`, `.section-title`, tables `.th` / `.th--right` / `.th--lead` and `.td` / `.td--right` / `.td--tight` / `.td--lead`, dropdown `.menu-item`, drawer `.drawer-nav-row` / `.drawer-export-btn`, tools `.tools-stack`, card `.card--stack`; retired `.accordion-header` alias `#ux`
+- [x] Paddock guide restructured into two nested sections (setup wizard + manual handbook) built from the same accordion recipe `#ux`
+- [x] Typography swap: Inter + JetBrains Mono → **Share Tech / Share Tech Mono** in `index.html`, `tailwind.config.cjs`, `tokens.css` and the SVG plot font constants; static markup moved out of `index.html` into component-owned template modules `#theme`
+- [x] Legend sync: `graph-legend.ts` (new) exports `GEAR_GRADIENT`, `legendSwatchColors()`, `layerSwatchColors()` and `syncGraphSwatches()`, called from `renderGraph` so legend swatches and layer pill dots follow the live palette in every theme `#graph` `#ux`
+- [x] Snapping extracted to `svg-shift-drops.ts: snapPointFor()` with its own `SNAP_WINDOW`; the free hover tooltip gained the grip verdict row (`tooltip.grip` + per-wheel share + wheelspin flag) `#graph` `#physics`
+- [x] QR sharing: `share/qr-svg.ts` reduced from a hand-rolled encoder to a thin `qrcode` wrapper (EC level L, versions 1-10, latin-1 guard, path-based SVG); `qrcode` 1.5.4 + `@types/qrcode` added `#share` `#perf`
+- [x] Coverage added: `tests/accordion-chrome.test.ts` (chrome recipe), `tests/graph-legend.test.ts` (legend/pill palette per theme), `tests/crosshair-snap.test.ts` (`snapPointFor` window), `tests/crosshair-tooltip.test.ts` (grip verdict + wheel-power readout) `#tests`
+- [x] Docs: README "What's new in 0.6.0" + structure refresh, AGENTS.md chrome/graph/testing sections, MATH.md §23.1 `#docs`
+
+---
+
+### v0.6.0 polish pass — comparison layout parity & power-layer readability
+
+- [x] Secondary running gear back in two columns: `#comp-rg-mount` is `display: contents`, so the injected `.field-half` rows join the primary's `grid-cols-2`; the lateral-G slider returns to its primary slot (`running-gear-block.ts` `LATG_AFTER`, between rear spring and downforce) `#ux` `#graph`
+- [x] kW axis visible at last: `buildPowerAxis` moved out of the plot-clipped group into its own unclipped `graph-power-axis` group, because its ticks and labels live in the right inset where the clip cut every one of them away `#graph` `#ux`
+- [x] Power axis ceiling sized from the available wheel-power peak (5 % headroom, 25 kW grid) instead of the road-load demand, which was squashing the envelope into the bottom third of the plot; the demand curve may leave the plot through the top, where the clip cuts it `#graph` `#physics`
+- [x] Crossing annotation: the drag-limited speed is labelled at the envelope crossing marker, next to the wall it belongs to `#graph`
+- [x] Secondary power envelope: the comparison car's available wheel power is drawn dashed on the shared kW scale (`buildComparePowerNodes`, new `compEngineCurve()` anchors), with its own open-circle crossing marker `#graph` `#physics`
+- [x] Hover tooltip wheel-power row: one `wheelPowerAtSpeed()` sample shared by the drawn envelope and the tooltip row (`tooltip.power`, `CrosshairPower` context), so readout and curve can never disagree `#graph` `#physics`
+- [x] Coverage: `tests/graph-svg.test.ts` (ceiling rule, unclipped axis group, comparison envelope, crossing label) and `tests/crosshair-tooltip.test.ts` (wheel-power readout: budget, cap, standstill, missing curve) `#tests`
+- [x] Docs: MATH.md §23.1 (power-envelope geometry) + test-map rows, README feature bullet, AGENTS.md draw order `#docs`
+
+---
+
+### v0.6.1 milestone — Setup consolidation & tools grid (critical refactor)
+
+Removes the duplicated legacy setup fields, mirrors the touch-first controls into the A/B comparison and gives every tool its own card.
+
+- [x] Setup A consolidated: pill/stepper controls replace the text fields instead of stacking above them; legacy tire/FD/redline inputs stay as hidden state carriers for presets, share and refs `#ux` `#mobile`
+- [x] Accordion 1 "Setup Base & Drivetrain": tire geometry pills, circumference readout, final-drive and rev-limiter steppers, max-speed field and the nested gear stack with micro ±0.005 steppers `#ux`
+- [x] Accordion 2 "Chassis, Aero & Grip": tire compound, 2x2 mass/Cd/area/Crr matrix, axle weight-split bar with live readout, advanced load inputs and the injected 200 km/h aero drag readout `#ux` `#physics`
+- [x] Setup B mirror: the comparison card reuses the same builder with `data-setup-prefix='compare'`, amber accents and a mirrored gear stack writing the secondary ratio CSV `#ux`
+- [x] Tools grid: cruise check, plus-size tire delta, 3-zone pyrometer and paddock wizard as four self-contained cards in a dedicated section `#ux`
+- [x] Breakdown table trimmed to 10 columns (gear, ratio, overall, v-max, next-gear RPM, RPM drop badge, power required, wheel torque, tractive force, shift advisory) plus the overall-ratio header badge `#ux`
+- [x] `running-gear-block.ts` marks the tire and weight rows as external so the static accordion inputs own those ids `#ux`
+
+---
+
 ### v0.7.0 milestone — Vehicle dynamics & tractive force engine
 
 Focus on tire physics evolution, wheel tractive-force curves and the dynamic vertical-load model.
 
-- [ ] Switchable tractive force graph view: commutable wheel-force mode ($F_x$ in N vs km/h) with per-gear curves and the total resistance parabola overlaid ($F_{\text{drag}} + F_{rr}$) for a visual Vmax `#graph` `#physics`
-- [ ] Live load transfer inside the accel solver: feed the instantaneous acceleration back into `maxDriveForceAtSpeed` (currently called with `accelMps2 = 0`) so grip and wheelspin respond to the real transfer `#physics` `#simulation`
-- [ ] Rev-limiter and fuel-cut model: bounce/hard-cut behavior at the limiter plus per-gear shift time (synchro vs dog box) instead of one global value `#physics` `#simulation`
-- [ ] Braking model with wheel lock and ABS: deceleration profile from mu, load transfer and optional ABS cycling, with a 100-0 km/h stopping-distance KPI `#physics` `#dynamics`
-- [ ] Downshift and rev-match simulation: engine-braking deceleration and the rev-match blip so the solver can model a full lap-style sequence `#physics` `#simulation`
-- [ ] Dense drivetrain efficiency map: replace the constant `eta` with a lookup verified against torque/load rather than the single layout default `#physics` `#powertrain`
-- [ ] Traction margin readout: per-gear excess of wheel force over grip ($F_x - F_{\text{limit}}$) as a table column and optional graph overlay `#physics` `#ux`
-- [ ] Braking distance and deceleration overlay: 100-0 and 200-0 km/h stopping curves on the canvas corrected by road mu plus the aero drag contribution `#graph` `#physics`
-- [ ] Torque-vectoring and active center differential: variable AWD front/rear bias beyond the fixed split (DCCD/ACD style) with handbrake-disengage behavior on turn-in `#physics` `#dynamics`
-- [ ] LSD clutch preload and breakaway torque: static preload parameter (Nm before plate slip) for mechanical clutch LSDs (KAAZ, Cusco, OS Giken) `#physics` `#dynamics`
-- [ ] Apex speed to shift advisor: corner radius plus max lateral G give cornering speed and recommend holding the gear vs downshifting to avoid shifts mid-corner `#physics` `#simulation`
-- [ ] Accel solver benchmark suite: vitest bench on the `accel-math.ts` Euler loop (dt=0.01s) guarding sub-3ms runs even with 64-point dyno curves `#tests` `#perf`
+- [x] Switchable tractive force graph view: SVG wheel-force mode (N vs speed), per-gear and dashed comparison curves, total road resistance and force-based Vmax marker (`dynamics-graph.ts`, `force-profile.ts`) `#graph` `#physics`
+- [x] Live load transfer inside the accel solver: self-consistent acceleration/grip feedback, analytical straight-line path, bounded general solve and zero-grip clamp (`drive-force.ts`, `accel-step.ts`) `#physics` `#simulation`
+- [x] Rev-limiter and fuel-cut model: hard cut or 150 RPM hysteretic bounce, per-departing-gear delays, selectable synchro/dog defaults and explicit global fallback (`powertrain-control.ts`) `#physics` `#simulation`
+- [x] Braking model with wheel lock and ABS: individual-wheel friction budgets, dynamic load transfer, 12 Hz ABS modulation, sliding friction and 100-0 distance/time KPI (`braking-simulation.ts`, `dynamics-tool.ts`) `#physics` `#dynamics`
+- [x] Downshift and rev-match simulation: editable timed throttle/coast/brake sequences, coast-side grip, unmatched clutch drag, rev-match blips and rejected over-rev downshifts (`lap-sequence.ts`) `#physics` `#simulation`
+- [x] Dense drivetrain efficiency map: 5×5 RPM/torque-load bilinear lookup, normalized to nominal efficiency, used by force/acceleration/shift/power models and tested at every node; explicitly an engineering approximation, not manufacturer-measured data (`drivetrain-map.ts`) `#physics` `#powertrain`
+- [x] Traction margin readout: transferred wheel-force excess at peak torque in the breakdown table, plus optional per-gear force-view overlay `#physics` `#ux`
+- [x] Braking distance and deceleration overlay: 100-0 and 200-0 km/h SVG speed/distance profiles with road friction, aero, downforce, rolling resistance and grade; deceleration on the right axis `#graph` `#physics`
+- [x] Torque-vectoring and active center differential: fixed-to-adaptive AWD torque split bounded by both axle budgets, vectoring authority and handbrake center-release controls mirrored in A/B (`active-differential.ts`, `active-diff-controls.ts`) `#physics` `#dynamics`
+- [x] LSD clutch preload and breakaway torque: axle preload in Nm converted through the rolling radius, bounded by both tire budgets, active only for mechanical clutch LSDs `#physics` `#dynamics`
+- [x] Apex speed to shift advisor: radius/lateral-g speed, usable-RPM gear selection and a 10% hold preference, with shifts advised before the corner (`corner-advisor.ts`) `#physics` `#simulation`
+- [x] Accel solver benchmark suite: `npm run bench` for anchors, 64-point dyno and active AWD; cached immutable Akima coefficients and warm-median <3 ms regression guards (`accel-math.bench.ts`, `accel-performance.test.ts`) `#tests` `#perf`
+
+Integration: localized EN/IT dynamics tool and graph controls, Full-level A/B
+differential fields, backward-compatible non-default URL sidecars, active-view
+SVG/PNG export, physics assumptions in MATH.md, and version files set to
+0.7.0-alpha.1 (Android versionCode 9). This is an alpha preview, not a stable
+release. Release tagging and publishing are separate actions.
 
 ---
 
@@ -229,7 +292,7 @@ Focus on real-world data acquisition, advanced sim-racing compatibility and heur
 
 Focus on expanding setup guidance, smartphone hardware integration and formal data robustness.
 
-- [ ] Interactive tire pyrometer analyzer: input UI for tread temperatures (inner/center/outer on all 4 wheels) with camber, pressure and drift-instability diagnosis `#setup` `#dynamics`
+- [ ] Interactive tire pyrometer analyzer: input UI for tread temperatures (inner/center/outer on all 4 wheels) with camber, pressure and drift-instability diagnosis (single-tire 3-zone calculator shipped in v0.6.0) `#setup` `#dynamics`
 - [ ] Setup conflict detector: detection of contradictory adjustments inside the setup matrix (e.g. stiffer rear ARB combined with softer springs) `#setup` `#dynamics`
 - [ ] Android haptic feedback: subtle haptics via `@capacitor/haptics` while scrubbing the shift-rpm cursor and when saving custom vehicles `#android` `#ux`
 - [ ] Edge-to-edge layout & safe areas: refine `env(safe-area-inset-*)` in `shell.css` for modern displays with notches and hidden system bars `#android` `#ux`

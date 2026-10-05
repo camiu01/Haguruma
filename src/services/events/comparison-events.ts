@@ -8,8 +8,7 @@ import { CUSTOM_PREFIX, loadCustomPresets } from '../../core/presets/custom-stor
 import { formatCompGears, parseCompGears } from '../../core/compare/compare-utils';
 import type { GearPreset } from '../../core/models';
 import type { ElementRefs } from '../dom/element-refs';
-import { addGear } from '../../components/gear-list';
-import { bindCompGearGrid, syncCompGearCells } from './comp-gear-grid';
+import { addGear, addCompGear, syncCompGearStack } from '../../components/gear-list';
 import { syncCompRunningGearInputs } from './comp-running-gear-events';
 import { formatPowerInput, fromDisplayPower } from '../../core/units/unit-utils';
 
@@ -20,7 +19,6 @@ import { formatPowerInput, fromDisplayPower } from '../../core/units/unit-utils'
  * @param render Full refresh callback.
  */
 export const bindComparisonEvents = (refs: ElementRefs, render: () => void): void => {
-	bindCompGearGrid(refs);
 	refs.comparisonToggle.addEventListener('change', (e) => {
 		state.compareEnabled = (e.target as HTMLInputElement).checked;
 		applyComparisonVisibility(refs);
@@ -130,7 +128,7 @@ export const syncComparisonInputs = (refs: ElementRefs): void => {
 	refs.compTire.value = state.compTire;
 	refs.compFd.value = String(state.compFd);
 	refs.compGears.value = formatCompGears(state.compGears);
-	syncCompGearCells(refs);
+	syncCompGearStack(refs);
 	refs.compRedline.value = String(state.compRedline);
 	refs.compMass.value = String(state.compMassKg);
 	refs.compCd.value = String(state.compCd);
@@ -143,13 +141,23 @@ export const syncComparisonInputs = (refs: ElementRefs): void => {
 };
 
 /**
- * Bind the Add Gear button.
- * @brief Append one shorter ratio up to the palette limit.
+ * Bind the Add Gear buttons of both gear stacks.
+ * @brief Append one shorter ratio up to the palette limit; the comparison
+ * @brief button lives outside ElementRefs and is resolved by id.
+ * @param refs Cached DOM handles.
+ * @param render Full refresh callback.
+ * @return void
  */
 export const bindGearActions = (refs: ElementRefs, render: () => void): void => {
 	refs.btnAddGear.addEventListener('click', () => {
 		addGear(refs, () => render());
 	});
+	const compAdd = document.getElementById('comp-btn-add-gear');
+	if (compAdd) {
+		compAdd.addEventListener('click', () => {
+			addCompGear(refs, () => render());
+		});
+	}
 };
 
 /**
@@ -192,7 +200,7 @@ const copyPrimaryToCompare = (refs: ElementRefs, render: () => void): void => {
 	refs.compTire.value = state.compTire;
 	refs.compFd.value = String(state.compFd);
 	refs.compGears.value = formatCompGears(state.compGears);
-	syncCompGearCells(refs);
+	syncCompGearStack(refs);
 	refs.compRedline.value = String(state.compRedline);
 	refs.compMass.value = String(state.compMassKg);
 	refs.compCd.value = String(state.compCd);
@@ -262,7 +270,7 @@ export const applyCompPresetData = (refs: ElementRefs, preset: GearPreset, rende
 	refs.compTire.value = preset.tire;
 	refs.compFd.value = String(preset.fd);
 	refs.compGears.value = formatCompGears(preset.gears);
-	syncCompGearCells(refs);
+	syncCompGearStack(refs);
 	refs.compRedline.value = String(preset.redline);
 	refs.compMass.value = preset.massKg !== undefined ? String(preset.massKg) : String(state.compMassKg);
 	refs.compCd.value = preset.dragCd !== undefined ? String(preset.dragCd) : String(state.compCd);

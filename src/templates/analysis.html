@@ -1,0 +1,149 @@
+<!-- @file analysis.html -->
+<!-- @brief Static application shell fragment. -->
+<section class='order-1 xl:order-2 xl:col-span-8 flex flex-col gap-4'>
+			<div class='card card-container graph-card flex flex-col'>
+				<div class='flex items-center justify-between mb-3 gap-2 flex-wrap'>
+					<h2 id='graph-title' class='card-title' data-i18n='graph.title'>Engine RPM vs Vehicle Speed</h2>
+					<div class='flex flex-wrap items-center gap-1'>
+						<label for='graph-view' class='field-label' data-i18n='dynamics.view'>Graph view</label>
+						<select id='graph-view' class='field-input field-input--compact'>
+							<option value='rpm' data-i18n='dynamics.rpmView'>RPM / speed</option>
+							<option value='force' data-i18n='dynamics.forceView'>Wheel force / speed</option>
+							<option value='braking' data-i18n='dynamics.brakingView'>Braking / distance</option>
+						</select>
+						<button id='graph-traction-overlay' type='button' class='btn btn--sm' aria-pressed='false' data-i18n='dynamics.marginToggle'>Traction excess overlay</button>
+						<button id='btn-expand-graph' type='button' class='btn-badge flex items-center gap-1' data-i18n-tip='graph.expandTip' title='Expand graph fullscreen' data-tip='Expand graph fullscreen' aria-label='Expand graph fullscreen' aria-expanded='false'>
+							<span class='material-symbols-outlined fs-lead' aria-hidden='true'>fullscreen</span>
+							<span data-i18n='graph.expand'>Expand</span>
+						</button>
+						<button id='btn-export-png' type='button' class='btn-badge' data-i18n='export.png' data-i18n-tip='export.pngTip' title='Export graph as PNG' data-tip='Export graph as PNG' aria-label='Export graph as PNG'>PNG</button>
+						<button id='btn-export-svg' type='button' class='btn-badge' data-i18n='export.svg' data-i18n-tip='export.svgTip' title='Export graph as vector SVG' data-tip='Export graph as vector SVG' aria-label='Export graph as vector SVG'>SVG</button>
+						<div class='relative'>
+							<button id='btn-export-menu' type='button' class='btn-badge btn-badge-accent flex items-center gap-1' aria-haspopup='menu' aria-expanded='false'>
+								<span id='export-menu-label'><span data-i18n='export.go'>Export</span> INI</span>
+								<span class='material-symbols-outlined fs-lead' aria-hidden='true'>expand_more</span>
+							</button>
+							<div id='export-menu' class='hidden absolute right-0 top-full mt-1 z-30 min-w-32 rounded-DEFAULT border border-border-hairline bg-surface-container-high p-1 shadow-lg' role='menu'>
+								<button type='button' data-export-format='ini' class='menu-item' role='menuitem'>INI</button>
+								<button type='button' data-export-format='json' class='menu-item' role='menuitem'>JSON</button>
+								<button type='button' data-export-format='jbeam' class='menu-item' role='menuitem'>JBeam</button>
+								<button type='button' data-export-format='motec' class='menu-item' role='menuitem'>MoTeC</button>
+								<button type='button' data-export-format='aim' class='menu-item' role='menuitem'>AiM</button>
+								<button id='btn-print' type='button' class='menu-item' role='menuitem' data-i18n='print.label' data-i18n-tip='print.tip' title='Print summary or save as PDF' data-tip='Print summary or save as PDF' aria-label='Print summary or save as PDF'>Print / PDF</button>
+							</div>
+						</div>
+						<select id='export-format' class='hidden' data-i18n-tip='export.formatTip' title='Drivetrain export format' aria-label='Drivetrain export format'>
+							<option value='ini' data-i18n='export.ini'>INI</option>
+							<option value='json' data-i18n='export.gearJson'>JSON</option>
+							<option value='jbeam' data-i18n='export.jbeam'>JBeam</option>
+							<option value='motec' data-i18n='export.motec'>MoTeC</option>
+							<option value='aim' data-i18n='export.aim'>AiM</option>
+						</select>
+						<button id='btn-export-go' type='button' class='hidden' data-i18n='export.go' data-i18n-tip='export.goTip' title='Export drivetrain in the selected format' data-tip='Export drivetrain in the selected format' aria-label='Export drivetrain in the selected format'>Export</button>
+					</div>
+				</div>
+				<div id='graph-layer-toggles' class='flex flex-wrap items-center gap-1.5 mb-2 pb-2 border-b border-border-hairline'>
+					<span class='fs-micro font-mono font-bold uppercase tracking-wider text-text-muted mr-1' data-i18n='graph.toolbarLayer'>Layer:</span>
+					<button type='button' data-graph-layer='shiftDrops' aria-pressed='true' class='graph-pill'>
+						<span class='pill-dot bg-red-500' data-graph-swatch aria-hidden='true'></span>
+						<span data-i18n='graph.toggleShiftDrops'>Shift drops</span>
+					</button>
+					<button type='button' data-graph-layer='aeroWall' aria-pressed='true' class='graph-pill'>
+						<span class='pill-dot bg-sky-400' data-graph-swatch aria-hidden='true'></span>
+						<span data-i18n='graph.toggleAeroWall'>Aero wall</span>
+					</button>
+					<button type='button' data-graph-layer='gripLimit' aria-pressed='true' class='graph-pill'>
+						<span class='pill-dot bg-amber-500' data-graph-swatch aria-hidden='true'></span>
+						<span data-i18n='graph.toggleGripLimit'>Grip limit</span>
+					</button>
+					<button type='button' data-graph-layer='powerCurve' aria-pressed='false' class='graph-pill'>
+						<span class='pill-dot bg-violet-400' data-graph-swatch aria-hidden='true'></span>
+						<span data-i18n='graph.togglePowerCurve'>Power curve</span>
+					</button>
+				</div>
+				<div id='graph-host' class='graph-wrap relative w-full aspect-[16/9] min-h-[320px] bg-canvas-plot rounded border border-border-hairline overflow-hidden select-none'>
+					<svg id='graph-svg' class='w-full h-full block' viewBox='0 0 1000 562.5' preserveAspectRatio='none' role='img' aria-labelledby='graph-title' tabindex='0'></svg>
+					<div id='graph-hud' class='absolute top-3 right-3 z-20 bg-surface-subtle/95 backdrop-blur-md px-3 py-1.5 rounded border border-neon-cyan/80 shadow-md fs-small font-mono text-text-output max-w-[70%]'></div>
+					<div id='graph-tooltip' class='absolute pointer-events-none hidden bg-canvas border border-border rounded px-2 py-1 fs-small font-mono text-text-main z-30 shadow-lg'></div>
+				</div>
+				<div class='graph-legend mt-3 flex flex-wrap gap-x-4 gap-y-1.5 fs-base'>
+					<span data-graph-legend='primary' class='inline-flex items-center gap-1.5 text-text-main whitespace-nowrap'>
+						<span class='w-3 h-0.5 bg-red-500 inline-block' data-graph-swatch></span> <span data-i18n='legend.primary'>Primary</span>
+					</span>
+					<span id='comp-legend-indicator' data-graph-legend='compare' class='items-center gap-1.5 text-neon-yellow hidden whitespace-nowrap'>
+						<span class='w-3 h-0.5 border-b border-dashed border-accent-amber-overlay inline-block' data-graph-swatch data-swatch='border'></span> <span data-i18n='legend.compare'>Compare</span>
+					</span>
+					<span data-graph-legend='shift' class='inline-flex items-center gap-1.5 text-neon-red whitespace-nowrap'>
+						<span class='w-1.5 h-1.5 rounded-full bg-red-500' data-graph-swatch></span> <span data-i18n='legend.shift'>Redline Shift Drop</span>
+					</span>
+					<span data-graph-legend='drop' class='inline-flex items-center gap-1.5 text-neon-yellow whitespace-nowrap'>
+						<span class='w-3 h-0.5 border-t border-dashed border-neon-yellow inline-block' data-graph-swatch data-swatch='border'></span> <span data-i18n='graph.legendDrop'>RPM drop</span>
+					</span>
+					<span data-graph-legend='aero' class='inline-flex items-center gap-1.5 text-accent-warning whitespace-nowrap'>
+						<span class='w-3 h-0.5 border-t border-dashed border-accent-warning inline-block' data-graph-swatch data-swatch='border'></span> <span data-i18n='graph.legendAero'>Aero wall</span>
+					</span>
+					<span data-graph-legend='grip' class='inline-flex items-center gap-1.5 text-neon-green whitespace-nowrap'>
+						<span class='w-3 h-0.5 border-t border-dashed border-neon-green inline-block' data-graph-swatch data-swatch='border'></span> <span data-i18n='graph.legendGrip'>Grip limit</span>
+					</span>
+					<span data-graph-legend='power' class='inline-flex items-center gap-1.5 text-gear-5 whitespace-nowrap'>
+						<span class='w-3 h-0.5 bg-gear-5 inline-block' data-graph-swatch></span> <span data-i18n='graph.legendPower'>Power curve</span>
+					</span>
+				</div>
+			</div>
+			<div class='card card-container flex-1'>
+				<div class='flex items-center justify-between gap-2 flex-wrap pb-3 mb-3 border-b border-border'>
+					<h3 class='card-title' data-i18n='table.title'>Gear Breakdown &amp; Shift Drop at Redline</h3>
+					<span class='flex items-center gap-2'>
+						<span id='table-fd-badge' class='fs-small font-mono font-semibold text-neon-cyan whitespace-nowrap'></span>
+						<span class='fs-small text-text-dim whitespace-nowrap' data-i18n='table.subtitle'>Calculated Theoretical Peak</span>
+					</span>
+				</div>
+				<div class='table-scroll overflow-x-auto custom-scroll'>
+					<table class='table-sticky w-full text-left fs-base font-mono'>
+						<thead>
+							<tr class='text-text-dim border-b border-border/80'>
+								<th class='th th--lead' data-i18n='th.gear'>Gear</th>
+								<th class='th' data-i18n='th.ratio'>Ratio</th>
+								<th class='th hidden md:table-cell' data-i18n='th.overall'>Overall</th>
+								<th class='th th--right'><span data-i18n='th.topSpeed'>Top Speed</span> (<span class='unit-label'>km/h</span>)</th>
+								<th class='th th--right text-neon-red' data-i18n='th.nextRpm'>Next Gear RPM</th>
+								<th class='th th--right text-neon-red' data-i18n='th.drop'>RPM Drop</th>
+								<th class='th th--right text-neon-cyan hidden md:table-cell'><span data-i18n='th.power'>Pwr Req</span> (<span class='power-unit-label'>kW</span>) <span class='help-dot' tabindex='0' data-i18n-tip='th.powerTip' title='Required wheel power at this gear peak from weight, aero drag and rolling resistance.' data-tip='Required wheel power at this gear peak from weight, aero drag and rolling resistance.' aria-label='Required wheel power at this gear peak from weight, aero drag and rolling resistance.'>?</span></th>
+								<th class='th th--right text-neon-yellow hidden md:table-cell' data-i18n='th.wheelTorque'>Wheel Torque (Nm)</th>
+								<th class='th th--right text-neon-green hidden md:table-cell' data-i18n='th.force'>Traction (N)</th>
+								<th class='th th--right hidden md:table-cell' data-i18n='dynamics.margin'>Excess over grip (N)</th>
+								<th class='th th--right text-neon-purple'><span data-i18n='th.shift'>Shift Advisory</span> <span class='help-dot' tabindex='0' data-i18n-tip='th.shiftTip' title='LIMIT = shift at redline (optimal shift point hits the rev limiter).' data-tip='LIMIT = shift at redline (optimal shift point hits the rev limiter).' aria-label='LIMIT = shift at redline.'>?</span></th>
+							</tr>
+						</thead>
+						<tbody id='gear-breakdown-body' class='divide-y divide-border/40 text-text-main'></tbody>
+					</table>
+				</div>
+				<div class='pt-2 mt-1 border-t border-border-hairline flex flex-wrap items-center justify-between gap-2 fs-tiny font-mono text-text-muted'>
+					<span class='inline-flex items-center gap-1.5'>
+						<span class="material-symbols-outlined fs-lead" aria-hidden='true'>functions</span>
+						<span data-i18n='table.formula'>Speed = (RPM × π × tire diameter) / (total ratio × 60) × 3.6</span>
+					</span>
+					<span class='text-neon-cyan' data-i18n='table.validated'>SAE J1263 aerodynamic coastdown validated</span>
+				</div>
+				<div id='compare-table-wrap' class='hidden mt-5 pt-4 border-t border-dashed border-accent-amber-overlay'>
+					<div class='flex items-center justify-between pb-2 mb-2'>
+						<h4 class='fs-base font-semibold text-neon-yellow' data-i18n='compare.secondary'>Secondary (dashed)</h4>
+						<span class='fs-small text-text-dim' data-i18n='compare.delta'>Δ vs primary</span>
+					</div>
+					<div class='table-scroll overflow-x-auto custom-scroll'>
+						<table class='table-sticky table-compare w-full text-left fs-base font-mono'>
+							<thead>
+								<tr class='text-text-dim border-b border-border/80'>
+									<th class='th th--lead' data-i18n='th.gear'>Gear</th>
+									<th class='th' data-i18n='th.ratio'>Ratio</th>
+									<th class='th th--right'><span data-i18n='th.topSpeed'>Top Speed</span> (<span class='unit-label'>km/h</span>)</th>
+									<th class='th th--right' data-i18n='compare.delta'>Δ vs primary</th>
+									<th class='th th--right text-neon-cyan hidden md:table-cell' data-comp-power='1'><span data-i18n='th.power'>Pwr Req</span> (<span class='power-unit-label'>kW</span>)</th>
+								</tr>
+							</thead>
+							<tbody id='compare-breakdown-body' class='divide-y divide-border/40 text-text-main'></tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</section>

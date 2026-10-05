@@ -762,8 +762,11 @@ Cross-checks that pin the model to reality:
 
 ## 23. Graph coordinate mapping
 
-The canvas is not physics, but the plot lives in the same units. Mapping in
-`canvas-setup.ts` (CSS pixels):
+The plot is not physics, but it lives in the same units. Since v0.6.0 the
+graph is a declarative SVG: every render pins the viewBox of `#graph-svg` to
+the measured host size in CSS pixels (`graph-renderer.ts`), so one user unit
+equals one screen pixel, fonts keep their real size on every viewport and
+the plot never stretches. Mapping in `svg-frame.ts` (user units):
 
 $$
 x(v) = \text{pad}_{\text{left}} + \frac{v}{v_{\max}}\,\text{plotWidth},
@@ -777,19 +780,133 @@ $$
 \text{plotHeight} = H - \text{pad}_{\text{top}} - \text{pad}_{\text{bottom}}
 $$
 
-Paddings (top/right/bottom/left) = 25/30/40/55. Axis ceiling
-$n_{\max} = \lceil n_{\text{red}}/1000 \rceil · 1000 + 500$; $v_{\max}$ is the
-state's `maxGraphSpeed`. HiDPI: the backing store is `round(cssSize × dpr)` with
-`dpr = min(devicePixelRatio, 2)`, and the context transform is set so all
-mapping stays in CSS pixels.
+Base paddings (top/right/bottom/left) = 34/74/48/62 user units, scaled by
+$\max(0.62, \min(1, W/900))$ so narrow hosts keep a readable plot band.
+Axis ceiling $n_{\max} = \lceil n_{\text{red}}/1000 \rceil · 1000 + 500$;
+$v_{\max}$ is the state's `maxGraphSpeed`. Gear rays are cut at the
+drag-limited wall: solid up to the wall, dashed (`10 8`, opacity 0.32)
+past it; the required-power envelope crossing lands on the same wall
+speed, so the power label and the wall label can never disagree.
 
 Ghost-delta readout (v0.5.0, `describeAllShiftDeltas` in `shift-math.ts`,
 rendered as DOM rows in `#comp-shift-deltas`): at each primary up-shift
 point, $\Delta n$ compares the next-gear landing RPM of both setups at the
 same road speed and $\Delta v$ compares the same-gear shift-point speeds; the
-canvas stays curve-only.
+plot stays curve-only.
+
+### 23.1 Power envelope layer (v0.6.0)
+
+Available wheel power at a road speed is the strongest gear at that speed,
+capped at the declared wheel-power budget:
+
+$$
+P_{\text{avail}}(v) = \min\Big(\max_i\big[F_{\text{trac},i}(v)\cdot v_{\text{ms}}\big],\; P_{\text{engine}}\,\eta\Big)
+$$
+
+with $F_{\text{trac},i}$ from §7.1 and $\eta$ from §15. The required curve is
+the road load of §9.2. Both are sampled every 2 km/h up to $v_{\max}$
+(`wheelPowerAtSpeed` + `buildPowerEnvelope` in `svg-power.ts`).
+
+The right-hand axis ceiling follows the **available** peak,
+$\lceil 1.05\,P_{\text{peak}}/25 \rceil \cdot 25$ kW, so the envelope uses the
+full plot height. The demand curve is allowed to leave the plot through the
+top, where the plot clip cuts it — only the crossing matters, and its absolute
+value would otherwise dictate the scale (a 300 km/h road-load demand is far
+above any wheel-power peak). The crossing is bisected (2 km/h scan, then 22
+halvings) and equals `dragLimitedSpeedKmh` for the same inputs, so the crossing
+marker and the aero wall can never disagree; the marker keeps the aero color
+and carries the drag-limited speed as a label.
+
+The kW axis lives in the right inset, so `buildPowerAxis` is mounted in its own
+**unclipped** group (`graph-power-axis`): inside the plot-clipped group the
+clip would cut every tick and label away.
+
+With the comparison on, the secondary envelope is drawn dashed in the compare
+color on the same kW scale, from the secondary gearset and its own engine
+anchors (`compEngineCurve()` — a dyno CSV belongs to the primary car). The
+tooltip wheel-power row reads the same $P_{\text{avail}}$ sample as the drawn
+curve, so the readout and the envelope cannot disagree.
 
 ## 24. Extending the model
+
+### v0.7 dynamics models
+
+**Self-consistent drive transfer.** Acceleration now satisfies
+
+$$
+a = \frac{\min(F_{\mathrm{engine}}, F_{\mathrm{grip}}(v,a))-F_{\mathrm{road}}(v)}
+{m+m_{\mathrm{rot}}}.
+$$
+
+The straight-line FWD/RWD grip relation is linear in acceleration and is solved
+analytically. Fully adaptive straight-line AWD uses the combined axle budget;
+other states use a bounded relaxed iteration. A zero tire budget always clamps
+drive to zero. Lateral transfer is bounded by each axle's load so an airborne
+inside wheel cannot create extra vertical force.
+
+**Efficiency map.** `drivetrain-map.ts` interpolates a 5×5 table of relative
+efficiency against $n/n_{\mathrm{lim}}$ and $T/T_{\mathrm{peak}}$, clamped to
+the table edges. Nominal efficiency scales the table, with layout-specific loss
+sensitivity. The table is an explicit engineering approximation; node,
+interpolation and force tests validate the implementation, not measured
+manufacturer efficiency. The same mapped model feeds acceleration, optimal
+shifts, the force plot and the power-envelope/tooltip pair. The legacy aero-wall
+KPI remains a nominal peak-wheel-power estimate and can differ from a
+gear-dependent force crossing.
+
+**Limiter and shifts.** Hard cut interrupts torque at or above the limiter.
+Bounce latches fuel cut until wheel-implied RPM falls at least 150 RPM below it.
+Shifts use the departing gear's explicit delay, then either gearbox defaults
+(0.30 s synchro, 0.08 s dog) or the legacy global delay. Delays are quantized
+up to the 0.01 s Euler step; zero remains an instantaneous shift.
+Landing RPM is recalculated from the newly engaged ratio, never reused from the
+departing gear.
+
+**Stopping integration.** Each wheel has a friction-circle budget with dynamic
+longitudinal load transfer, lateral demand and aero downforce. Hydraulic force
+is split by front bias; engine braking, when present in a lap sequence, shares
+the same wheel budgets rather than adding a second friction allowance.
+Over-demand without ABS uses kinetic friction at 75% of peak capacity.
+With ABS, modulation is
+$0.94+0.06\cos(2\pi\cdot12t)$ of capacity. These are declared modeling assumptions,
+not vehicle-specific controller calibration. Signed road loads contribute to
+deceleration. Speed integrates at 0.01 s; distance uses trapezoidal velocity,
+and the final interval is truncated at exactly zero speed. Incomplete runs
+return null metrics rather than an invented stopping distance.
+
+**Downshift sequence.** Unsafe wheel-implied over-rev commands are rejected.
+Rev matching supplies the positive target-minus-old RPM blip during interruption.
+Without matching, reflected engine inertia adds a bounded clutch drag impulse,
+decaying over a nominal 0.20 s engagement window and limited by coast-side grip.
+The sequence input accepts up to 32 rows and 60 s total:
+`duration_s, gear_1_based, throttle_fraction, brake_g`. This is a timed vehicle
+sequence, not a track-geometry or full-lap optimizer.
+
+**Differentials.** Axle clutch preload adds $T_{\mathrm{preload}}/r$ to the
+outer-wheel force-transfer allowance before plate slip. Clutch and Torsen
+capacity never exceed the sum of the two tire budgets. Vectoring blends the
+passive axle capacity toward that sum. AWD front share interpolates between
+the configured fixed split and the split proportional to available axle grip;
+the total is bounded independently by both axles. Handbrake center release
+interrupts coupled AWD drive, without pretending to simulate a rear-wheel
+handbrake torque or controller-specific DCCD/ACD hardware.
+
+**Corner advice.** Apex speed is $v=\sqrt{r\,g\,G_{\max}}$. Eligible gears must
+land between 1000 RPM and the limiter. The best wheel-force gear is selected,
+but the approach gear is retained when it provides at least 90% of the best
+force. A change is advised before the corner, never midway through it.
+
+**Graph semantics.** The force view uses newtons on Y and display speed on X;
+road resistance includes aerodynamic drag, speed-sensitive rolling resistance
+and signed grade. Positive traction margin means engine demand exceeds the
+transferred tire limit. The force Vmax marker searches all usable gear ranges
+and bisects steady-force/resistance crossings. The braking view uses metres on
+X, display speed on the left Y axis, and deceleration in m/s² on the right.
+
+**Performance.** `npm run bench` exercises anchors, 64-point Akima dyno and
+active AWD. A warm-run median test guards the 3 ms target on the test machine.
+Only validated, deeply frozen dyno arrays cache their coefficients; mutable
+public arrays are re-evaluated to avoid stale interpolation.
 
 When adding physics:
 
@@ -805,6 +922,12 @@ When adding physics:
 
 | Suite | Covers |
 |:--|:--|
+| `tests/vehicle-dynamics.test.ts` | mapped efficiency, transfer feedback, fuel cut, per-gear delays, preload/vectoring/center coupling |
+| `tests/braking-simulation.test.ts` | constant-deceleration reference, wheel lock, ABS, aero/grade, stopping telemetry |
+| `tests/lap-sequence.test.ts` | timed commands, safe downshifts, unmatched clutch drag, rev matching and apex advice |
+| `tests/dynamics-share.test.ts` | sidecar round trips, validation, compact/verbose chassis preservation |
+| `tests/dynamics-graph.test.ts` | force-unit curves, resistance, margins, display-unit boundary, stopping/deceleration axes |
+| `tests/accel-performance.test.ts`, `tests/accel-math.bench.ts` | 64-point dyno 3 ms warm-median guard and benchmark cases |
 | `tests/tire-math.test.ts` | parsing, rolling factor, centrifugal growth, load-sensitive radius |
 | `tests/tire-compounds.test.ts` | compound catalog order, gains, i18n labels, legacy fallback |
 | `tests/speed-math.test.ts` | SI conversions, mph boundary |
@@ -821,5 +944,7 @@ When adding physics:
 | `tests/cruise-math.test.ts` | gear pick, load, verdict |
 | `tests/drivetrain-eff.test.ts` | layout efficiency map |
 | `tests/unit-utils.test.ts` | axes, unit persistence, power formatting |
+| `tests/graph-svg.test.ts` | frame projections, aero-wall fade, envelope crossing + ceiling rule, unclipped power axis, comparison envelope, layer gating |
+| `tests/crosshair-tooltip.test.ts` | tooltip grip verdict plus wheel-power readout: budget at the peak-power speed, declared cap, standstill, missing curve |
 
 Run them with `npm test` (or `npx vitest run tests/<file>.test.ts`).

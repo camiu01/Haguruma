@@ -22,7 +22,7 @@ src/
   main.ts                         # bootstrap only
   core/
     models.ts                     # SpeedUnit, TireSpec, GearPreset, AppState, etc.
-    math/                         # tire-math, speed-math, aero-math, traction-math, shift-math, accel-math, inertia-math, cruise-math, dynamics-math, dyno-csv (CSV parser + resampling), engine-curve-core (anchor/dyno engine curve)
+    math/                         # tire-math, speed-math, aero-math, traction-math, shift-math, accel-math, inertia-math, cruise-math, dynamics-math, dyno-csv (CSV parser + resampling), engine-curve-core (anchor/dyno engine curve), pyrometer-math (3-zone tread analysis)
     setup/                        # setup-matrix.ts (wizard data) + setup-guide-content.ts (handbook copy)
     state/app-state.ts            # defaultState + singleton
     state/engine-curve.ts         # active engine curve (anchors vs sanitized dyno points)
@@ -31,7 +31,7 @@ src/
     share/share-utils.ts          # URL hash encode/decode (verbose keys, compact `c` token, curve, rg_/crg_ running gear)
     share/running-gear-share.ts   # rg_/crg_ encode/decode block + numeric param helper
     share/share-compact.ts        # Packed Base64URL full-state codec (v1) + legacy primary token, no dependencies
-    share/qr-svg.ts               # Dependency-free QR encoder rendering an SVG for the share modal
+    share/qr-svg.ts               # QR SVG renderer for the share modal (qrcode lib, EC level L, versions 1-10)
   config/
     presets.ts                    # preset maps built from the catalog loader
     car-catalog.ts                # CarCatalogEntry model + import.meta.glob loader + validateCatalogEntry() contract
@@ -44,30 +44,37 @@ src/
   services/
     dom/element-refs.ts           # Typed DOM handles (ElementRefs)
     dom/focus-trap.ts             # Tab trap helper for drawer and modal overlays
-    graph/                        # canvas-setup, graph-axes, graph-curves, graph-shift-drops, graph-renderer, graph-tooltip, graph-theme, graph-export, graph-layers (static cache), graph-limits, drivetrain-export (sim INI/JSON/JBeam/CSV)
+    graph/                        # svg-frame (geometry + projection), svg-defs, svg-axes, svg-curves, svg-shift-drops, svg-limits, svg-power, svg-nodes (prim model + mount), graph-scene (state → scene, composeNodes draw order), graph-renderer (renderGraph, bindGraphInteractions, toggleGraphExpand), graph-crosshair + crosshair-tooltip (snapping HUD + free tooltip), graph-theme, graph-export (PNG/SVG), drivetrain-export (sim INI/JSON/JBeam/CSV)
     events/                       # One binder per control group
   components/
-    gear-list.ts                  # Editable gear rows + add/remove
-    gear-table.ts                 # Primary breakdown table + KPI strip + accel memo
+    gear-list.ts                  # Editable gear rows + add/remove (ratio, overall, RPM drop)
+    gear-table.ts                 # Primary breakdown table renderer
+    gear-status.ts                # Pure WALL / OVERDRIVE / REDLINE classifiers (no DOM)
+    kpi-strip.ts                  # 8-cell KPI strip + accel memo (renderKpis)
+    setup-controls.ts             # Touch-first tire pills, FD/rev steppers, aero readout (prefix-parameterized A/B)
+    header-bar.ts                 # Top bar chip + active-car label sync
+    pyrometer-tool.ts             # 3-zone pyrometer calculator card
     compare-table.ts              # Secondary comparison rows + tire-delta caption + shift-delta panel
     running-gear-block.ts         # Shared primary/secondary running-gear builder, binder and sync (prefix-parameterized)
     preset-search.ts              # Searchable preset combobox (grouped dropdown)
     custom-car.ts                 # Save/load/export/import custom presets
     setup-guide.ts                # Setup shell injection + card assembly
-    cruise-card.ts                # Tools card: cruise accordion + tire-size accordion + render
-    tire-size-tool.ts             # Stock vs plus-size comparator (speedo error, gearing deltas)
+    cruise-card.ts                # Tools card: cruise accordion + render only
+    tire-size-tool.ts             # Tools card: stock vs plus-size comparator (own accordion + verdict pill)
     running-gear-readouts.ts      # Downforce + coast lock-up/downforce readouts
-    card/                         # base Card + one file per specialized card + index.ts barrel
-  views/render-all.ts             # resizeCanvas + drawGraph + renderTable + renderCruise
+    card/                         # base Card + shared accordion-shell builder + one file per specialized card + index.ts barrel
+  views/render-all.ts             # renderGraph + renderTable + KPI/readout syncs
   styles/
     main.css                      # Hub only: @imports below, no rules
     tokens.css                    # Theme variables (dark/oled/light)
     base.css                      # Base elements, safe-area, scrollbars, small viewports
     drawer.css                    # Slide-over drawer + relocated header controls
     components.css                # Cards, accordions, tables, inputs, help-dot
+    controls.css                  # Type scale (--fs-*), field labels/inputs, titles, captions
     shell.css                     # Header controls, modal, preset combobox
     overrides.css                 # OLED + light Tailwind overrides
     setup-guide.css               # Wizard badges, feel cues, procedure steps
+    telemetry.css                 # v0.6.0 feature: graph pills, HUD, tire pills, steppers, badges
     print.css                     # Print/PDF summary (window.print)
 index.html                        # Shell layout; feature shells inject into mount points
 capacitor.config.ts               # Native wrapper (webDir dist)
@@ -97,20 +104,38 @@ android/                          # Committed Capacitor scaffold (generated outp
 - Toggle cycles dark → oled → light. Persisted in localStorage.
 - CSS uses `[data-theme='dark']`, `[data-theme='oled']`, `[data-theme='light']` selectors.
 - **Every Tailwind text/background/border class needs a light-mode override** in `overrides.css` (e.g. `[data-theme='light'] .text-gray-300 { color: #334155 !important; }`).
-- New feature CSS goes in its own `styles/<feature>.css` module (theme tokens only) and is wired via `@import` in `main.css`, keeping hub order: tokens, base, drawer, components, shell, overrides, feature.
+- New feature CSS goes in its own `styles/<feature>.css` module (theme tokens only) and is wired via `@import` in `main.css`, keeping hub order: tokens, base, drawer, components, controls, shell, overrides, feature.
 - Same for OLED: `bg-gauge/80`, `bg-gauge/50` need explicit OLED overrides.
 - `document.documentElement.classList.toggle('dark', currentTheme !== 'light')` controls Tailwind dark mode.
 - Graph has separate palettes per theme in `graph-theme.ts`.
 
-## Graph layer order (must maintain in drawGraph)
-Static layer, cached in `graph-layers.ts` (repaint only when frame/unit/theme/redline change):
-1. Background (`graph-axes.ts: drawBackground`)
-2. Grid, redline band, labels, titles (`graph-axes.ts: drawSpeedGrid, drawRpmGrid, drawRedlineBand, drawAxisTitles`)
-Dynamic layer, redrawn every render on top of the blitted bitmap:
-3. Primary curves + shift drops + markers (`graph-curves.ts`, `graph-shift-drops.ts`)
-4. Aero-wall shading + limits (`shadeAeroWall`, `drawAeroLimit`)
-5. Comparison curves + shift drops (if enabled, dashed style)
-6. Grip limits (`graph-limits.ts`)
+## Type scale & fonts
+- `src/styles/controls.css` owns the **type scale**: `--fs-micro` (9px) → `--fs-body` (16px) plus `--fs-label`, the `.fs-*` size utilities, and the shared control classes `.field-label` / `.field-label--mono`, `.field-input` (modifiers `--compact`, `--md`, `--tall`, `--upper`, `--center`, `--recessed`), `.field-unit`, `.field-half`, `.card-title`, `.section-title`, `.mono-cap`, `.mono-note`.
+- The same file owns the shared **button system**: `.btn` (sizes `--xs`, `--sm`, `--md`; variants `--mono`, `--solid`, `--recessed`, `--icon`), `.seg-btn` (drawer language/unit/power segments, `--mono`, active state `.is-active`) and `.text-btn` (variants `--compare`, `--accent`, `--danger`). `components.css` adds `.menu-item` for dropdown rows; `drawer.css` adds `.drawer-nav-row` (`.is-active`) and `.drawer-export-btn`. Never rebuild these looks with inline utilities and never reassign `className` on a segmented button: flip `is-active` with `classList.toggle` (`language-events.ts`, `unit-events.ts`).
+- Do not inline arbitrary sizes (`text-[…]`, `text-xs`, `text-sm`) in markup or TS class strings: use the `.fs-*` utilities or the role classes above, and change sizes only through the `--fs-*` variables.
+- Fonts are declared once in `src/styles/tokens.css`: `--font-sans` (Share Tech) and `--font-mono` (Share Tech Mono), loaded from Google Fonts by `index.html`; `tailwind.config.cjs` mirrors them for `font-sans` / `font-mono`. Both families ship weight 400 only, so heavier weights render synthesized.
+- SVG graph text uses `'Share Tech Mono, monospace'` (the `FONT` constants in `src/services/graph/svg-*.ts`).
+- HTML legend swatches and layer pill dots are painted from the plot palette: `graph-legend.ts: syncGraphSwatches()` runs inside `renderGraph` and reads `[data-graph-legend]` / `[data-graph-layer]` hosts plus their `[data-graph-swatch]` child (`data-swatch='border'` for dashed lines).
+
+## Card & section chrome
+- One recipe builds every accordion: `components/card/accordion-shell.ts` exports `buildToolShell()` (stacked card wrapper), `buildAccordionSection()` for nested sections, plus `buildSectionHeader()` and `buildChevron()`; the panel chrome itself comes from the shared `[data-accordion]` rule in `components.css`. Tool modules (`setup-guide.ts`, `cruise-card.ts`, `tire-size-tool.ts`, `pyrometer-shell.ts`) only pass `{ id, title, note?, dot?, middle?, body }` — never hand-roll the card/accordion/header markup again.
+- Header role classes live in `components.css`: `.section-header` (padding, background and bottom border come from the `[data-accordion] > .section-header` rule, so headers carry no spacing/background utilities), `.section-head` (+ `.section-head--end` for the trailing group), `.section-dot` (accent color from a `bg-*` utility), `.section-note`, `.section-title`, and `card card-container card--stack` for tool cards; `.tools-stack .card` strips the nested chrome inside the tools card. Card-level shells that wrap sibling sections (`vehicle`, `compare`, `tools`, `setup`) are exempt from the panel chrome: transparent box, flat `0 0 8px` header with a hairline underline, `0` content padding — only their inner sections carry the banded header. The retired `.accordion-header` alias is gone.
+- Table role classes: `.th` / `.th--right` / `.th--lead` and `.td` / `.td--right` / `.td--tight` / `.td--lead` in `components.css`; mono, `nowrap` and inline padding come from `.table-sticky`, so never repeat `pb-2 font-medium … whitespace-nowrap` or `py-2.5 … whitespace-nowrap` clusters in markup or `innerHTML` strings.
+- `tests/accordion-chrome.test.ts` locks the recipe in place: no retired `accordion-header` alias, every `data-accordion-header` header carries `section-header`, tool modules delegate to `buildToolShell`, table cells use the role classes.
+
+## Graph render order (must maintain in renderGraph)
+The plot is a declarative SVG rebuild: every render clears `#graph-svg` and remounts the primitives composed by `graph-scene.ts: composeNodes` (no bitmap cache, no HiDPI work). The viewBox is pinned to the measured host in CSS pixels (`graph-renderer.ts`), so text keeps its real size on every viewport; `svg-frame.ts: buildPlotFrame` scales the insets with the host width.
+Draw order:
+1. `<defs>` (`svg-defs.ts`: aero/wheelspin hatch, power gradient, plot clipPath)
+2. Background, grid (+ fine 10-unit texture), speed/RPM ticks, redline band, comparison redline (`svg-axes.ts`)
+3. Primary gear rays with aero-wall fade split, gear tags, reverse ray (`svg-curves.ts`)
+4. Shift-drop connectors, markers and labels (`svg-shift-drops.ts`, layer-gated)
+5. Aero-wall shading, line and callout (`svg-limits.ts`, drawn only when the wall is inside the plot)
+6. Power envelope + comparison envelope + right-hand power axis (`svg-power.ts`, `svg-axes.ts: buildPowerAxis`, layer-gated). The ceiling follows the available peak; the road-load curve may leave the plot through the top. The axis nodes are mounted in their own **unclipped** group (`graph-power-axis`) because they live in the right inset, where the plot clip would cut every tick.
+7. Comparison rays and comparison aero wall (`svg-curves.ts`, `svg-limits.ts`)
+8. Grip limit curves + launch wheelspin bands (`svg-limits.ts`, layer-gated)
+9. Axis titles (`svg-axes.ts`), then the crosshair group (`graph-crosshair.ts`)
+Layer switches live in `state.graphLayers` (`core/models.ts`). The four `[data-graph-layer]` toolbar pills are bound in `graph-renderer.ts: bindGraphInteractions` (click → flip → `renderGraph`); the drawer's fine-grid and snap-HUD checkboxes are owned by `drawer-display-events.ts` and repaint through the full render. Exports (`graph-export.ts`) clone the live SVG and pin the live viewBox.
 
 ## Important DOM patterns
 - `data-i18n` for text content → `applyI18n()` sets `el.textContent = t(key)`.
@@ -134,7 +159,7 @@ Dynamic layer, redrawn every render on top of the blitted bitmap:
 - Run single file: `npx vitest run tests/tire-math.test.ts`.
 - Always run `npx tsc --noEmit` + `npm test` before committing.
 - Coverage for the chassis/aero pass: `tests/dynamics-math.test.ts` (load transfer, friction circle, dyno taper, coast lock, compound gain), `tests/drivetrain-eff.test.ts`, `tests/dyno-csv.test.ts`, `tests/setup-matrix.test.ts`, `tests/brake-math.test.ts`, `tests/recovery-math.test.ts`, `tests/tire-compounds.test.ts`.
-- Coverage for the physics/share/sim passes: `tests/engine-curve-akima.test.ts`, `tests/graph-layers.test.ts`, `tests/share-compact.test.ts`, `tests/catalog-validation.test.ts`, `tests/drivetrain-export.test.ts`, `tests/presets.test.ts`, `tests/qr-svg.test.ts`, `tests/accel-math.test.ts` (splits + reaction), `tests/accordion-height.test.ts` (no height cap).
+- Coverage for the physics/share/sim passes: `tests/engine-curve-akima.test.ts`, `tests/graph-svg.test.ts` (frame math, fade rule, envelope crossing + ceiling, unclipped power axis, comparison envelope, layer gating), `tests/crosshair-tooltip.test.ts` (grip verdict + wheel-power readout), `tests/pyrometer-math.test.ts`, `tests/kpi-strip.test.ts` (WALL/OVERDRIVE/ECO classifiers), `tests/share-compact.test.ts`, `tests/catalog-validation.test.ts`, `tests/drivetrain-export.test.ts`, `tests/presets.test.ts`, `tests/qr-svg.test.ts`, `tests/accel-math.test.ts` (splits + reaction), `tests/accordion-height.test.ts` (no height cap), `tests/accordion-chrome.test.ts` (header/table role classes).
 
 ## Share/URL
 - Full setup encoded in URL hash, restored on page load via `restoreFromUrl()`.
@@ -151,9 +176,9 @@ Dynamic layer, redrawn every render on top of the blitted bitmap:
 - Tests: `tests/diff-presets.test.ts` (order, range, i18n labels).
 
 ## Simulation KPIs
-- `renderTable()` → `updateSummaryKpis()` keeps `#kpi-redline`, `#kpi-top-speed`, `#kpi-aero-wall` in sync with state (never rely on static HTML defaults).
+- `kpi-strip.ts: renderKpis()` keeps `#kpi-redline`, `#kpi-top-speed`, `#kpi-aero-wall`, `#kpi-grip`, `#kpi-0-100-time`, `#kpi-quarter`, `#kpi-trap`, `#kpi-wheel-power` in sync with state (never rely on static HTML defaults). `renderTable()` calls it internally.
 - Accel KPIs memoize on a JSON key of physical inputs (`buildAccelKey`).
-- `updateAccelKpis()` calls `applyKpiUnits()`: km/h mode shows 0-100 / 0-160 / 0-400 m, mph mode shows 60 ft / 0-60 mph / 1/4 mile. The quarter-mile cell swaps its label between `kpi.m400` and `kpi.quarterMile`; trap speed always renders in the active speed unit.
+- km/h mode swaps the 0-100 cell value to `time0To100S`; mph mode swaps it to `t060mphS` (the dedicated 0-60 cell is gone, so copy and number always describe the same split). The quarter-mile cell keeps `quarterMileS` and swaps its label between `kpi.m400` and `kpi.quarterMile`; trap speed always renders in the active speed unit.
 
 ## Setup levels (Easy / Medium / Full)
 - `SetupLevel = 'easy' | 'medium' | 'full'` on `AppState.setupLevel` (primary) and `AppState.compLevel` (comparison); persisted in `haguruma-setup-level` / `haguruma-comp-level`.
@@ -161,10 +186,13 @@ Dynamic layer, redrawn every render on top of the blitted bitmap:
 - Primary level gates **setup inputs only** — graph, tables, cruise and guides stay visible at every level. The comparison follows the primary level and can be lowered independently; its gear rows gate at `full`, engine/aero sections at `medium`.
 - A level change must re-run `applySetupLevel()` + `applyCompLevel()` and then `renderAll(refs)`.
 
-## Drawer navigation & Tools card
-- Drawer nav has four entries only: Primary Car, Secondary Car, Tools, Setup (`data-view='primaryCar' | 'secondaryCar' | 'tools' | 'setup'`).
-- `mobile-drawer-events.ts` maps each view to an accordion selector (`primaryCar → [data-accordion="primary"]`, `secondaryCar → compare`, `tools → cruise`, `setup → setup`); `openAccordionTree()` auto-opens collapsed ancestors.
-- The Tools card (`cruise-card.ts`) holds two sibling accordions: `data-accordion="cruise"` (cruising check) and `data-accordion="tiresize"` (tire-size comparator with its own verdict pill). Both share the standard section-header/chevron markup.
+## Drawer navigation & Tools column
+- Drawer nav scrolls the page to its section and closes: `data-view='primaryCar' | 'secondaryCar' | 'engine' | 'setup' | 'pyrometer' | 'presets'` plus the `#btn-my-cars` modal trigger.
+- `mobile-drawer-events.ts` maps each view to a selector (`primaryCar → [data-accordion="primary"]`, `secondaryCar → compare`, `engine → engine`, `setup → #setup-guide-mount`, `tools → #cruise-mount`, `pyrometer → #pyrometer-mount`, `presets → #preset-anchor`); `openAccordionTree()` auto-opens collapsed ancestors. The header `#header-car-trigger` reuses `data-view='presets'`.
+- Drawer display switches (`drawer-fine-grid`, `drawer-snap-hud`) toggle `state.graphLayers` and repaint; `drawer-display-events.ts` also owns the drawer export pipeline and footer close. `syncDrawerDisplay()` re-aligns the checkboxes on every render.
+- The tools live in the left sidebar (`xl:col-span-4`) as four stacked mount points (`#cruise-mount`, `#tire-size-mount`, `#pyrometer-mount`, `#setup-guide-mount`) after the secondary-compare card; each tool card is self-contained (`inject*Shell()` builds its own `card` chrome and its own accordion header: `cruise`, `tiresize`, pyrometer, handbook/wizard). No tool creates another tool's mount. The right column (`xl:col-span-8`) holds only the graph and the gear-breakdown table.
+- Setup controls are built by one prefix-parameterized module: `setup-controls.ts: injectSetupBaseBlock(host, prefix)` + `injectAeroReadout(host, prefix)` render the pills/steppers into `#setup-controls-mount` and `#comp-setup-controls-mount`; `syncSetupControls()` repaints both. Roots carry `data-setup-prefix='primary' | 'compare'` (the compare variant is styled amber in `telemetry.css`).
+- Primary setup rows that also exist as static markup stay authoritative: `running-gear-block.ts` marks `tire` and `weight` as `EXTERNAL_SUFFIXES` so the injected grid skips them while binding/sync still resolve those ids.
 
 ## Car catalog labels
 - `label` follows one convention: `<Model> (<N>-Speed[, <Type>], <FD> FD)` — e.g. `BMW M3 E36 3.2 (5-Speed, 3.15 FD)`. No prose descriptors ("Test", scenario names, bare years).
@@ -186,3 +214,15 @@ Dynamic layer, redrawn every render on top of the blitted bitmap:
 - `vite.config.ts` uses `base: './'` for GitHub Pages deployment.
 - `tsconfig.json`: strict mode, `noEmit`, `moduleResolution: bundler`.
 - Tailwind loaded via CDN (`cdn.tailwindcss.com`) with custom colors in `index.html`.
+
+## v0.7 dynamics
+- `state.dynamics` owns limiter/gearbox timing, mapped efficiency, ABS/brake settings, apex inputs, timed sequence CSV and graph view. `dynamics-input.ts` builds shared primary simulation/braking/force inputs.
+- `drive-force.ts` and `force-profile.ts` share wheel force and transfer feedback between solver, table and force graph. `accel-step.ts` owns mutable per-run gear/limiter state; no application state is written by a solver.
+- `braking-simulation.ts` owns per-wheel ABS/lock integration and combines hydraulic and engine-braking demand in one tire budget. `lap-sequence.ts` rejects over-rev commands; `corner-advisor.ts` recommends a pre-corner gear.
+- `active-diff-controls.ts` adds mirrored optional preload/vectoring/AWD fields; the primary static running-gear grid receives its rows before refs resolve. New fields gate at Full and are disabled when the layout/model makes them irrelevant.
+- `dynamics-tool.ts` delegates chrome to `buildToolShell`. It shows stopping-distance KPIs and apex/sequence results. Braking and sequence results memoize on all relevant physical inputs.
+- `dynamics-graph.ts` renders force or stopping-distance views on the same SVG host. RPM crosshair/legend layers are disabled outside RPM view; axes must never display RPM for force or distance data. Exports clone the active view.
+- `graph-power-scene.ts` composes mapped power envelopes; `graph-crosshair-context.ts` builds the matching tooltip context. The legacy aero-wall KPI uses nominal peak wheel power, while the force graph marks the per-gear achievable crossing.
+- `dynamics-share.ts` appends validated non-default `d_*`, `rg_dp/af/cl/tv/hd/ha` and `crg_*` sidecars. Never change the frozen v1 compact payload; merge sidecars after decoding its running-gear blocks.
+- The efficiency map and ABS/kinetic-slip constants are engineering assumptions, not manufacturer-verified data. Keep that caveat in the UI and MATH.md.
+- Run `npm run bench` for anchor/64-point dyno/active-AWD timings; `tests/accel-performance.test.ts` guards a warm median below 3 ms.

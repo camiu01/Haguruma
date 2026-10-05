@@ -10,6 +10,77 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 [![Vitest](https://img.shields.io/badge/Vitest-1.6.0-green.svg)](https://vitest.dev/)
 [![PWA](https://img.shields.io/badge/PWA-ready-purple.svg)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 
+## What's new in 0.7.0-alpha.1
+
+This is an alpha preview of the v0.7.0 milestone, not a stable release.
+
+- **Graph views:** switch between RPM/speed, per-gear wheel force/speed, and
+  stopping speed/distance. The force view overlays road resistance, a force-based
+  Vmax marker, optional traction excess, and dashed comparison curves. Braking
+  shows 100–0 and 200–0 km/h profiles with deceleration on the right axis.
+- **Live acceleration physics:** grip feeds instantaneous longitudinal transfer
+  back into the Euler solver, including zero-grip states. Hard fuel cut or
+  hysteretic limiter bounce, synchro/dog defaults and per-gear delays are selectable.
+- **Dynamics tool:** ABS, brake bias/demand, stopping-distance KPIs, corner-radius
+  apex advice and editable throttle/coast/brake/downshift sequences with rev matching.
+  Sequence rows are `seconds, one-based gear, throttle (0–1), brake demand (g)`;
+  total duration is limited to 60 seconds and over-rev downshifts are rejected.
+- **Differentials:** mirrored axle preload, torque vectoring, adaptive AWD
+  front/rear coupling and handbrake-disengage controls in both running-gear setups.
+- **Mapped losses:** a bilinear RPM/torque-load efficiency map, normalized to the
+  nominal efficiency input. This is an engineering approximation, **not a
+  manufacturer-measured map**; disable it to retain constant-efficiency calculations.
+- **Sharing and performance:** v0.7 controls use validated sidecar keys beside
+  the unchanged v1 compact token. Frozen dyno curves reuse Akima coefficients.
+  `npm run bench` measures anchors, 64-point dyno and active-AWD runs; a warm-median
+  regression test guards the 3 ms target.
+
+These estimates are intended for setup exploration, not safety-critical braking
+predictions. See [MATH.md](MATH.md) for assumptions and equations.
+
+## Previously in 0.6.0
+
+**Power envelope.** The available-vs-required wheel-power layer now scales to the
+wheel-power peak instead of the road-load demand, so the envelope fills the plot;
+the kW axis lives in its own unclipped group (it used to be cut away by the plot
+clip entirely), the crossing carries its drag-limited speed, the secondary car's
+envelope runs dashed on the same scale, and the hover tooltip reports the wheel
+power at the cursor from the very sample the curve is drawn from.
+
+**Graph readouts.** The free hover tooltip grew a grip verdict row (tire limit,
+per-wheel share, wheelspin flag) and a wheel-power row; shift-point snapping moved
+into `svg-shift-drops.ts: snapPointFor()` with its own window constant and suite.
+
+**Comparison parity.** The secondary running gear renders in the same two-column
+grid as the primary card again (`#comp-rg-mount` is `display: contents`), with the
+lateral-G slider back in its primary slot between rear spring and downforce.
+
+**Shared chrome.** One recipe builds every card and accordion: `components/card/accordion-shell.ts`
+exports `buildToolShell` / `buildAccordionSection` / `buildSectionHeader` / `buildChevron`,
+and the cruise, tire-size, pyrometer and paddock tools delegate to it instead of
+hand-rolling card, header and chevron markup. Headers moved to the `section-header` /
+`section-head` / `section-dot` / `section-note` role classes, tables to the `.th` / `.td`
+roles and inputs to `.field-*`; the retired `.accordion-header` alias is gone, locked by
+`tests/accordion-chrome.test.ts`.
+
+**Design system.** New `src/styles/controls.css` owns the type scale (`--fs-micro` →
+`--fs-body` plus the `.fs-*` utilities), the field system (`.field-label`, `.field-input`
+with its `--compact` / `--md` / `--tall` / `--upper` / `--center` / `--recessed`
+modifiers, `.field-unit`, `.field-half`) and the button system (`.btn`, `.seg-btn` with
+`.is-active`, `.text-btn`); segmented buttons flip a class instead of rebuilding their
+class list. Fonts moved from Inter / JetBrains Mono to **Share Tech / Share Tech Mono**
+(`index.html`, `tailwind.config.cjs`, theme tokens), and static markup moved out of
+`index.html` into component-owned template modules.
+
+**Legend sync.** `graph-legend.ts: syncGraphSwatches()` repaints the HTML legend swatches
+and the layer pill dots from the live plot palette on every render, so legend and graph
+cannot drift apart in any theme.
+
+**QR sharing.** The share modal's QR renderer is a thin wrapper over the `qrcode` package
+now (~430 hand-rolled encoder lines removed; EC level L, versions 1-10, path-based SVG).
+
+The full checklist lives in [TODO.md](TODO.md).
+
 ## Features
 
 - **RPM-vs-speed curves** — one per forward gear up to the rev limiter, with shift-drop connectors showing RPM landing in the next gear.
@@ -28,9 +99,12 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 - **Layout-mapped efficiency** — picking FWD/RWD/AWD in the running-gear card also sets the default drivetrain efficiency (0.90 / 0.85 / 0.80).
 - **Acceleration solver** — fixed-step Euler simulation of 0-100 km/h and the quarter mile, including optional rotating inertia (per-gear when `I` values are set), shift torque cut, and launch clutch-slip `launchRpm`. Splits follow the display unit: 0-400 m / 0-160 in km/h mode, 60 ft / 0-60 mph / 1/4-mile trap speed in mph mode.
 - **Highway cruising check** — required vs available wheel power and gear RPM at a chosen cruise speed.
-- **Graph export** — PNG (canvas) and SVG (vector) downloads; print stylesheet for PDF via the browser print dialog.
+- **Wheel-power envelope** — available (max over gears) vs required (road load) wheel power on a theme-aware kW axis, scaled to the wheel-power peak: the crossing marks the drag-limited speed, the secondary car's envelope runs dashed alongside on the same scale, and the hover tooltip reads the wheel power at the cursor speed.
+- **Graph layer toggles & legend** — four toolbar pills (shift drops, aero wall, grip limit, power curve) bound to `state.graphLayers`, with the legend swatches and pill dots repainted from the live plot palette on every render (`graph-legend.ts`).
+- **Hover tooltip** — free readout beside the crosshair: RPM per primary (and secondary) gear with over-rev flags, the wheel power at that speed, and the grip verdict (tire limit, per-wheel share, wheelspin).
+- **Graph export** — PNG and SVG downloads rendered from the SVG plot; print stylesheet for PDF via the browser print dialog.
 - **Sim & telemetry export** — one dropdown for Assetto Corsa `.ini`, drivetrain `.json`, BeamNG `.jbeam`, and tabular CSV for MoTeC / AiM Race Studio.
-- **KPI strip** — live redline, top speed, aero wall, grip limit, and unit-aware acceleration cells.
+- **KPI strip** — 8 live cells: redline, top speed, aero wall, grip limit, wheel power, unit-aware 0-100/0-60 cell, quarter-mile/trap pair.
 - **Brake bias & stopping distance** — ideal front/rear bias from deceleration load transfer with a rear-lock flag, plus `v²/2a` stopping distance with aero/grade correction (`brake-math.ts`).
 - **Gear-drop recovery** — milliseconds to climb back to peak torque after each upshift from equivalent inertia (`recovery-math.ts`).
 - **Tire size comparator** — stock vs plus-size diameters, speedometer error at 50/100/130 km/h, and gearing shift deltas, live-synced from primary/secondary state.
@@ -44,8 +118,12 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 - **Share via URL** — encodes all setup parameters into the URL hash (packed Base64URL `c` token with verbose fallback). One-click copy, plus an offline **QR code** modal for laptop-to-phone transfer.
 - **Setup levels** — Easy / Medium / Full gating of setup inputs, persisted in localStorage; the comparison card follows the primary level and can be lowered independently.
 - **PWA** — `manifest.webmanifest` with standalone display, maskable icons; service worker for offline asset caching.
-- **Theme system** — three-way toggle: dark (default) → oled (pure black) → light (white). Persisted in localStorage. Graph canvas palette follows the theme.
-- **Mobile-first layout** — slide-over drawer (nav, garage, units/theme, share/QR), compact header, 16/9 graph canvas, horizontal-scroll tables with sticky first column, 44px touch targets, `visualViewport` keyboard-avoidance.
+- **Theme system** — three-way toggle: dark (default) → oled (pure black) → light (white). Persisted in localStorage. The SVG plot palette follows the theme through CSS tokens.
+- **Mobile-first layout** — universal slide-over drawer (nav, units/language, export & data pipeline, display preferences, technical specs), 64px fixed header, 16/9 SVG cartesian plot with layer toggles and snapping crosshair HUD, horizontal-scroll tables with sticky first column, 44px touch targets, `visualViewport` keyboard-avoidance.
+- **Touch-first setup controls** — tire geometry pills (width/aspect/rim), tactile final-drive and rev-limiter steppers with live circumference, diameter and 200 km/h aero drag readouts. The A/B comparison mirrors the same controls with amber accents, and the gear stack rows carry micro ±0.005 steppers with per-row overall-ratio readouts.
+- **Breakdown table** — 11 columns including peak-torque traction excess (`wheel force − transferred grip`), per-gear WALL and OVERDRIVE flags plus ECO cruising advisories.
+- **3-zone pyrometer calculator** — inner/middle/outer tread temperatures with camber and hot-pressure advisories (bar steps, clamped), inner-outer and center-edge spread readouts, and a cold/optimal/hot working-window verdict.
+- **Tools** — cruising check, tire-size comparator, pyrometer, vehicle dynamics and the paddock setup guide.
 
 ## Physics engine
 
@@ -53,6 +131,10 @@ HAGURUMA uses strict SI discipline internally:
 
 | Module | Key physics |
 |---|---|
+| `drive-force.ts`, `force-profile.ts` | Shared mapped force, self-consistent axle transfer, per-gear traction margin and force-based Vmax |
+| `drivetrain-map.ts`, `powertrain-control.ts` | Bilinear loss map, limiter hysteresis and per-departing-gear interruption |
+| `braking-simulation.ts` | Individual wheel budgets, combined service/engine braking, ABS cycling, sliding friction and stopping profiles |
+| `lap-sequence.ts`, `corner-advisor.ts` | Downshift clutch impulse, rev-match blip, timed commands and apex gear advice |
 | `tire-math.ts` | `205/55R16` parsing, loaded rolling circumference, centrifugal growth, load-sensitive dynamic radius |
 | `engine-curve-core.ts` | Single source of truth for `engineTorqueAt` / `tractiveForceAt` / optimal shift; Akima interpolation over measured dyno nodes with linear fallback, dyno-tail taper |
 | `traction-math.ts` | Engine torque from power anchors (`KW_TO_NM = 30000/π` ≈ 9549.3); linear torque interpolation below peak torque; tractive force `F = T × i × η / r_dyn`; optimal shift via force-curve crossing with backward scan |
@@ -66,6 +148,7 @@ HAGURUMA uses strict SI discipline internally:
 | `accel-math.ts` | Forward-Euler time-step solver for 0-100 and 1/4 mile; 60 ft / 0-60 mph / 0-160 splits plus trap speed and reaction offset; shift window; optional rotating mass and launch RPM |
 | `inertia-math.ts` | Reflects engine/wheel moments of inertia through the current gear into an equivalent translational mass |
 | `cruise-math.ts` | Highest gear with RPM ≥ floor, required/available wheel power, OK / high / over verdict |
+| `pyrometer-math.ts` | 3-zone tread analysis: inner/outer and center/edge spreads, camber advice (±8 °C), pressure advice in 0.05 bar steps (0.30 bar cap, 1.0 bar hot floor), target ± 15 °C working window |
 
 ## Presets
 
@@ -127,19 +210,24 @@ src/
     share/share-utils.ts         # verbose URL hash encode/decode
     share/share-compact.ts       # packed Base64URL full-state codec
     share/running-gear-share.ts  # rg_/crg_ block + numeric range table
+    share/qr-svg.ts              # share-modal SVG QR (qrcode package, EC level L)
   config/                        # presets, glob catalog loader, cars/, diff-presets,
                                  # tire-compounds, drivetrain-eff, gear colors, graph constants
   services/
     dom/element-refs.ts          # typed DOM handles
-    graph/                       # canvas setup, axes, curves, drops, renderer, tooltip,
-                                 # theme, export, layers, limits, drivetrain-export
+    graph/                       # svg-frame geometry + projection, defs, axes, curves,
+                                 # shift drops (+ snapPointFor), limits, power envelope,
+                                 # prim mount, scene + renderer, crosshair + tooltip,
+                                 # legend swatch sync, theme, export, drivetrain-export
     events/                      # one binder per control group
   components/                    # gear list, breakdown table, compare table, running-gear-block,
                                  # tire-size tool, custom car, cruise card, preset search
-  components/card/               # base Card + one file per specialized card + barrel
+  components/card/               # base Card + accordion-shell recipe + one file per
+                                 # specialized card + barrel
+  templates/                     # static shell fragments injected by app-shell.ts
   views/render-all.ts            # single refresh entry
-  styles/                        # main.css hub + tokens/base/drawer/components/shell/overrides/
-                                 # setup-guide/print
+  styles/                        # main.css hub + tokens/base/drawer/components/controls/shell/
+                                 # overrides/setup-guide/telemetry/print
 capacitor.config.ts              # native wrapper (webDir dist)
 android/                         # committed Capacitor scaffold
 tests/                           # vitest suites mirroring src/
