@@ -265,8 +265,7 @@ Focus on tire physics evolution, wheel tractive-force curves and the dynamic ver
 Integration: localized EN/IT dynamics tool and graph controls, Full-level A/B
 differential fields, backward-compatible non-default URL sidecars, active-view
 SVG/PNG export, physics assumptions in MATH.md, and version files set to
-0.7.0-alpha.1 (Android versionCode 9). This is an alpha preview, not a stable
-release. Release tagging and publishing are separate actions.
+0.7.0 (Android versionCode 10). Released as stable; tagged `v0.7.0`.
 
 ---
 

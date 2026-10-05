@@ -10,9 +10,9 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 [![Vitest](https://img.shields.io/badge/Vitest-1.6.0-green.svg)](https://vitest.dev/)
 [![PWA](https://img.shields.io/badge/PWA-ready-purple.svg)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 
-## What's new in 0.7.0-alpha.1
+## What's new in 0.7.0
 
-This is an alpha preview of the v0.7.0 milestone, not a stable release.
+Stable release of the v0.7.0 milestone: vehicle dynamics and tractive-force engine.
 
 - **Graph views:** switch between RPM/speed, per-gear wheel force/speed, and
   stopping speed/distance. The force view overlays road resistance, a force-based

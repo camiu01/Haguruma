@@ -144,18 +144,21 @@ internal scans call `speedKmh` / `rpmFromKmh` directly.
 ### 5.1 Torque ⇄ power
 
 $$
-T\,[\text{Nm}] = P\,[\text{kW}] \cdot \frac{KW\_TO\_NM}{n}
+T\,[\text{Nm}] = P\,[\text{kW}] \cdot \frac{\mathrm{KWtoNM}}{n}
 = P \cdot \frac{30000}{\pi \, n},
 \qquad
-P\,[\text{kW}] = \frac{T \cdot n}{KW\_TO\_NM}
+P\,[\text{kW}] = \frac{T \cdot n}{\mathrm{KWtoNM}}
 $$
+
+$\mathrm{KWtoNM}$ is the `KW_TO_NM` constant ($30000/\pi$); formulas spell it
+without underscores because GitHub math strips `\_` escapes before rendering.
 
 ### 5.2 Anchor model (default)
 
 Anchors: `peakTorqueRpm`, `peakTorqueNm`, `peakPowerRpm`, `peakPowerKw`, `redline`.
 Validated by `validateCurve`: redline clamped to [3000, 12000], torque peak
-RPM clamped to $[\text{CURVE\_MIN\_RPM}, \text{peakPowerRpm}]$, power peak RPM
-clamped to $[\text{CURVE\_MIN\_RPM}, \text{redline}]$.
+RPM clamped to [`CURVE_MIN_RPM`, power peak RPM], power peak RPM clamped to
+[`CURVE_MIN_RPM`, redline].
 
 Power is piecewise-linear in RPM, with a torque ramp below peak torque:
 
@@ -163,7 +166,7 @@ $$
 \text{for } n \le n_{T}:\quad
 k = \frac{n - 1000}{n_T - 1000},\quad
 T = T_{\max}\,(0.5 + 0.5k),\quad
-P = \frac{T\,n}{KW\_TO\_NM}
+P = \frac{T\,n}{\mathrm{KWtoNM}}
 $$
 
 So torque rises from 50 % of peak at 1000 rpm to 100 % at the torque peak.
@@ -173,7 +176,7 @@ $$
 P = P_{T} + (P_{\max} - P_{T})\,\frac{n - n_T}{n_P - n_T}
 $$
 
-where $P_T = T_{\max} n_T / KW\_TO\_NM$ is the power at the torque peak.
+where $P_T = T_{\max} n_T / \mathrm{KWtoNM}$ is the power at the torque peak.
 
 $$
 \text{for } n_P < n \le n_{\text{red}}:\quad
@@ -201,7 +204,7 @@ w_1 = |m_{i+3}-m_{i+2}|,\quad w_2 = |m_{i+1}-m_i|,
 \qquad
 t_i =
 \begin{cases}
-\dfrac{w_1 m_{i+1} + w_2 m_{i+2}}{w_1 + w_2}, & w_1+w_2>0\\[4pt]
+\dfrac{w_1 m_{i+1} + w_2 m_{i+2}}{w_1 + w_2}, & w_1+w_2>0\\
 \dfrac{m_{i+1}+m_{i+2}}{2}, & \text{otherwise}
 \end{cases}
 $$
@@ -223,7 +226,7 @@ limiter instead of extrapolating a rising curve:
 
 $$
 P(n) = P_{\text{last}}\left(1 - 0.10 \cdot k\right),\quad
-k = \operatorname{clamp}\!\left(\frac{n - n_{\text{last}}}{n_{\text{red}} - n_{\text{last}}}, 0, 1\right)
+k = \mathrm{clamp}\!\left(\frac{n - n_{\text{last}}}{n_{\text{red}} - n_{\text{last}}}, 0, 1\right)
 $$
 
 `anchorsFromPoints` derives consistent `peakTorque*` / `peakPower*` anchors by
@@ -235,7 +238,7 @@ scanning the interpolated curve in 25-rpm steps.
 - Header row optional; column labels matched case-insensitively (`rpm|giri|rev`,
   `nm|coppia|torque|kgm|mkg`, `kw|cv|hp|ps|potenza|power`).
 - Unit handling: torque `kgm → Nm` via 9.80665; power `cv/hp/ps → kW` via `hpToKw`.
-- Power-only rows convert to torque with $T = P \cdot KW\_TO\_NM / n$.
+- Power-only rows convert to torque with $T = P \cdot \mathrm{KWtoNM} / n$.
 - Optional Gaussian pre-filter `smoothTorquePoints`, kernel $[1,4,6,4,1]/16$,
   clamped-index edges.
 - Savitzky-Golay pre-filter `smoothTorquePointsSG` (v0.5.0): quadratic fit
@@ -676,8 +679,8 @@ Every other function returns `0`, `null` or a null-result object rather than
 | km/h → m/s | $/3.6$ (`kmhToMs`) |
 | km/h → mph | `× MPH_PER_KMH` = $/1.609344$ |
 | mph → km/h | `× KMH_PER_MPH` = $× 1.609344$ |
-| kW → Nm at $n$ | $× KW\_TO\_NM / n$, $KW\_TO\_NM = 30000/\pi$ |
-| Nm → kW at $n$ | $× n / KW\_TO\_NM$ |
+| kW → Nm at $n$ | $× \mathrm{KWtoNM} / n$, $\mathrm{KWtoNM} = 30000/\pi$ |
+| Nm → kW at $n$ | $× n / \mathrm{KWtoNM}$ |
 | kW → cv (metric hp) | $× 1.35962$ |
 | cv → kW | $/ 1.35962$ |
 | kgm → Nm | $× 9.80665$ |
