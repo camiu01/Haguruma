@@ -46,7 +46,7 @@ src/
     gear-status.ts                 # Pure gear verdict classifiers (no DOM)
     kpi-strip.ts                   # 8-cell KPI strip + accel memo
     setup-controls.ts              # Tire pills, FD/rev steppers, aero readout
-    header-bar.ts                  # Header chip + active-car label sync
+    header-bar.ts                  # Header unit/level chip sync
     pyrometer-tool.ts              # 3-zone pyrometer calculator card
     custom-car.ts                  # Save/load/export/import custom presets
     setup-guide.ts                 # Setup shell injection + card assembly

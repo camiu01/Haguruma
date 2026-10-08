@@ -52,7 +52,7 @@ src/
     gear-status.ts                # Pure WALL / OVERDRIVE / REDLINE classifiers (no DOM)
     kpi-strip.ts                  # 8-cell KPI strip + accel memo (renderKpis)
     setup-controls.ts             # Touch-first tire pills, FD/rev steppers, aero readout (prefix-parameterized A/B)
-    header-bar.ts                 # Top bar chip + active-car label sync
+    header-bar.ts                 # Top bar unit/level chip sync
     pyrometer-tool.ts             # 3-zone pyrometer calculator card
     compare-table.ts              # Secondary comparison rows + tire-delta caption + shift-delta panel
     running-gear-block.ts         # Shared primary/secondary running-gear builder, binder and sync (prefix-parameterized)
@@ -61,6 +61,12 @@ src/
     setup-guide.ts                # Setup shell injection + card assembly
     cruise-card.ts                # Tools card: cruise accordion + render only
     tire-size-tool.ts             # Tools card: stock vs plus-size comparator (own accordion + verdict pill)
+    fitment-tool.ts               # Tools card: rim-channel calculator + balloon-to-stretch verdict
+    telemetry-tool.ts             # Tools card: telemetry gear recovery + inverse dyno
+    gear-lab-tool.ts              # Tools card: heuristic gearset solver + track archetypes + GPX import
+    session-tool.ts               # Tools card: GPS phone timer + session log + wake lock
+    spec-wizard-tool.ts           # Tools card: spec-sheet quick-add into My Cars
+    backup-tool.ts                # Tools card: full-state bundle + bulk preset transfer
     running-gear-readouts.ts      # Downforce + coast lock-up/downforce readouts
     card/                         # base Card + shared accordion-shell builder + one file per specialized card + index.ts barrel
   views/render-all.ts             # renderGraph + renderTable + KPI/readout syncs
@@ -118,7 +124,7 @@ android/                          # Committed Capacitor scaffold (generated outp
 - HTML legend swatches and layer pill dots are painted from the plot palette: `graph-legend.ts: syncGraphSwatches()` runs inside `renderGraph` and reads `[data-graph-legend]` / `[data-graph-layer]` hosts plus their `[data-graph-swatch]` child (`data-swatch='border'` for dashed lines).
 
 ## Card & section chrome
-- One recipe builds every accordion: `components/card/accordion-shell.ts` exports `buildToolShell()` (stacked card wrapper), `buildAccordionSection()` for nested sections, plus `buildSectionHeader()` and `buildChevron()`; the panel chrome itself comes from the shared `[data-accordion]` rule in `components.css`. Tool modules (`setup-guide.ts`, `cruise-card.ts`, `tire-size-tool.ts`, `pyrometer-shell.ts`) only pass `{ id, title, note?, dot?, middle?, body }` — never hand-roll the card/accordion/header markup again.
+- One recipe builds every accordion: `components/card/accordion-shell.ts` exports `buildToolShell()` (stacked card wrapper), `buildAccordionSection()` for nested sections, plus `buildSectionHeader()` and `buildChevron()`; the panel chrome itself comes from the shared `[data-accordion]` rule in `components.css`. Tool modules (`setup-guide.ts`, `cruise-card.ts`, `tire-size-tool.ts`, `fitment-tool.ts`, `telemetry-tool.ts`, `gear-lab-tool.ts`, `session-tool.ts`, `spec-wizard-tool.ts`, `backup-tool.ts`, `pyrometer-shell.ts`) only pass `{ id, title, note?, dot?, middle?, body }` — never hand-roll the card/accordion/header markup again.
 - Header role classes live in `components.css`: `.section-header` (padding, background and bottom border come from the `[data-accordion] > .section-header` rule, so headers carry no spacing/background utilities), `.section-head` (+ `.section-head--end` for the trailing group), `.section-dot` (accent color from a `bg-*` utility), `.section-note`, `.section-title`, and `card card-container card--stack` for tool cards; `.tools-stack .card` strips the nested chrome inside the tools card. Card-level shells that wrap sibling sections (`vehicle`, `compare`, `tools`, `setup`) are exempt from the panel chrome: transparent box, flat `0 0 8px` header with a hairline underline, `0` content padding — only their inner sections carry the banded header. The retired `.accordion-header` alias is gone.
 - Table role classes: `.th` / `.th--right` / `.th--lead` and `.td` / `.td--right` / `.td--tight` / `.td--lead` in `components.css`; mono, `nowrap` and inline padding come from `.table-sticky`, so never repeat `pb-2 font-medium … whitespace-nowrap` or `py-2.5 … whitespace-nowrap` clusters in markup or `innerHTML` strings.
 - `tests/accordion-chrome.test.ts` locks the recipe in place: no retired `accordion-header` alias, every `data-accordion-header` header carries `section-header`, tool modules delegate to `buildToolShell`, table cells use the role classes.
@@ -159,7 +165,7 @@ Layer switches live in `state.graphLayers` (`core/models.ts`). The four `[data-g
 - Run single file: `npx vitest run tests/tire-math.test.ts`.
 - Always run `npx tsc --noEmit` + `npm test` before committing.
 - Coverage for the chassis/aero pass: `tests/dynamics-math.test.ts` (load transfer, friction circle, dyno taper, coast lock, compound gain), `tests/drivetrain-eff.test.ts`, `tests/dyno-csv.test.ts`, `tests/setup-matrix.test.ts`, `tests/brake-math.test.ts`, `tests/recovery-math.test.ts`, `tests/tire-compounds.test.ts`.
-- Coverage for the physics/share/sim passes: `tests/engine-curve-akima.test.ts`, `tests/graph-svg.test.ts` (frame math, fade rule, envelope crossing + ceiling, unclipped power axis, comparison envelope, layer gating), `tests/crosshair-tooltip.test.ts` (grip verdict + wheel-power readout), `tests/pyrometer-math.test.ts`, `tests/kpi-strip.test.ts` (WALL/OVERDRIVE/ECO classifiers), `tests/share-compact.test.ts`, `tests/catalog-validation.test.ts`, `tests/drivetrain-export.test.ts`, `tests/presets.test.ts`, `tests/qr-svg.test.ts`, `tests/accel-math.test.ts` (splits + reaction), `tests/accordion-height.test.ts` (no height cap), `tests/accordion-chrome.test.ts` (header/table role classes).
+- Coverage for the physics/share/sim passes: `tests/engine-curve-akima.test.ts`, `tests/graph-svg.test.ts` (frame math, fade rule, envelope crossing + ceiling, unclipped power axis, comparison envelope, layer gating), `tests/crosshair-tooltip.test.ts` (grip verdict + wheel-power readout), `tests/pyrometer-math.test.ts`, `tests/kpi-strip.test.ts` (WALL/OVERDRIVE/ECO classifiers), `tests/share-compact.test.ts`, `tests/catalog-validation.test.ts`, `tests/drivetrain-export.test.ts`, `tests/presets.test.ts`, `tests/qr-svg.test.ts`, `tests/accel-math.test.ts` (splits + reaction), `tests/accordion-height.test.ts` (no height cap), `tests/accordion-chrome.test.ts` (header/table role classes), `tests/fitment-math.test.ts`, `tests/telemetry-math.test.ts`, `tests/gear-optimizer.test.ts`, `tests/track-gear.test.ts`, `tests/inverse-dyno.test.ts`, `tests/gpx-track.test.ts`, `tests/timer-math.test.ts`, `tests/session-backup.test.ts`.
 
 ## Share/URL
 - Full setup encoded in URL hash, restored on page load via `restoreFromUrl()`.
@@ -188,9 +194,9 @@ Layer switches live in `state.graphLayers` (`core/models.ts`). The four `[data-g
 
 ## Drawer navigation & Tools column
 - Drawer nav scrolls the page to its section and closes: `data-view='primaryCar' | 'secondaryCar' | 'engine' | 'setup' | 'pyrometer' | 'presets'` plus the `#btn-my-cars` modal trigger.
-- `mobile-drawer-events.ts` maps each view to a selector (`primaryCar → [data-accordion="primary"]`, `secondaryCar → compare`, `engine → engine`, `setup → #setup-guide-mount`, `tools → #cruise-mount`, `pyrometer → #pyrometer-mount`, `presets → #preset-anchor`); `openAccordionTree()` auto-opens collapsed ancestors. The header `#header-car-trigger` reuses `data-view='presets'`.
+- `mobile-drawer-events.ts` maps each view to a selector (`primaryCar → [data-accordion="primary"]`, `secondaryCar → compare`, `engine → engine`, `setup → #setup-guide-mount`, `tools → #cruise-mount`, `pyrometer → #pyrometer-mount`, `presets → #preset-anchor`); `openAccordionTree()` auto-opens collapsed ancestors.
 - Drawer display switches (`drawer-fine-grid`, `drawer-snap-hud`) toggle `state.graphLayers` and repaint; `drawer-display-events.ts` also owns the drawer export pipeline and footer close. `syncDrawerDisplay()` re-aligns the checkboxes on every render.
-- The tools live in the left sidebar (`xl:col-span-4`) as four stacked mount points (`#cruise-mount`, `#tire-size-mount`, `#pyrometer-mount`, `#setup-guide-mount`) after the secondary-compare card; each tool card is self-contained (`inject*Shell()` builds its own `card` chrome and its own accordion header: `cruise`, `tiresize`, pyrometer, handbook/wizard). No tool creates another tool's mount. The right column (`xl:col-span-8`) holds only the graph and the gear-breakdown table.
+- The tools live in the left sidebar (`xl:col-span-4`) as stacked mount points (`#cruise-mount`, `#tire-size-mount`, `#fitment-mount`, `#telemetry-mount`, `#gearlab-mount`, `#session-mount`, `#spec-mount`, `#backup-mount`, `#pyrometer-mount`, `#setup-guide-mount`) after the secondary-compare card; each tool card is self-contained (`inject*Shell()` builds its own `card` chrome and its own accordion header). No tool creates another tool's mount. The right column (`xl:col-span-8`) holds only the graph and the gear-breakdown table.
 - Setup controls are built by one prefix-parameterized module: `setup-controls.ts: injectSetupBaseBlock(host, prefix)` + `injectAeroReadout(host, prefix)` render the pills/steppers into `#setup-controls-mount` and `#comp-setup-controls-mount`; `syncSetupControls()` repaints both. Roots carry `data-setup-prefix='primary' | 'compare'` (the compare variant is styled amber in `telemetry.css`).
 - Primary setup rows that also exist as static markup stay authoritative: `running-gear-block.ts` marks `tire` and `weight` as `EXTERNAL_SUFFIXES` so the injected grid skips them while binding/sync still resolve those ids.
 

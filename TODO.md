@@ -273,17 +273,23 @@ SVG/PNG export, physics assumptions in MATH.md, and version files set to
 
 Focus on real-world data acquisition, advanced sim-racing compatibility and heuristic gear-ratio sizing.
 
-- [ ] Reverse gear-ratio calculator from telemetry logs: parser for MoTeC, AiM, RaceChrono and OBD2 CSV (`engine_rpm`, `wheel_speed_kmh`) to recover the real ratios and detect clutch/tire slip `#telemetry` `#data`
-- [ ] Gearset optimizer / heuristic solver: search engine (brute force over a discrete catalog or simulated annealing) to generate the optimal gear spacing constrained by straight-line Vmax and the maximum allowed drop `#physics` `#heuristic`
-- [ ] Target-track gear-ratio presets: profiles for track archetypes (tight hairpins / fast straights) to calibrate 2nd and 3rd gear outside the torque dead spots `#physics` `#heuristic`
-- [ ] Keep-screen-awake toggle: integrate `@capacitor/keep-awake` / `navigator.wakeLock` configurable from the UI for continuous track-side use on a mount `#android` `#ux`
-- [ ] Inverse dyno from an acceleration log: derive the torque curve from a logged v(t) run plus known mass and gearing, then load it as a custom curve `#telemetry` `#engine`
-- [ ] Phone-sensor performance timer: use device motion/GPS to measure 0-100 km/h and 1/4 mile and compare against the solver prediction `#telemetry` `#android`
-- [ ] Session recorder and export: log runs locally and export them as CSV/JSON for MoTeC / AiM tooling `#telemetry` `#export`
-- [ ] GPX track import: read a GPX file to seed the target-track gear presets with real corner and straight lengths `#telemetry` `#heuristic`
-- [ ] Spec-sheet quick-add wizard: build a new preset from a few datasheet numbers (power, mass, tire, gears) with range validation `#presets` `#ux`
-- [ ] Full-state backup bundle: export/import every persisted value (custom cars, units, theme, language) as a single JSON file `#data` `#pwa`
-- [ ] Bulk preset import/export: one-click JSON/ZIP backup and restore of all browser-saved custom cars for device migration (preset-scoped companion to the full-state bundle) `#data` `#pwa`
+Shipped in 0.8.0:
+
+- [x] Rim-channel & tire fitment calculator in Tools: ideal/accepted channel (J) for the tire width, tire window for the rim, balloon-to-stretch verdict pill with advice (`fitment-math.ts` + `fitment-tool.ts`, `fit.*` EN/IT keys) `#tires` `#ux`
+- [x] Header cleanup: removed the active-car trigger; the top bar keeps brand, solver dot, subtitle and the unit/level chip `#ux`
+- [x] Version bump 0.7.0 -> 0.8.0 (`package.json`, `package-lock.json`, `build.gradle` `versionName` + `versionCode` 10 -> 11) `#release`
+
+- [x] Reverse gear-ratio calculator from telemetry logs: dependency-free CSV parser (MoTeC, AiM, RaceChrono, OBD2 `engine_rpm`/`wheel_speed_kmh`, header-less and decimal-comma layouts) clustering rpm-per-wheel-rev into gears with a >5% slip share (`telemetry-math.ts`, Tools card `telemetry-tool.ts`) `#telemetry` `#data`
+- [x] Gearset optimizer / heuristic solver: Vmax-anchored geometric seed plus bounded coordinate descent over 0.01 steps penalizing drops past the allowed maximum (`gear-optimizer.ts`, Tools card `gear-lab-tool.ts` with apply-to-primary) `#physics` `#heuristic`
+- [x] Target-track gear-ratio presets: hairpin / balanced / fast archetypes placing 2nd/3rd corner-exit windows on peak torque (`track-gear.ts`, same gear-lab card) `#physics` `#heuristic`
+- [x] Keep-screen-awake toggle: guarded `navigator.wakeLock` wrapper degrading to a hidden no-op where unsupported (session card checkbox) `#android` `#ux`
+- [x] Inverse dyno from an acceleration log: single-gear v(t) differentiation minus drag/rolling, torque binned per 250 rpm with copy-ready dyno CSV for the engine import (`inverse-dyno.ts`, telemetry card section) `#telemetry` `#engine`
+- [x] Phone-sensor performance timer: GPS watch into pure `splitsFromSpeedSeries` (0-100, 0-60 mph, 0-160, 60 ft, 1/4 mile + trap) compared against the solver prediction (session card) `#telemetry` `#android`
+- [x] Session recorder and export: versioned localStorage run log with CSV/JSON downloads reusing the MoTeC/AiM column layout (`session-store.ts`, session card) `#telemetry` `#export`
+- [x] GPX track import: regex trkpt parser (no DOM dependency) with heading-stability straight/corner split seeding the solver Vmax from the longest straight (`gpx-track.ts`, gear-lab card) `#telemetry` `#heuristic`
+- [x] Spec-sheet quick-add wizard: datasheet numbers (power, mass, tire, gears) with strict range/decreasing validation saving straight into My Cars (`spec-wizard-tool.ts`) `#presets` `#ux`
+- [x] Full-state backup bundle: one versioned JSON snapshot of every persisted key with pure pre-write validation (`state-backup.ts`, backup card) `#data` `#pwa`
+- [x] Bulk preset import/export: preset-scoped JSON transfer with per-row validation reusing the custom-store migration (same backup card) `#data` `#pwa`
 
 ---
 

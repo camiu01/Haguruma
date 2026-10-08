@@ -4,19 +4,15 @@
  */
 import { state } from '../core/state/app-state';
 import { t } from '../core/i18n/language';
-import type { ElementRefs } from '../services/dom/element-refs';
 
 /**
- * Refresh the unit/level chip and the active car label.
- * @brief Keeps the header honest after preset loads, unit swaps and level
- * @brief changes without giving the static markup an i18n key per state.
- * @param refs Cached DOM handles.
+ * Refresh the unit/level chip.
+ * @brief Keeps the header honest after unit swaps and level changes.
  * @return void
  */
-export const renderHeader = (refs: ElementRefs): void => {
+export const renderHeader = (): void => {
 	setText('header-unit-label', t(state.unit === 'mph' ? 'header.chipImperial' : 'header.chipMetric'));
 	setText('header-level-label', levelLabel().toUpperCase());
-	setText('header-car-name', activeCarLabel(refs));
 };
 
 /**
@@ -31,20 +27,6 @@ const levelLabel = (): string => {
 		return t('setup.levelMedium');
 	}
 	return t('setup.levelFull');
-};
-
-/**
- * Read the selected preset option as the active car label.
- * @brief Falls back to the placeholder while no preset is loaded.
- * @param refs Cached DOM handles.
- * @return Car model string shown in the header trigger.
- */
-const activeCarLabel = (refs: ElementRefs): string => {
-	const option = refs.presetSelector.selectedOptions[0];
-	if (!option || !refs.presetSelector.value) {
-		return t('header.presetPlaceholder');
-	}
-	return option.textContent ?? t('header.presetPlaceholder');
 };
 
 /**

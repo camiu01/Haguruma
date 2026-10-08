@@ -10,7 +10,32 @@ A client-side TypeScript SPA that plots engine RPM against vehicle speed for eve
 [![Vitest](https://img.shields.io/badge/Vitest-1.6.0-green.svg)](https://vitest.dev/)
 [![PWA](https://img.shields.io/badge/PWA-ready-purple.svg)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 
-## What's new in 0.7.0
+## What's new in 0.8.0
+
+Stable release of the v0.8.0 milestone: telemetry, multi-sim and heuristic solver.
+
+- **Telemetry gear check:** paste MoTeC / AiM / RaceChrono / OBD2 CSV rows
+  (`engine_rpm`, `wheel_speed_kmh`) to recover the real ratios and flag
+  clutch/tire slip; derive a torque curve from a single-gear pull and copy it
+  as dyno CSV for the engine import.
+- **Gear lab:** heuristic gearset solver (Vmax target + max shift drop, with
+  apply-to-primary), hairpin/balanced/fast track archetypes sizing 2nd and 3rd
+  off peak torque, and GPX lap import seeding corner/straight lengths.
+- **Session & phone timer:** GPS standing-start splits (0-100, 0-60 mph,
+  quarter mile + trap) compared against the solver, a local run log with
+  CSV/JSON export for MoTeC/AiM, and a keep-screen-awake toggle for
+  track-side mounts.
+- **Data & presets:** spec-sheet quick-add wizard (power, mass, tire, gears)
+  saving into My Cars, a full-state backup bundle (custom cars, units, theme,
+  language, levels, sessions) and bulk preset import/export for migration.
+- **Wheel fitment:** rim-channel calculator with balloon-to-stretch verdict
+  for the tire-on-rim pairing, next to the tire-size check.
+
+Heuristic outputs (solver proposals, inverse dyno, recovered ratios) are
+starting estimates from logged or assumed data, not measured optima.
+See [MATH.md](MATH.md) for assumptions and equations.
+
+## Previously in 0.7.0
 
 Stable release of the v0.7.0 milestone: vehicle dynamics and tractive-force engine.
 

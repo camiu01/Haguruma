@@ -21,6 +21,12 @@ import { renderGearsList, renderCompareGearsList } from './components/gear-list'
 import { injectSetupGuideShell } from './components/setup-guide';
 import { injectCruiseShell, renderCruise } from './components/cruise-card';
 import { injectTireSizeShell } from './components/tire-size-tool';
+import { injectFitmentShell } from './components/fitment-tool';
+import { injectTelemetryShell } from './components/telemetry-tool';
+import { bindGearLabApply, injectGearLabShell } from './components/gear-lab-tool';
+import { injectSessionShell } from './components/session-tool';
+import { bindSpecWizard, injectSpecWizardShell } from './components/spec-wizard-tool';
+import { injectBackupShell } from './components/backup-tool';
 import { injectSetupBaseBlock, injectAeroReadout } from './components/setup-controls';
 import { injectPyrometerShell } from './components/pyrometer-tool';
 import { renderAll } from './views/render-all';
@@ -44,6 +50,12 @@ const bootstrap = (): void => {
 	injectSetupGuideShell(requireMount('setup-guide-mount'));
 	injectCruiseShell(requireMount('cruise-mount'));
 	injectTireSizeShell(requireMount('tire-size-mount'));
+	injectFitmentShell(requireMount('fitment-mount'));
+	injectTelemetryShell(requireMount('telemetry-mount'));
+	injectGearLabShell(requireMount('gearlab-mount'));
+	injectSessionShell(requireMount('session-mount'));
+	injectSpecWizardShell(requireMount('spec-mount'));
+	injectBackupShell(requireMount('backup-mount'));
 	injectSetupBaseBlock(requireMount('setup-controls-mount'), 'primary');
 	injectAeroReadout(requireMount('aero-controls-mount'), 'primary');
 	injectSetupBaseBlock(requireMount('comp-setup-controls-mount'), 'compare');
@@ -59,6 +71,15 @@ const bootstrap = (): void => {
 	initTheme();
 	bindAllEvents(refs, render);
 	bindDynamicsControls(render);
+	bindGearLabApply((ratios) => {
+		state.gears = ratios;
+		renderGearsList(refs, () => render());
+		render();
+	});
+	bindSpecWizard(() => {
+		refreshPresetOptions(refs);
+		renderCustomList(refs, render);
+	});
 	syncLangToggle(refs);
 	syncThemeToggle(refs);
 	syncUnitToggle(refs);

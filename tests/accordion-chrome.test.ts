@@ -22,6 +22,12 @@ const toolShells = [
 	'src/components/setup-guide.ts',
 	'src/components/cruise-card.ts',
 	'src/components/tire-size-tool.ts',
+	'src/components/fitment-tool.ts',
+	'src/components/telemetry-tool.ts',
+	'src/components/gear-lab-tool.ts',
+	'src/components/session-tool.ts',
+	'src/components/spec-wizard-tool.ts',
+	'src/components/backup-tool.ts',
 	'src/components/pyrometer-shell.ts',
 ].map(read);
 

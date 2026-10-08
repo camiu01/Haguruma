@@ -948,5 +948,13 @@ When adding physics:
 | `tests/unit-utils.test.ts` | axes, unit persistence, power formatting |
 | `tests/graph-svg.test.ts` | frame projections, aero-wall fade, envelope crossing + ceiling rule, unclipped power axis, comparison envelope, layer gating |
 | `tests/crosshair-tooltip.test.ts` | tooltip grip verdict plus wheel-power readout: budget at the peak-power speed, declared cap, standstill, missing curve |
+| `tests/fitment-math.test.ts` | rim channel window, tire window, balloon-to-stretch classifier |
+| `tests/telemetry-math.test.ts` | CSV layouts, mph conversion, gear clustering, slip flag |
+| `tests/gear-optimizer.test.ts` | decreasing proposal, Vmax landing, drop-limit compliance |
+| `tests/track-gear.test.ts` | archetype advice order, torque-point window checks |
+| `tests/inverse-dyno.test.ts` | steady-pull recovery, CSV export shape |
+| `tests/gpx-track.test.ts` | trkpt parsing, corner/straight split |
+| `tests/timer-math.test.ts` | split interpolation, distance marks, unreached nulls |
+| `tests/session-backup.test.ts` | session CSV/JSON exports, backup and preset-bundle validation |
 
 Run them with `npm test` (or `npx vitest run tests/<file>.test.ts`).
