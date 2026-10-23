@@ -2,11 +2,11 @@
 
 Completed work, grouped by milestone. Entries record what was implemented and why; they are not release announcements.
 
-The repository records no release dates and no per-release tags beyond the version numbers written into `package.json` and `android/app/build.gradle`. At the time of writing those files carry **0.5.1**, and the last tagged release recorded in the milestone list is **0.4.0**. Everything below is therefore grouped under "Unreleased".
+Git tags record the released milestones: `v0.2.0`, `v0.3.0`, `v0.4.0`, `v0.5.0`, `v0.5.1`, `v0.6.0`, `v0.7.0-alpha.1`, `v.0.7.0` and `v0.8.0` (plus a `backup/local-0.6-0.9-pass` backup tag). `package.json` currently reports **0.9.0**, while `android/app/build.gradle` still carries `versionName "0.8.0"` with `versionCode 11` — the native version lags the web version. The 0.5.x sections below shipped as `v0.5.0` / `v0.5.1`; the closing "Milestone items and their current state" section records which planned items are in the tree and which are not.
 
 For work that is still open, see [TODO.md](TODO.md). For what each capability does, see [README.md](README.md) and [docs/](docs/README.md).
 
-## Unreleased — 0.5.x development
+## 0.5.x development (released as v0.5.0 / v0.5.1)
 
 ### Physics polish and chassis convergence (0.5.0 milestone)
 
@@ -76,7 +76,7 @@ Docs consolidation, physics polish, chassis convergence and trackside utilities.
 - Export chips split into labelled Graph and Drivetrain groups with a divider, and the row wraps instead of overflowing the card on phones.
 - Fixed the grip curve and the shift-drop markers drifting while panning and zooming. Two causes: the grip peak was normalized against the visible speed window instead of the whole axis, and both overlays computed their Y from `paddingTop + plotHeight - ratio * plotHeight`, which ignores the window's `minRpm`. They now normalize against `state.maxGraphSpeed` and project through `toY`, so a given force or landing RPM lands on the same screen pixel at any zoom level.
 - Fixed the shift-drop marker drawn above the limiter line: `drawSingleDrop` returns early when the upshift does not lose rpm, which only happens with a non-descending gear list.
-- Regression tests for both fixes: `tests/graph-limits.test.ts` asserts the grip curve is identical across windows, `tests/shift-drops.test.ts` covers the connector, the no-rpm-loss case, the over-redline clamp and the landing RPM through a panned window, and `tests/canvas-setup.test.ts` pins `toX`/`toY` against a non-zero window minimum.
+- Regression tests for both fixes: the coverage now lives in `tests/graph-viewport.test.ts` (window clamping, the grip curve projected against the full RPM axis while zoomed, and shift-drop markers on a windowed frame) and `tests/shift-drops.test.ts` (`isPeakVisible` and `describeShiftDelta`); the earlier `graph-limits` and `canvas-setup` suites were retired when the graph moved to SVG and their assertions folded into those files.
 - Docs and screenshots: `docs/user-guide.md` navigation and export paragraphs updated, the `graph.help` string rewritten in all five languages, and a README section with desktop, tools, light-theme and mobile captures.
 
 ### Simulation engine
@@ -184,16 +184,29 @@ Docs consolidation, physics polish, chassis convergence and trackside utilities.
 - Procedure order: ride height and rake, pressures and camber, braking and bias, ARB roll balance, springs, dampers, differential, aero trim.
 - All guide copy bundled offline as localized pairs, with chrome strings in the dictionaries and styling built on theme tokens.
 
-### Milestone items already completed in the working tree
+### Milestone items and their current state
 
-These belong to milestones that have not been released. The rest of those milestones is tracked in [TODO.md](TODO.md).
+These bullets restate the milestone scope; where the working tree diverges from the original plan, the actual state is noted. `v0.7.0` and `v0.8.0` were tagged; the `v0.9.0` items below are not.
 
-- **0.7.0** — Dense drivetrain efficiency map: up to 256 measured RPM/load/efficiency samples imported from CSV, validated and used in acceleration, shift advice and the force readouts, preserved in shared URLs, with an explicit constant-efficiency fallback and no fabricated factory calibration.
+- **0.7.0** — Drivetrain efficiency map. What ships is a **built-in normalized RPM/load loss map** (`EFFICIENCY_MAP` in `src/core/math/drivetrain-map.ts`, bilinear interpolation calibrated to the nominal efficiency, with a layout sensitivity factor), used by the shift and force paths when the Dynamics "Torque/load efficiency map" toggle is on; the toggle travels in the share URL as `d_efficiencyMap`. The strict CSV import for user-measured samples (`src/core/math/efficiency-map.ts`) and the IDW interpolation (`mappedEfficiency` in `powertrain-math.ts`) exist but have **no UI control wired to them**. The map is an engineering assumption, not manufacturer data.
 - **0.7.0** — Braking distance and deceleration overlay: responsive 100–0 and 200–0 km/h stopping profiles with speed and deceleration axes, road mu, load transfer, aero drag, an ABS choice and accessible distance and time equivalents.
 - **0.7.0** — Accel solver benchmark suite: a Vitest bench over the `accel-math.ts` Euler loop, with `npm run bench` adding an isolated warmed-mean timing assertion.
-- **0.9.0** — Setup sensitivity analyzer: signed ±5% perturbations of gear ratios, final drive, tire, mass and grip, ranked and plotted as signed zero-centred bars with accessible numeric equivalents.
-- **0.9.0** — Preset data-quality lint: physically implausible catalog values reported in CI, with raw-file tests so loader filtering cannot hide an invalid entry.
-- **0.9.0** — Diagnostic matrix completeness test: every phase × issue combination asserted to carry ranked fixes and localized copy.
+- **0.9.0** — Setup sensitivity analyzer: the math exists (`src/core/math/setup-sensitivity.ts`, signed ±5 % perturbations of gear ratios, final drive, tire, mass and grip, ranked by largest relative change, covered by `tests/setup-sensitivity.test.ts`), but **no UI panel plots it yet**.
+- **0.9.0** — Preset data-quality lint: `src/config/catalog-quality.ts` plausibility rules with raw-file coverage in `tests/catalog-quality.test.ts`, which runs in the CI test job.
+- **0.9.0** — Diagnostic matrix completeness test: `tests/setup-matrix.test.ts` asserts every phase × issue combination carries ranked fixes and localized copy.
+
+## Tagged milestones after 0.5.1
+
+Summarised from the tagged commits; the repository keeps no per-release notes for these, so the commit subjects are the record.
+
+- **v0.6.0** (`259035a`, merged via PR #1 `release/0.6.0`) — design system, shared component chrome and power-layer readability; the surrounding window (`3c09089`) is where the graph renderer moved from canvas to SVG.
+- **v0.7.0-alpha.1** (`303dcfd`) — vehicle dynamics suite: braking simulation, lap sequence, corner advisor and the mirrored active-differential controls.
+- **v0.7.0** (`6877a10`) — release finalisation plus MATH.md GitHub math-rendering fixes.
+- **v0.8.0** (`323c2b0`) — telemetry gear check, inverse dyno, gear lab with GPX import, session timer and log, backup/transfer tools; the same window unified the trackside tools with the app chrome (`85e990f`), moved viewport controls into the plot with drag-to-pan (`9825a63`), mounted the tool shells (`b70af6e`) and added this documentation set with README screenshots (`560f024`).
+
+## 0.9.0 (unreleased)
+
+The `v0.9.0` work sits at HEAD (`909e9be`, "restore 0.9.0 setup tools, stabilize the grip layer and move viewport controls into the plot") and is not tagged yet. The milestone bullets under "Milestone items already completed in the working tree" below record the planned scope; the setup tools, grip-layer stabilisation and in-plot viewport controls from the commit are part of it.
 
 ## Earlier releases
 

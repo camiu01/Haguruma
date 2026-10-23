@@ -2,268 +2,311 @@
 
 **Heuristic Application for Gear-ratio, Up-shift, & Redline Unit Mapping Architecture**
 
-A client-side TypeScript SPA that plots engine RPM against vehicle speed for every gear, computes redline shift drops, estimates road-load physics (mass + aero drag + rolling resistance), and prescribes optimal shift points via tractive-force analysis.
-
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4.5-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.2.0-purple.svg)](https://vitejs.dev/)
 [![Vitest](https://img.shields.io/badge/Vitest-1.6.0-green.svg)](https://vitest.dev/)
 [![PWA](https://img.shields.io/badge/PWA-ready-purple.svg)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 
-## What's new in 0.8.0
+HAGURUMA is a client-side TypeScript single-page application for exploring
+vehicle setups: it plots engine RPM against vehicle speed for every gear,
+computes shift drops, estimates road-load physics (mass, aero drag, rolling
+resistance, grade), and prescribes shift points through tractive-force
+analysis. Everything runs in the browser — there is no server, no account and
+no runtime configuration. Setups live in `localStorage` and travel as URL
+hashes.
 
-Stable release of the v0.8.0 milestone: telemetry, multi-sim and heuristic solver.
+Version **0.9.0** (`package.json`). The physics model, its assumptions and its
+validation anchors are documented in [MATH.md](MATH.md).
 
-- **Telemetry gear check:** paste MoTeC / AiM / RaceChrono / OBD2 CSV rows
-  (`engine_rpm`, `wheel_speed_kmh`) to recover the real ratios and flag
-  clutch/tire slip; derive a torque curve from a single-gear pull and copy it
-  as dyno CSV for the engine import.
-- **Gear lab:** heuristic gearset solver (Vmax target + max shift drop, with
-  apply-to-primary), hairpin/balanced/fast track archetypes sizing 2nd and 3rd
-  off peak torque, and GPX lap import seeding corner/straight lengths.
-- **Session & phone timer:** GPS standing-start splits (0-100, 0-60 mph,
-  quarter mile + trap) compared against the solver, a local run log with
-  CSV/JSON export for MoTeC/AiM, and a keep-screen-awake toggle for
-  track-side mounts.
-- **Data & presets:** spec-sheet quick-add wizard (power, mass, tire, gears)
-  saving into My Cars, a full-state backup bundle (custom cars, units, theme,
-  language, levels, sessions) and bulk preset import/export for migration.
-- **Wheel fitment:** rim-channel calculator with balloon-to-stretch verdict
-  for the tire-on-rim pairing, next to the tire-size check.
+## See it in action
 
-Heuristic outputs (solver proposals, inverse dyno, recovered ratios) are
-starting estimates from logged or assumed data, not measured optima.
-See [MATH.md](MATH.md) for assumptions and equations.
+| Desktop, dark theme | Desktop, light theme |
+|:---:|:---:|
+| ![Desktop dark](docs/assets/app-desktop-dark.png) | ![Desktop light](docs/assets/app-desktop-light.png) |
 
-## Previously in 0.7.0
+| Tools column | Mobile |
+|:---:|:---:|
+| ![Tools dark](docs/assets/app-tools-dark.png) | ![Mobile dark](docs/assets/app-mobile-dark.png) |
 
-Stable release of the v0.7.0 milestone: vehicle dynamics and tractive-force engine.
+## What it does
 
-- **Graph views:** switch between RPM/speed, per-gear wheel force/speed, and
-  stopping speed/distance. The force view overlays road resistance, a force-based
-  Vmax marker, optional traction excess, and dashed comparison curves. Braking
-  shows 100–0 and 200–0 km/h profiles with deceleration on the right axis.
-- **Live acceleration physics:** grip feeds instantaneous longitudinal transfer
-  back into the Euler solver, including zero-grip states. Hard fuel cut or
-  hysteretic limiter bounce, synchro/dog defaults and per-gear delays are selectable.
-- **Dynamics tool:** ABS, brake bias/demand, stopping-distance KPIs, corner-radius
-  apex advice and editable throttle/coast/brake/downshift sequences with rev matching.
-  Sequence rows are `seconds, one-based gear, throttle (0–1), brake demand (g)`;
-  total duration is limited to 60 seconds and over-rev downshifts are rejected.
-- **Differentials:** mirrored axle preload, torque vectoring, adaptive AWD
-  front/rear coupling and handbrake-disengage controls in both running-gear setups.
-- **Mapped losses:** a bilinear RPM/torque-load efficiency map, normalized to the
-  nominal efficiency input. This is an engineering approximation, **not a
-  manufacturer-measured map**; disable it to retain constant-efficiency calculations.
-- **Sharing and performance:** v0.7 controls use validated sidecar keys beside
-  the unchanged v1 compact token. Frozen dyno curves reuse Akima coefficients.
-  `npm run bench` measures anchors, 64-point dyno and active-AWD runs; a warm-median
-  regression test guards the 3 ms target.
+| Area | What the app does |
+|:---|:---|
+| Gear & speed math | One RPM-vs-speed ray per forward gear plus a dashed reverse ray, shift-drop connectors with the RPM landing in the next gear, WALL / OVERDRIVE / ECO flags per gear, and a per-gear breakdown table with overall ratios and traction margin. |
+| Engine curves | Three-anchor torque model (peak torque RPM/Nm, peak power RPM) with linear interpolation, or a measured dyno curve imported from CSV (comma/semicolon/tab, decimal comma, Nm/kgm, kW/cv/hp, header or header-less) interpolated with Akima and resampled to 64 points. |
+| Road load & top speed | Weight, drag, rolling resistance and grade forces per speed; a bisection solver marks the drag-limited top speed with an `AERO` line and flags gears the engine cannot pull. |
+| Shift advice | Optimal shift RPM per gear pair from tractive-force crossing with anti-false-positive scanning; `LIMIT` when the rev limiter is the optimal point. |
+| Grip & chassis | Load transfer, Kamm friction circle, differential catalog (open, 1/1.5/2-way, Torsen, spool and named models with accel/coast lock), tire treadwear compounds, downforce from lift coefficient and area, and coast/engine-braking lock-up speed. |
+| Acceleration KPIs | Fixed-step Euler simulation of 0-100 km/h (or 0-60 mph) and the quarter mile with trap speed, optional rotating inertia, shift torque cut and launch RPM; results memoize on their physical inputs. |
+| Graph | Declarative SVG plot with theme-aware palettes, four layer pills (shift drops, aero wall, grip limit, power curve) plus drawer switches for the fine grid and the snap HUD, a wheel-power envelope on its own kW axis, a snapping crosshair plus free tooltip (per-gear RPM, wheel power, grip verdict), pan/zoom in the RPM view, and PNG/SVG export. |
+| Graph views | The same host renders the RPM/speed plot, per-gear wheel force, and stopping distance, selected in the graph header. |
+| Vehicle dynamics | ABS and per-wheel braking simulation, brake bias and stopping-distance readouts, apex gear advice, a timed throttle/coast/brake sequence (CSV in the state, 60 s cap, over-rev rejected), optional bilinear drivetrain efficiency map, and mirrored differential preload / torque-vectoring / AWD-coupling fields. |
+| Comparison | A full secondary vehicle (tire, FD, gears, redline, mass, Cd, area, power, running gear) drawn dashed with delta readouts in the table and the KPI strip. |
+| Tools column | Cruise check, tire-size comparator, wheel fitment, telemetry gear recovery and inverse dyno, gear-lab solver with GPX lap import, GPS phone timer with a session log, spec-sheet quick-add wizard, full-state backup, pyrometer calculator, and the setup guide. |
+| Setup guidance | Troubleshooting decision tree (entry/mid/exit × understeer/oversteer/transfer/bottoming) with ranked fixes and severity badges, feel-the-car handbook (braking, mid-corner, exit, pyrometer) and the 8-step systematic procedure. |
+| Presets | 26 factory/community cars as drop-in JSON under `src/config/cars/`, plus user presets saved to `localStorage` with JSON export/import and a searchable dropdown. |
+| Sharing | Full state encoded in the URL hash (packed Base64URL `c` token with verbose-key fallback, `rg_`/`crg_` running-gear blocks, `d_*` dynamics sidecars, `curve` for the dyno), one-click copy and an offline QR modal. |
+| Units, language, theme | km/h ↔ mph, kW ↔ cv, five languages (EN, IT, DE, ES, FR), three themes (dark, OLED, light), all persisted. |
+| Setup levels | Easy / Medium / Full gating of setup inputs, with the comparison able to sit at a lower level. |
+| PWA & offline | `manifest.webmanifest` (standalone, maskable icons) and a service worker (`haguruma-v3`, 3-URL precache, 60-entry runtime cache, 7-day expiry for cached JSON responses). |
+| Android | Capacitor wrapper around the same build; a manual GitHub workflow assembles a debug APK artifact. |
+| Exports | Graph PNG/SVG, print stylesheet for PDF, drivetrain tables for Assetto Corsa `.ini`, BeamNG `.jbeam`, drivetrain `.json`, tabular CSV for MoTeC / AiM, session-log CSV/JSON, garage and backup JSON bundles. |
 
-These estimates are intended for setup exploration, not safety-critical braking
-predictions. See [MATH.md](MATH.md) for assumptions and equations.
+Presets, the file formats and the full test inventory each have a single
+canonical page: [docs/presets.md](docs/presets.md),
+[docs/data-formats.md](docs/data-formats.md) and
+[docs/testing.md](docs/testing.md).
 
-## Previously in 0.6.0
+## Requirements
 
-**Power envelope.** The available-vs-required wheel-power layer now scales to the
-wheel-power peak instead of the road-load demand, so the envelope fills the plot;
-the kW axis lives in its own unclipped group (it used to be cut away by the plot
-clip entirely), the crossing carries its drag-limited speed, the secondary car's
-envelope runs dashed on the same scale, and the hover tooltip reports the wheel
-power at the cursor from the very sample the curve is drawn from.
+| Purpose | Requirement |
+|:---|:---|
+| Run the dev server, build, test | **Node.js 20 or newer** and npm. All three GitHub workflows pin Node 20; no `engines` field is declared in `package.json`. |
+| Use the app | Any current browser with ES modules, `localStorage` and inline SVG. No account, no backend. |
+| Build the Android APK locally | JDK **21**, Android SDK platform `android-35`, build-tools `35.0.0`, and the committed Gradle wrapper under `android/`. The CI workflow installs exactly these. |
+| Clone the repository | Git (optional — the repo is not required to use a published build). |
 
-**Graph readouts.** The free hover tooltip grew a grip verdict row (tire limit,
-per-wheel share, wheelspin flag) and a wheel-power row; shift-point snapping moved
-into `svg-shift-drops.ts: snapPointFor()` with its own window constant and suite.
+## Build and run
 
-**Comparison parity.** The secondary running gear renders in the same two-column
-grid as the primary card again (`#comp-rg-mount` is `display: contents`), with the
-lateral-G slider back in its primary slot between rear spring and downforce.
+1. Clone and install:
 
-**Shared chrome.** One recipe builds every card and accordion: `components/card/accordion-shell.ts`
-exports `buildToolShell` / `buildAccordionSection` / `buildSectionHeader` / `buildChevron`,
-and the cruise, tire-size, pyrometer and paddock tools delegate to it instead of
-hand-rolling card, header and chevron markup. Headers moved to the `section-header` /
-`section-head` / `section-dot` / `section-note` role classes, tables to the `.th` / `.td`
-roles and inputs to `.field-*`; the retired `.accordion-header` alias is gone, locked by
-`tests/accordion-chrome.test.ts`.
+   ```bash
+   git clone https://github.com/camiu01/haguruma.git
+   cd haguruma
+   npm install
+   ```
 
-**Design system.** New `src/styles/controls.css` owns the type scale (`--fs-micro` →
-`--fs-body` plus the `.fs-*` utilities), the field system (`.field-label`, `.field-input`
-with its `--compact` / `--md` / `--tall` / `--upper` / `--center` / `--recessed`
-modifiers, `.field-unit`, `.field-half`) and the button system (`.btn`, `.seg-btn` with
-`.is-active`, `.text-btn`); segmented buttons flip a class instead of rebuilding their
-class list. Fonts moved from Inter / JetBrains Mono to **Share Tech / Share Tech Mono**
-(`index.html`, `tailwind.config.cjs`, theme tokens), and static markup moved out of
-`index.html` into component-owned template modules.
+2. Start the dev server (Vite on `http://localhost:5173`):
 
-**Legend sync.** `graph-legend.ts: syncGraphSwatches()` repaints the HTML legend swatches
-and the layer pill dots from the live plot palette on every render, so legend and graph
-cannot drift apart in any theme.
+   ```bash
+   npm run dev
+   ```
 
-**QR sharing.** The share modal's QR renderer is a thin wrapper over the `qrcode` package
-now (~430 hand-rolled encoder lines removed; EC level L, versions 1-10, path-based SVG).
+3. Run the checks — a clean typecheck is required before committing:
 
-The full checklist lives in [TODO.md](TODO.md).
+   ```bash
+   npx tsc --noEmit   # typecheck, no output on success
+   npm test           # vitest run
+   ```
 
-## Features
+4. Produce the production bundle (`npx tsc --noEmit && npx vite build` → `dist/`)
+   and serve it locally:
 
-- **RPM-vs-speed curves** — one per forward gear up to the rev limiter, with shift-drop connectors showing RPM landing in the next gear.
-- **Reverse gear** — dashed gray `R` curve.
-- **Tire parsing** — `205/55R16` → rolling circumference with instant validation.
-- **Comparison overlay** — full secondary vehicle setup (tire, FD, gears, redline, mass, Cd, frontal area, power, torque/power anchors, running gear) as dashed curves with delta readout and its own grip curve.
-- **Engine curve model** — peak torque RPM, peak torque Nm, peak power RPM with linear **torque interpolation** below peak torque (smooth real-world profile) and linear power interpolation above. Derived `kW @ torque peak` readout via `P = T × n × π / 30000`.
-- **Road-load physics** — for every gear peak, computes wheel power required to hold speed against weight, aero drag, rolling resistance, and grade. Flags gears the engine cannot pull as `drag-limited`.
-- **Drag-limited top speed** — bisection solver finds where required wheel power equals available power; marked with an `AERO` line on the graph. Handles steep downhill grades robustly.
-- **Tractive force analysis** — engine torque → wheel force in Newtons per gear (`F = T × i_total × η / r_dyn`).
-- **Optimal shift advisor** — per-gear-pair shift RPM based on force-curve crossing with anti-false-positive scanning (immune to turbo-lag oscillations at low RPM); appends `LIMIT` when the rev limiter is the optimal point.
-- **Load transfer & grip model** — lateral load transfer per axle (full inner→outer transfer), Kamm friction circle, advanced differential catalog (open / LSD 1-way / 1.5-way / 2-way with accel+coast lock %, Torsen, spool), wheelspin detection, and proportional lateral force distribution based on instantaneous wheel load.
-- **Downforce model** — lift coefficient, reference area and front/rear split inputs with a live downforce readout; downforce adds to vertical load for the friction-limited grip curve.
-- **Coast / engine-braking model** — closed-throttle drag through the coast-side differential lock, with a per-gear coast lock-up speed readout (inside-wheel lockup under engine braking).
-- **Dyno CSV import** — load a measured torque or power curve (comma/semicolon/tab, decimal comma, Nm/kgm, kW/cv/hp, header or header-less); the anchor model is replaced until you switch back.
-- **Layout-mapped efficiency** — picking FWD/RWD/AWD in the running-gear card also sets the default drivetrain efficiency (0.90 / 0.85 / 0.80).
-- **Acceleration solver** — fixed-step Euler simulation of 0-100 km/h and the quarter mile, including optional rotating inertia (per-gear when `I` values are set), shift torque cut, and launch clutch-slip `launchRpm`. Splits follow the display unit: 0-400 m / 0-160 in km/h mode, 60 ft / 0-60 mph / 1/4-mile trap speed in mph mode.
-- **Highway cruising check** — required vs available wheel power and gear RPM at a chosen cruise speed.
-- **Wheel-power envelope** — available (max over gears) vs required (road load) wheel power on a theme-aware kW axis, scaled to the wheel-power peak: the crossing marks the drag-limited speed, the secondary car's envelope runs dashed alongside on the same scale, and the hover tooltip reads the wheel power at the cursor speed.
-- **Graph layer toggles & legend** — four toolbar pills (shift drops, aero wall, grip limit, power curve) bound to `state.graphLayers`, with the legend swatches and pill dots repainted from the live plot palette on every render (`graph-legend.ts`).
-- **Hover tooltip** — free readout beside the crosshair: RPM per primary (and secondary) gear with over-rev flags, the wheel power at that speed, and the grip verdict (tire limit, per-wheel share, wheelspin).
-- **Graph export** — PNG and SVG downloads rendered from the SVG plot; print stylesheet for PDF via the browser print dialog.
-- **Sim & telemetry export** — one dropdown for Assetto Corsa `.ini`, drivetrain `.json`, BeamNG `.jbeam`, and tabular CSV for MoTeC / AiM Race Studio.
-- **KPI strip** — 8 live cells: redline, top speed, aero wall, grip limit, wheel power, unit-aware 0-100/0-60 cell, quarter-mile/trap pair.
-- **Brake bias & stopping distance** — ideal front/rear bias from deceleration load transfer with a rear-lock flag, plus `v²/2a` stopping distance with aero/grade correction (`brake-math.ts`).
-- **Gear-drop recovery** — milliseconds to climb back to peak torque after each upshift from equivalent inertia (`recovery-math.ts`).
-- **Tire size comparator** — stock vs plus-size diameters, speedometer error at 50/100/130 km/h, and gearing shift deltas, live-synced from primary/secondary state.
-- **Tire compounds** — treadwear catalog (Eco 400TW → Slick) scaling road mu via grip gain.
-- **Downforce integration** — aerodynamic downforce from lift coefficient and reference area, split front/rear, adds to vertical load for friction-limited grip.
-- **Translation** — English and Italian, persisted. Uses `data-i18n` (text), `data-i18n-tip` (tooltip), `data-i18n-ph` (placeholder). All English copy lives in `dictionary.en.ts`, all Italian in `dictionary.it.ts`.
-- **Setup troubleshooting wizard** — entry/mid/exit × understeer/oversteer/transfer/bottoming decision tree with ranked adjustments, severity badges and trade-off warnings.
-- **Setup handbook** — offline feel-the-car cues (braking, mid-corner, exit, pyrometer reading) plus the 8-step systematic setup procedure, rendered from reusable `Card` components.
-- **Android APK** — Capacitor wrapper; manual **Build APK** workflow assembles a debug APK artifact on demand.
-- **Custom cars** — save/load complete setups (tire, FD, redline, gears, reverse, mass, Cd, area, power, torque curve anchors) to localStorage. Export/import JSON files.
-- **Share via URL** — encodes all setup parameters into the URL hash (packed Base64URL `c` token with verbose fallback). One-click copy, plus an offline **QR code** modal for laptop-to-phone transfer.
-- **Setup levels** — Easy / Medium / Full gating of setup inputs, persisted in localStorage; the comparison card follows the primary level and can be lowered independently.
-- **PWA** — `manifest.webmanifest` with standalone display, maskable icons; service worker for offline asset caching.
-- **Theme system** — three-way toggle: dark (default) → oled (pure black) → light (white). Persisted in localStorage. The SVG plot palette follows the theme through CSS tokens.
-- **Mobile-first layout** — universal slide-over drawer (nav, units/language, export & data pipeline, display preferences, technical specs), 64px fixed header, 16/9 SVG cartesian plot with layer toggles and snapping crosshair HUD, horizontal-scroll tables with sticky first column, 44px touch targets, `visualViewport` keyboard-avoidance.
-- **Touch-first setup controls** — tire geometry pills (width/aspect/rim), tactile final-drive and rev-limiter steppers with live circumference, diameter and 200 km/h aero drag readouts. The A/B comparison mirrors the same controls with amber accents, and the gear stack rows carry micro ±0.005 steppers with per-row overall-ratio readouts.
-- **Breakdown table** — 11 columns including peak-torque traction excess (`wheel force − transferred grip`), per-gear WALL and OVERDRIVE flags plus ECO cruising advisories.
-- **3-zone pyrometer calculator** — inner/middle/outer tread temperatures with camber and hot-pressure advisories (bar steps, clamped), inner-outer and center-edge spread readouts, and a cold/optimal/hot working-window verdict.
-- **Tools** — cruising check, tire-size comparator, pyrometer, vehicle dynamics and the paddock setup guide.
+   ```bash
+   npm run build
+   npm run preview
+   ```
 
-## Physics engine
+   `vite.config.ts` sets `base: './'`, so `dist/` works from any static path,
+   including a subfolder.
 
-HAGURUMA uses strict SI discipline internally:
+5. Optional — benchmark the hot math paths (`vitest bench --run`, suite in
+   `tests/accel-math.bench.ts`):
 
-| Module | Key physics |
-|---|---|
-| `drive-force.ts`, `force-profile.ts` | Shared mapped force, self-consistent axle transfer, per-gear traction margin and force-based Vmax |
-| `drivetrain-map.ts`, `powertrain-control.ts` | Bilinear loss map, limiter hysteresis and per-departing-gear interruption |
-| `braking-simulation.ts` | Individual wheel budgets, combined service/engine braking, ABS cycling, sliding friction and stopping profiles |
-| `lap-sequence.ts`, `corner-advisor.ts` | Downshift clutch impulse, rev-match blip, timed commands and apex gear advice |
-| `tire-math.ts` | `205/55R16` parsing, loaded rolling circumference, centrifugal growth, load-sensitive dynamic radius |
-| `engine-curve-core.ts` | Single source of truth for `engineTorqueAt` / `tractiveForceAt` / optimal shift; Akima interpolation over measured dyno nodes with linear fallback, dyno-tail taper |
-| `traction-math.ts` | Engine torque from power anchors (`KW_TO_NM = 30000/π` ≈ 9549.3); linear torque interpolation below peak torque; tractive force `F = T × i × η / r_dyn`; optimal shift via force-curve crossing with backward scan |
-| `dyno-csv.ts` | Dyno CSV parsing (header/header-less, `;`/`,`/tab, decimal comma, Nm/kgm, kW/cv/hp), resampling to 64 points, derived peak-torque/power anchors, Gaussian / Savitzky-Golay / median pre-filters |
-| `speed-math.ts` | SI core `speedKmh` / `rpmFromKmh`; mph applied only at display boundary (`KMH_PER_MPH = 1.609344`) |
-| `aero-math.ts` | Drag, rolling resistance, grade forces; drag-limited top-speed bisection; handles negative-grade power |
-| `dynamics-math.ts` | Longitudinal & lateral load transfer (full per-axle lateral transfer, no 50% undercount); Kamm friction circle; differential torque bias; downforce from lift coefficients; proportional lateral force distribution (`Fy ∝ Fz`); coast/engine-braking force with coast-lock lockup scan; tire-compound grip gain (Eco 400TW → Slick) |
-| `brake-math.ts` | Ideal front brake bias from deceleration load transfer with rear-lock flag; `v²/2a` stopping distance with aero/grade correction |
-| `recovery-math.ts` | Gear-drop recovery time in ms from equivalent mass and residual wheel force |
-| `shift-math.ts` | Kinematic landing RPM (`n_land = n_shift × i_next / i_curr`); direct ratio calculation eliminates conversion drift |
-| `accel-math.ts` | Forward-Euler time-step solver for 0-100 and 1/4 mile; 60 ft / 0-60 mph / 0-160 splits plus trap speed and reaction offset; shift window; optional rotating mass and launch RPM |
-| `inertia-math.ts` | Reflects engine/wheel moments of inertia through the current gear into an equivalent translational mass |
-| `cruise-math.ts` | Highest gear with RPM ≥ floor, required/available wheel power, OK / high / over verdict |
-| `pyrometer-math.ts` | 3-zone tread analysis: inner/outer and center/edge spreads, camber advice (±8 °C), pressure advice in 0.05 bar steps (0.30 bar cap, 1.0 bar hot floor), target ± 15 °C working window |
+   ```bash
+   npm run bench
+   ```
 
-## Presets
+6. Optional — build the Android debug APK locally (Windows shown; the Gradle
+   wrapper script is `.\\gradlew.bat` there and `./gradlew` elsewhere):
 
-| Preset | Tire | FD | Redline | Forward gears | Reverse | Power |
-|:---|---|---|---|---|---|---|
-| Mitsubishi Eclipse 1G GS (5-Speed) | `195/60R15` | `4.322` | `7000` | 3.363 / 1.947 / 1.285 / 0.939 / 0.756 | 3.083 | 110 kW |
-| Mazda Miata NA (5-Speed) | `185/60R14` | `4.30` | `7200` | 3.136 / 1.888 / 1.330 / 1.000 / 0.814 | 3.758 | 85 kW |
-| Honda S2000 AP1 (6-Speed) | `225/50R16` | `4.10` | `9000` | 3.133 / 2.045 / 1.481 / 1.161 / 0.971 / 0.811 | 2.800 | 177 kW |
-| BMW M3 E46 (6-Speed) | `255/40R18` | `3.62` | `8000` | 4.23 / 2.53 / 1.67 / 1.23 / 1.00 / 0.83 | 3.75 | 252 kW |
-| BMW M3 E36 3.2 (5-Speed) | `225/45R17` | `3.15` | `7600` | 4.23 / 2.53 / 1.67 / 1.23 / 1.00 | 3.68 | 236 kW |
-| Volvo 240 Turbo (5-Speed) | `195/65R15` | `4.10` | `6000` | 3.67 / 2.17 / 1.37 / 1.00 / 0.79 | 3.55 | 114 kW |
-| Toyota GR86 / BRZ (6-Speed) | `215/40R18` | `4.10` | `7500` | 3.626 / 2.188 / 1.541 / 1.213 / 1.000 / 0.767 | 3.438 | 168 kW |
-| Porsche 911 GT3 991 (6-Speed) | `305/30R20` | `3.97` | `9000` | 3.75 / 2.38 / 1.72 / 1.34 / 1.11 / 0.96 | 3.42 | 349 kW |
+   ```bash
+   npm run androidAPP
+   # = npm run build && npx cap sync android && cd android && .\gradlew.bat assembleDebug
+   ```
 
-The full catalog holds **26** factory/community vehicles under `src/config/cars/` (drop-in JSON; no registry edit). Labels follow a single convention — `<Model> (<N>-Speed[, <Type>], <FD> FD)` — so the gearbox and final drive are visible in the preset dropdown.
+   The output is `android/app/build/outputs/apk/debug/app-debug.apk`
+   (debug-signed, for sideloading only). CI does the same through the
+   **Build APK** workflow — see [Development](#development).
 
-### Real-world anchor (Eclipse 1G GS)
+## Controls and everyday use
 
-5th gear tops out at **215–220 km/h at ~5,900–6,100 RPM** — past that point the 150 cv engine cannot beat air drag to reach the limiter. The app models this: the `AERO` line marks where required wheel power equals available power, and the 5th-gear row reads `drag-limited`.
+**Header.** The fixed top bar holds the hamburger drawer button and two
+readout chips kept live by `header-bar.ts`: the current speed unit and the
+setup level (Easy / Medium / Full).
 
-## Run it
+**Drawer.** Slide-over navigation that scrolls to a section and closes:
+primary car, secondary car, engine, setup guide, tools, pyrometer, presets,
+plus "My Cars". It also carries the direct switches — language segment
+(EN / IT / DE / ES / FR), speed unit (km/h ↔ mph), power unit (kW ↔ cv),
+theme segment (dark / OLED / light) — the road-load and comparison toggles,
+the display switches (fine grid, snap HUD), garage export/import buttons and
+the technical specs.
 
-Prerequisites: Node.js 20+.
+**Setup sections.** Accordion cards for vehicle, comparison, engine, running
+gear and tools. Tire geometry is a pill row (width / aspect / rim); final drive
+and rev limiter are ± steppers with live circumference, diameter and 200 km/h
+drag readouts. Every section re-renders through a single `renderAll()` pass,
+so no control can drift out of sync with the graph.
 
-```bash
-git clone https://github.com/camiu01/haguruma.git
-cd haguruma
-npm install
-npm run dev      # vite dev server on :5173
-```
+**Graph.** Above the plot: the view selector (RPM / force / braking), the
+layer pills, the traction-overlay toggle (force view) and the fullscreen
+expand button. Inside the plot: the viewport controls (zoom in, zoom out, fit)
+live in the RPM view only, where mouse wheel, drag-pan, `+` / `-` keys and
+`Home` / `0` also move the window; force and braking views have no window to
+move, so those controls hide. The crosshair snaps to shift points and gear
+rays when the snap HUD is on, and the free tooltip reports RPM per gear, wheel
+power at the cursor and the grip verdict.
 
-Checks:
+**Tables and KPIs.** The gear table scrolls horizontally with a sticky first
+column; the KPI strip stays live (redline, top speed, aero wall, grip, 0-100,
+quarter mile, trap, wheel power).
 
-```bash
-npx tsc --noEmit
-npm test
-npm run build   # tsc --noEmit; vite build
-npm run preview
-```
+**Tools column.** Each tool is a self-contained accordion card (cruise, tire
+size, fitment, telemetry, gear lab, session timer, spec wizard, backup,
+pyrometer, setup guide). Nothing here mutates the graph directly — results are
+readouts and optional "apply" actions.
 
-`vite.config.ts` uses `base: './'` — `dist/` works on any static host.
+**Sharing and export.** The share button encodes the whole setup into the URL
+hash and opens a modal with copy and QR (generated offline by the `qrcode`
+library). Drawer exports download the graph, the drivetrain tables, the garage
+JSON or a full-state backup.
 
-## Structure
+## Configuration
 
-```text
-src/
-  main.ts                        # bootstrap
-  core/
-    models.ts                    # shared types
-    math/                        # tire, speed, aero, traction, shift, dynamics, accel, inertia, cruise,
-                                 # brake, recovery, dyno-csv, engine-curve-core
-    state/app-state.ts           # mutable singleton store
-    state/engine-curve.ts        # active curve (anchors vs sanitized dyno points)
-    units/unit-utils.ts          # kmh/mph + kW/cv helpers
-    i18n/                        # dictionary.en.ts + dictionary.it.ts + language state
-    setup/                       # wizard matrix + handbook copy (DictKey refs only)
-    theme/theme.ts               # dark/oled/light toggle
-    presets/custom-store.ts      # localStorage custom cars
-    share/share-utils.ts         # verbose URL hash encode/decode
-    share/share-compact.ts       # packed Base64URL full-state codec
-    share/running-gear-share.ts  # rg_/crg_ block + numeric range table
-    share/qr-svg.ts              # share-modal SVG QR (qrcode package, EC level L)
-  config/                        # presets, glob catalog loader, cars/, diff-presets,
-                                 # tire-compounds, drivetrain-eff, gear colors, graph constants
-  services/
-    dom/element-refs.ts          # typed DOM handles
-    graph/                       # svg-frame geometry + projection, defs, axes, curves,
-                                 # shift drops (+ snapPointFor), limits, power envelope,
-                                 # prim mount, scene + renderer, crosshair + tooltip,
-                                 # legend swatch sync, theme, export, drivetrain-export
-    events/                      # one binder per control group
-  components/                    # gear list, breakdown table, compare table, running-gear-block,
-                                 # tire-size tool, custom car, cruise card, preset search
-  components/card/               # base Card + accordion-shell recipe + one file per
-                                 # specialized card + barrel
-  templates/                     # static shell fragments injected by app-shell.ts
-  views/render-all.ts            # single refresh entry
-  styles/                        # main.css hub + tokens/base/drawer/components/controls/shell/
-                                 # overrides/setup-guide/telemetry/print
-capacitor.config.ts              # native wrapper (webDir dist)
-android/                         # committed Capacitor scaffold
-tests/                           # vitest suites mirroring src/
-```
+There are no config files and no environment variables. Everything is either
+stored in the browser or encoded in the URL.
 
-Conventions: tabs, single quotes, semicolons, TSDoc on every function, feature files <400 lines (shell/hub/dictionary exempt), functions <50 lines.
+**`localStorage` keys**
 
-## Android APK
+| Key | Written by | Contents |
+|:---|:---|:---|
+| `haguruma-custom-presets` | `core/presets/custom-store.ts` | `{ schemaVersion, presets }` envelope of user cars. |
+| `haguruma-lang` | `core/i18n/language.ts` | Active language code. |
+| `haguruma-unit` | `core/units/unit-utils.ts` | Speed unit (`kmh` / `mph`). |
+| `haguruma-power-unit` | `core/units/unit-utils.ts` | Power unit (`kw` / `cv`). |
+| `haguruma-theme` | `core/theme/theme.ts` | `dark` / `oled` / `light`. |
+| `haguruma-setup-level` | `services/events/setup-level-events.ts` | Primary Easy / Medium / Full level. |
+| `haguruma-comp-level` | `services/events/setup-level-events.ts` | Comparison card level. |
+| `haguruma-sessions` | `core/telemetry/session-store.ts` | Versioned session-run log. |
 
-Actions tab → **Build APK** → Run workflow. The workflow typechecks, tests, builds the web app, syncs Capacitor and assembles `app-debug.apk` (JDK 17), uploaded as the `haguruma-debug-apk` artifact. Debug-signed for sideload testing only.
+Corrupt or foreign values are validated on read; a bad key degrades to the
+default instead of crashing (see [docs/troubleshooting.md](docs/troubleshooting.md)).
 
-## License
+**URL hash.** `#…` carries the share payload: a packed Base64URL `c` token for
+the full state, verbose keys as fallback and for dyno curves (`curve=rpm:torque;…`),
+`rg_`/`crg_` running-gear blocks, and `d_*` sidecars for the v0.7+ dynamics
+fields. `restoreFromUrl()` applies whatever validates and ignores the rest.
+Exact keys and ranges: [docs/data-formats.md](docs/data-formats.md).
 
-Maintained by **Camiu** ([@camiu01](https://github.com/camiu01)). GPL-3.0-only — see [LICENSE](LICENSE).
+**Setup levels.** Easy shows the everyday inputs, Medium adds the aero and
+gearing detail, Full exposes everything (including the differential dynamics
+fields). Level changes re-run `applySetupLevel()` and then `renderAll()`.
+
+## Architecture
+
+One mutable state singleton feeds one renderer; the physics lives in pure,
+unit-tested modules:
+
+- `src/core/state/app-state.ts` — the single `AppState` singleton (plus
+  `engine-curve.ts` for the active curve: anchors vs sanitized dyno points).
+- `src/core/math/` — leaf math modules (tire, speed, aero, traction, shift,
+  accel, inertia, cruise, dynamics, brake, recovery, dyno parsing, telemetry,
+  optimizer, GPX, timer, fitment, pyrometer, powertrain control, active
+  differential, drivetrain map) with an explicit dependency order documented in
+  [MATH.md](MATH.md).
+- `src/views/render-all.ts` — the only refresh entry point.
+- `src/services/graph/` — declarative SVG plot: geometry (`svg-frame`), scene
+  composition, renderer, viewport/gestures, crosshair, limits, power envelope,
+  export.
+- `src/services/events/` — one binder per control group.
+- `src/components/` — DOM builders (gear list, tables, KPI strip, tools,
+  `components/card/` accordion recipe).
+- `src/config/` — car catalog (`cars/*.json` + `import.meta.glob` loader),
+  presets, differential and compound catalogs, graph constants.
+- `src/core/share/`, `src/core/backup/`, `src/core/i18n/` — URL codec, backup
+  bundles, five-language dictionaries.
+- `index.html` is only the shell; every feature's markup is injected by its
+  own `inject*Shell()` builder before refs resolve.
+
+The full directory tree, module tables and render order live in
+[docs/architecture.md](docs/architecture.md).
+
+## Limitations
+
+- **Every number is a model estimate.** No manufacturer data is bundled; the
+  efficiency map, ABS constants and compound gains are engineering assumptions
+  (see the assumptions section of [MATH.md](MATH.md)). Use the results for
+  setup exploration, not for safety-critical or on-track decisions.
+- **Data never leaves the browser.** There is no backend and no sync: clearing
+  site data loses saved cars and sessions unless you exported a backup or a
+  garage file.
+- **Storage is per origin and per browser.** Sharing a URL shares the setup,
+  not your saved cars.
+- **Offline caching can go stale.** The service worker keeps same-origin GET
+  assets in a 60-entry stale-while-revalidate runtime cache (only cached
+  `.json` responses expire after 7 days); if an update looks missing, clear
+  the site data (see
+  [docs/troubleshooting.md](docs/troubleshooting.md)).
+- **Some platform features are optional.** Clipboard copy falls back to a
+  textarea, the wake lock and geolocation are feature-detected, and graph
+  gestures are only wired for the RPM view.
+- **Heuristic outputs are starting points.** Solver proposals, inverse dyno
+  curves and recovered gear ratios come from logged or assumed data.
+- **The APK is debug-signed** — suitable for sideloading and testing, not for
+  store distribution.
+
+## Development
+
+**Commands** (from `package.json`; there is no lint script — the catalog checks
+are ordinary unit tests):
+
+| Command | Action |
+|:---|:---|
+| `npm run dev` | Vite dev server. |
+| `npx tsc --noEmit` | Typecheck (strict mode). |
+| `npm test` | `vitest run`. |
+| `npm run build` | Typecheck, then `vite build`. |
+| `npm run preview` | Serve `dist/` locally. |
+| `npm run bench` | `vitest bench --run`. |
+| `npm run androidAPP` | Web build, `cap sync android`, `gradlew assembleDebug`. |
+
+**Verified in this session:** `npx tsc --noEmit` passed and `npm test` passed
+with **58 test files / 513 tests**. The performance regression test
+(`tests/accel-performance.test.ts`) fails only if a warm 64-point dyno run
+exceeds a 6 ms median locally (8 ms under CI); the benchmark script is separate.
+
+**CI.** `.github/workflows/ci.yml` runs on pushes and pull requests to `main`
+with Node 20: `npm ci` → `npx tsc --noEmit` → `npm test` → `npm run build`.
+`.github/workflows/cd.yml` repeats the build and publishes `dist/` to GitHub
+Pages. `.github/workflows/build-apk.yml` is manual (`workflow_dispatch`) or
+triggered by a published release: web build, JDK 21, Android SDK
+`platforms;android-35` + `build-tools;35.0.0`, `npx cap sync android`,
+`./gradlew assembleDebug`, then uploads the renamed APK as the
+`haguruma-debug-apk` artifact and attaches it to the release. **The APK
+workflow does not run the test suite** — CI does that separately.
+
+**Conventions.** Tabs, single quotes, semicolons, TSDoc on every function,
+files under 400 lines and functions under 50 lines (documented in
+[AGENTS.md](AGENTS.md)). Comments, docs and commits in English; commits follow
+Conventional Commits.
+
+**Documentation map**
+
+| Topic | Page |
+|:---|:---|
+| Equations, assumptions, validation anchors | [MATH.md](MATH.md) |
+| Feature walkthrough | [docs/user-guide.md](docs/user-guide.md) |
+| Modules, directories, render order | [docs/architecture.md](docs/architecture.md) |
+| File formats, share keys, exports | [docs/data-formats.md](docs/data-formats.md) |
+| Tests, benchmarks, CI | [docs/testing.md](docs/testing.md) |
+| Presets and the car catalog | [docs/presets.md](docs/presets.md) |
+| Builds, Pages, APK | [docs/deployment.md](docs/deployment.md) |
+| Errors and recovery | [docs/troubleshooting.md](docs/troubleshooting.md) |
+| Release history | [CHANGELOG.md](CHANGELOG.md) · Roadmap [TODO.md](TODO.md) |
+
+## Credits and license
+
+Maintained by **Camiu** ([@camiu01](https://github.com/camiu01)).
+
+Built with [TypeScript](https://www.typescriptlang.org/),
+[Vite](https://vitejs.dev/), [Vitest](https://vitest.dev/),
+[Tailwind CSS](https://tailwindcss.com/) (compiled through PostCSS),
+[Capacitor](https://capacitorjs.com/) and the
+[`qrcode`](https://www.npmjs.com/package/qrcode) package. Interface type set in
+Share Tech / Share Tech Mono, loaded from Google Fonts; drawer and header icons
+from [Icons8](https://icons8.com) (used under its free license — see the
+[Icons8 terms](https://icons8.com/license)).
+
+Licensed under **GPL-3.0-only** — see [LICENSE](LICENSE).

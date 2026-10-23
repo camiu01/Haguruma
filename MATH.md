@@ -260,7 +260,9 @@ F_x(n) = \frac{T(n) \cdot i_g \, i_d \cdot \eta}{r_{\text{dyn}}}
 $$
 
 `tractiveForceAt` clamps $\eta$ to [0, 1] and returns 0 for non-positive
-inputs. `dynamicRadiusM` returns $C/2\pi$.
+inputs. `dynamicRadiusM` returns $C/2\pi$. When a `mappedLayout` is passed
+(the efficiency-map toggle), the constant $\eta$ is replaced by the bilinear
+map of §24 before the force is computed.
 
 ### 7.2 Optimal shift RPM
 
@@ -596,22 +598,40 @@ layers above it):
 ```
 leaf modules (no math imports, only ../models):
   tire-math.ts   speed-math.ts   engine-curve-core.ts   inertia-math.ts   aero-math.ts
-  recovery-math.ts
+  recovery-math.ts   powertrain-control.ts   active-differential.ts   drivetrain-map.ts
+  telemetry-math.ts   gear-optimizer.ts   gpx-track.ts   timer-math.ts   fitment-math.ts
+  pyrometer-math.ts
 
 dyno-csv.ts      -> engine-curve-core.ts, aero-math.ts
-traction-math.ts -> speed-math.ts, engine-curve-core.ts
+traction-math.ts -> speed-math.ts, engine-curve-core.ts, drivetrain-map.ts
 shift-math.ts    -> speed-math.ts
-dynamics-math.ts -> speed-math.ts, traction-math.ts, aero-math.ts, tire-compounds (grip gain)
+dynamics-math.ts -> speed-math.ts, traction-math.ts, aero-math.ts, tire-compounds (grip gain),
+                    active-differential.ts
 cruise-math.ts   -> aero-math.ts, speed-math.ts, traction-math.ts
 brake-math.ts    -> dynamics-math.ts (GRAVITY)
+drive-force.ts   -> traction-math.ts, dynamics-math.ts, tire-compounds
+force-profile.ts -> aero-math.ts, drive-force.ts, dynamics-math.ts, speed-math.ts, traction-math.ts
+accel-step.ts    -> aero-math.ts, drive-force.ts, powertrain-control.ts, inertia-math.ts,
+                    speed-math.ts, traction-math.ts, accel-math.ts (SimInput type)
+braking-simulation.ts -> aero-math.ts, dynamics-math.ts, tire-compounds
+lap-sequence.ts  -> aero-math.ts, dynamics-math.ts, braking-simulation.ts, drive-force.ts,
+                    powertrain-control.ts, speed-math.ts, traction-math.ts, accel-math.ts (type)
+corner-advisor.ts-> dynamics-math.ts, speed-math.ts, traction-math.ts, drive-force.ts
+inverse-dyno.ts  -> aero-math.ts, speed-math.ts
+track-gear.ts    -> speed-math.ts
 
 accel-math.ts    -> aero-math.ts, dynamics-math.ts, inertia-math.ts,
-                    speed-math.ts, traction-math.ts
+                    speed-math.ts, traction-math.ts, accel-step.ts
+setup-sensitivity.ts -> accel-math.ts, aero-math.ts, speed-math.ts, traction-math.ts
 unit-utils.ts    -> aero-math.ts
 drivetrain-eff.ts-> ../models only
+
+Outside core/math: `core/setup/setup-diagnostics.ts` imports only i18n types, and
+`config/catalog-quality.ts` builds on engine-curve-core.ts and tire-math.ts.
 ```
 
-No module imports `accel-math`, `cruise-math` or `dynamics-math` back; the
+Only `accel-step.ts` (as a type) and `setup-sensitivity.ts` import
+`accel-math`; nothing imports `cruise-math` or `dynamics-math` back, so the
 solver layer stays at the top of the graph.
 
 `traction-math.ts` re-exports the whole `engine-curve-core.ts` surface, so
@@ -645,6 +665,26 @@ state -> validateCurve() -> tractiveForceAt() -> optimalShiftFor()
 | `cruise-math.ts` | `cruiseCheck`, `CRUISE_MIN_RPM`, `CRUISE_HIGH_RPM_FRACTION` |
 | `unit-utils.ts` | `getSpeedStep`, `getUnitLabel`, `getMaxRpm`, `formatPower`, `toDisplayPower`, `fromDisplayPower`, `initUnit`/`storeUnit`, `initPowerUnit`/`storePowerUnit` |
 | `drivetrain-eff.ts` | `DEFAULT_DRIVETRAIN_EFF`, `efficiencyForLayout` |
+| `drivetrain-map.ts` | `drivetrainEfficiencyAt`, `EFFICIENCY_MAP`, `EFFICIENCY_RPM_AXIS`, `EFFICIENCY_LOAD_AXIS` |
+| `drive-force.ts` | `wheelForceAt`, `transferredDriveForce` |
+| `force-profile.ts` | `resistanceAt`, `forceReadoutAt`, `forceLimitedSpeedKmh` |
+| `powertrain-control.ts` | `limiterMultiplier`, `gearShiftTimeS` |
+| `accel-step.ts` | `advanceAccelStep` |
+| `braking-simulation.ts` | `validBrakingInput`, `brakingAtSpeed`, `simulateBraking` |
+| `lap-sequence.ts` | `parseLapCommands`, `simulateLapSequence` |
+| `corner-advisor.ts` | `adviseApexGear` |
+| `active-differential.ts` | `axleCapacityN`, `centerCapacityN` |
+| `telemetry-math.ts` | `parseTelemetryCsv`, `estimateGearRatios`, `TELEMETRY_MAX_SAMPLES` |
+| `inverse-dyno.ts` | `torqueFromAccelLog`, `recoveredPointsToCsv`, `INVERSE_DYNO_BIN_RPM` |
+| `gear-optimizer.ts` | `optimizeGearset` |
+| `track-gear.ts` | `TRACK_PROFILES`, `trackProfile`, `adviseTrackGears`, `ratioInWindow` |
+| `gpx-track.ts` | `parseGpx`, `summarizeTrack` |
+| `timer-math.ts` | `splitsFromSpeedSeries` |
+| `fitment-math.ts` | `rimRangeForTire`, `tireRangeForRim`, `classifyFitment`, `fitmentRatio`, `FIT_*` |
+| `pyrometer-math.ts` | `innerOuterSpread`, `centerEdgeSpread`, `camberAdvice`, `pressureAdvice`, `windowVerdict` |
+| `setup-sensitivity.ts` | `setupSensitivity`, `PERTURBATION` |
+| `setup-diagnostics.ts` | `diagnoseAxleTemperatures`, `conflictingAdjustments`, `AXLE_IMBALANCE_C` |
+| `catalog-quality.ts` | `catalogQualityIssues` |
 
 Key interfaces: `EngineCurve`, `TorqueCurvePoint` (`models.ts`),
 `OptimalShift`, `ShiftStep`, `ShiftVerdict`, `SimInput`, `SimResult`,
@@ -668,6 +708,12 @@ Clamps and validation bounds that silently rescue bad input:
 | Shift torque cut | [0, 3] s | `simulateAcceleration` |
 | Wheel count | integer ≥ 0 (default 4) | `equivalentRotatingMassKg` |
 | wheel-load ranges | see `RunningGear` docs in `models.ts` | catalog validator + UI |
+| Telemetry log | ≤ 20 000 samples, rpm/speed > 0 | `telemetry-math.ts` |
+| Lap commands | ≤ 4000 chars, ≤ 32 rows, duration 0–60 s, total ≤ 60 s, gear 1–8, throttle 0–1, brake 0–3 g | `parseLapCommands` |
+| Gear optimizer | 2–8 gears, redline ≥ 1000, drop 0.05–0.6, target > 20 km/h | `gear-optimizer.ts` |
+| Pyrometer advice | camber ±8 °C, pressure ±6 °C, step 0.05 bar, ≤ 0.30 bar total, ≥ 1.0 bar hot | `pyrometer-math.ts` |
+| Axle imbalance | axle-mean gap > 15 °C, zones 0–200 °C, exactly 4 tires | `setup-diagnostics.ts` |
+| Sensitivity probe | one input scaled by +5 % per row | `setup-sensitivity.ts` |
 
 Every other function returns `0`, `null` or a null-result object rather than
 `NaN`/`Infinity`; guards are listed per function in the TSDoc.
@@ -829,6 +875,13 @@ anchors (`compEngineCurve()` — a dyno CSV belongs to the primary car). The
 tooltip wheel-power row reads the same $P_{\text{avail}}$ sample as the drawn
 curve, so the readout and the envelope cannot disagree.
 
+### 23.2 Viewport window and zoom-stable layers (v0.9.0)
+
+Pan and zoom operate on a `GraphWindow` — the visible $[v_{\min}, v_{\max}] \times [n_{\min}, n_{\max}]$ rectangle carried by the `PlotFrame` (`graph-viewport.ts`). `clampWindow` keeps every candidate window inside the axis bounds and enforces minimum spans (`VIEW_LIMITS`), so a zoom anchored at the plot edge slides the window instead of overflowing it, and a full-axis drag is a no-op because the window is already clamped to the axis. `fullWindow` builds the identity window and `isFullWindow` detects it, which is what disables the fit button's effect at rest.
+
+Wheel, drag and keyboard gestures (`graph-gestures.ts`) and the floating map-style control cluster (`.graph-map-controls`, top-right inside the plot host) are active only in the RPM view (`state.dynamics.graphView === 'rpm'`); the force and braking views keep fixed axes.
+
+The grip-limit layer reads its vertical scale from `axisLimitPeak(frame, unit, limitFn)` (`svg-limits.ts`), which scans the **full** speed axis (`fromDisplaySpeed(frame.maxSpeed, unit)`, 160 samples by default) rather than the visible window. Before v0.9.0 the peak was sampled over the visible window, so the dashed grip curve re-normalized — and visibly jumped — on every zoom or pan. The curve still maps force onto the full RPM axis, so deep zooms below the grip band leave it outside the plot; that is accepted behavior, not a miscalculation.
 ## 24. Extending the model
 
 ### v0.7 dynamics models
@@ -906,10 +959,130 @@ and bisects steady-force/resistance crossings. The braking view uses metres on
 X, display speed on the left Y axis, and deceleration in m/s² on the right.
 
 **Performance.** `npm run bench` exercises anchors, 64-point Akima dyno and
-active AWD. A warm-run median test guards the 3 ms target on the test machine.
+active AWD. A warm-run median test guards the per-run budget — 6 ms locally, 8 ms
+under CI, both wide enough to catch a solver blow-up without flaking on a
+loaded machine.
 Only validated, deeply frozen dyno arrays cache their coefficients; mutable
 public arrays are re-evaluated to avoid stale interpolation.
 
+### Pyrometer tread diagnostics — `pyrometer-math.ts`
+
+Trackside 3-zone pyrometer readings (inner / center / outer, °C) turned into
+camber and hot-pressure advice:
+
+$$
+\Delta_{\text{io}} = T_{\text{inner}} - T_{\text{outer}},\qquad
+\Delta_{\text{ce}} = T_{\text{center}} - \frac{T_{\text{inner}} + T_{\text{outer}}}{2}
+$$
+
+- $|\Delta_{\text{io}}| \le$ `CAMBER_TOLERANCE_C` (8 °C) reads as balanced; a
+  hotter inner shoulder advises **less** negative camber, a hotter outer
+  shoulder more.
+- Past `PRESSURE_TOLERANCE_C` (6 °C), pressure corrects in
+  `PRESSURE_STEP_BAR` (0.05 bar) steps — one per °C of excess, saturated at
+  `MAX_PRESSURE_STEP_BAR` (0.30 bar) — lowering on a hot center, raising on a
+  cool one, never bleeding below `MIN_HOT_PRESSURE_BAR` (1.0 bar).
+- The working-window verdict compares the three-zone mean against
+  target ± `WINDOW_TOLERANCE_C` (15 °C): cold / optimal / hot.
+
+These are heuristics over three point readings, not a tire thermal model.
+
+### v0.8 measurement and proposal models
+
+**Telemetry ratio recovery** (`telemetry-math.ts`). Each log sample maps to an
+overall ratio $i = n \, / \, \omega_{\text{wheel}}$ with
+$\omega_{\text{wheel}} = v \cdot 1000 / 3600 / C \cdot 60$ rev/min. Sorted
+ratios within `CLUSTER_TOLERANCE` (3 %) join one gear cluster; clusters need
+`MIN_CLUSTER_SAMPLES` (5) samples and report their median ratio. Samples over
+`SLIP_TOLERANCE` (5 %) off the cluster median count as clutch/tire slip. Logs
+are capped at `TELEMETRY_MAX_SAMPLES` (20 000) rows. The CSV parser accepts a
+header row (`rpm` + `speed`/`kmh`/`velocity`/`mph`, optional time column),
+header-less `rpm,speed` or `time,rpm,speed` rows, semicolon or tab delimiters
+and decimal commas on semicolon logs; an `mph` speed column is converted with
+`KMH_PER_MPH`. Without a time column, samples are spaced 0.1 s apart. This is
+ratio recovery from road data: clustering cannot separate a slipping clutch
+from a wrong circumference, so the slip percentage is a flag, not a
+measurement.
+
+**Inverse dyno** (`inverse-dyno.ts`). From a single-gear pull trace,
+$a_k = \Delta v / 3.6 / \Delta t$ at the interval midpoint speed $\bar v$:
+
+$$
+F = m\,a + F_{\text{drag}}(\bar v) + F_{\text{roll}}(\bar v),\qquad
+T_{\text{eng}} = \frac{F \cdot r}{i_g\, i_d\, \eta}
+$$
+
+binned by engine RPM (`INVERSE_DYNO_BIN_RPM` = 250) with the median torque per
+bin. Needs at least 6 trace samples and 2 populated bins; output converts back
+to dyno-CSV rows for the engine import. Grade, wind, shift cuts and driveline
+inertia are not modeled, so the curve is an estimate, not a dyno measurement.
+
+**Heuristic gearset solver** (`gear-optimizer.ts`). The tallest gear is
+anchored so the target speed sits at the limiter,
+$i_{\text{top}} = n_{\text{red}} \cdot C \cdot 60 \,/\, (v_{\text{target}} \cdot 1000) \,/\, i_d$;
+lower gears start from a geometric ladder at 80 % of the allowed drop. A
+bounded coordinate descent (40 passes, ±0.01 steps, ratios clamped to
+[0.4, 6.0]) minimizes a cost penalizing drops past `maxDrop` (100× overshoot),
+deviation from the 0.8·`maxDrop` spacing target, and top-speed miss. The
+result is a feasible starting proposal for the stated objective — "optimal" is
+defined only against that cost function, not against lap time or any measured
+criterion.
+
+**Track archetypes** (`track-gear.ts`). Three profiles (hairpin, balanced,
+fast) name corner-exit speed windows for 2nd and 3rd gear; the advised ratio
+places the window midpoint at peak-torque RPM,
+$i = n_T \,/\, (\omega_{\text{wheel}}(v_{\text{mid}}) \cdot i_d)$. A ratio
+check (`ratioInWindow`) reports whether an existing gear lands its torque peak
+inside the window.
+
+**GPX track summary** (`gpx-track.ts`). Track points are read with a plain
+regex (no XML parser, `<!DOCTYPE`/`<!ENTITY` rejected), distances accumulate
+by haversine ($R$ = 6 371 000 m), and a point is a corner when heading change
+per metre exceeds 0.001 rad/m (~1.1° per 20 m). Segments under 25 m are
+dropped, straights sort longest-first. Track segmentation feeds target speeds
+for the gear lab; it is not a racing-line or elevation model.
+
+**Phone standing-start splits** (`timer-math.ts`). Speed thresholds
+(100 km/h, 60 mph = 96.56064 km/h, 160 km/h) are linear-interpolated crossing
+times; distance marks (60 ft = 18.288 m, quarter mile = 402.336 m) integrate
+speed trapezoidally and interpolate the crossing, with the trap speed read at
+the quarter-mile mark. Unreached marks return null. Accuracy is bounded by the
+phone GPS rate and accuracy; the module itself is unit-tested on synthetic
+series. Note the solver-side quarter mile in `accel-math.ts` uses
+402.33928 m — a 3 mm constant mismatch with this module, harmless at GPS
+precision but flagged for cleanup.
+
+### v0.9 setup feedback models
+
+**Setup sensitivity** (`setup-sensitivity.ts`). One input at a time is scaled
+by `PERTURBATION` (+5 %) over a fresh copy of the setup — all gears, final
+drive, tire circumference, mass, or road friction — and three metrics are
+re-evaluated: limited top speed (the lower of the gearing limit and the
+aero-wall limit, so a gearing change only registers when gearing is what
+limits the car), the first upshift RPM, and the 0–100 km/h time. Rows rank by
+the largest relative change across the three metrics. The setup object is
+never mutated. This is a local linear probe around one operating point, not a
+global sensitivity analysis.
+
+**Setup diagnostics** (`setup-diagnostics.ts`). Two cross-checks the
+single-tire pyrometer math cannot express: `diagnoseAxleTemperatures` flags
+`diag.rearHot` / `diag.frontHot` when the two axle-mean tread temperatures
+differ by more than `AXLE_IMBALANCE_C` (15 °C) over four valid tires (each
+zone finite, 0–200 °C), and `conflictingAdjustments` flags axles where the
+proposed spring and anti-roll-bar changes pull roll stiffness in opposite
+directions — a plan worth reviewing one change at a time. Exactly 15 °C is
+inside tolerance by design.
+
+**Catalog plausibility lint** (`catalog-quality.ts`). A deliberately generous
+lint over catalog presets: scalar ranges (mass 300–4000 kg, power 10–1500 kW,
+fd 1–10, redline 3000–15000, peak torque 10–2500 Nm), gearbox shape (2–10
+gears, ratios 0.25–8, spread 1.5–12, no upshift losing more than 65 % RPM),
+and engine-anchor consistency — torque peak ≤ power peak ≤ redline, plus the
+two cross-checks `powerFromTorque(T_peak, n_T) ≤ P_max × 1.08` and
+`torqueFromPower(P_max, n_P) ≤ T_max × 1.08` (`ANCHOR_TOLERANCE`). It answers
+"is this entry plausible?", complementing `validateCatalogEntry`'s "can this
+entry be loaded?". As its own header states, it is not a substitute for
+datasheet validation.
 When adding physics:
 
 1. Put pure math in a new `src/core/math/<name>-math.ts` (`@file` + `@brief`).
@@ -929,7 +1102,7 @@ When adding physics:
 | `tests/lap-sequence.test.ts` | timed commands, safe downshifts, unmatched clutch drag, rev matching and apex advice |
 | `tests/dynamics-share.test.ts` | sidecar round trips, validation, compact/verbose chassis preservation |
 | `tests/dynamics-graph.test.ts` | force-unit curves, resistance, margins, display-unit boundary, stopping/deceleration axes |
-| `tests/accel-performance.test.ts`, `tests/accel-math.bench.ts` | 64-point dyno 3 ms warm-median guard and benchmark cases |
+| `tests/accel-performance.test.ts`, `tests/accel-math.bench.ts` | 64-point dyno warm-median guard (6 ms local / 8 ms CI budget) and benchmark cases |
 | `tests/tire-math.test.ts` | parsing, rolling factor, centrifugal growth, load-sensitive radius |
 | `tests/tire-compounds.test.ts` | compound catalog order, gains, i18n labels, legacy fallback |
 | `tests/speed-math.test.ts` | SI conversions, mph boundary |
@@ -956,5 +1129,10 @@ When adding physics:
 | `tests/gpx-track.test.ts` | trkpt parsing, corner/straight split |
 | `tests/timer-math.test.ts` | split interpolation, distance marks, unreached nulls |
 | `tests/session-backup.test.ts` | session CSV/JSON exports, backup and preset-bundle validation |
+| `tests/setup-sensitivity.test.ts` | perturbation rows, ranking, non-mutation |
+| `tests/setup-diagnostics.test.ts` | axle-imbalance threshold, conflict detection |
+| `tests/catalog-quality.test.ts` | plausibility lint over every raw catalog file |
+| `tests/graph-viewport.test.ts` | window clamping, spans, identity detection |
+| `tests/android-manifest.test.ts` | foreground location permissions, no background location |
 
 Run them with `npm test` (or `npx vitest run tests/<file>.test.ts`).

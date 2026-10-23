@@ -59,7 +59,7 @@ Defined in `src/config/car-catalog.ts` and documented in `src/core/models.ts`.
 
 Validator messages are returned verbatim, for example `preset.gears must be strictly decreasing`, `preset.finalDrives must contain the stock fd` and `preset.drivetrainOptions.gearsets ratios must be within 0.4-6.0`.
 
-The validator is the minimum bar, not the full requirement. The test suites also require `massKg`, `dragCd`, `frontalAreaM2`, `powerKw`, `peakTorqueNm`, `peakTorqueRpm`, `peakPowerRpm` and a `runningGear` block on every preset, and `npm run lint:catalog` adds the plausibility ranges in `src/config/catalog-quality.ts`.
+The validator is the minimum bar, not the full requirement. The test suites also require `massKg`, `dragCd`, `frontalAreaM2`, `powerKw`, `peakTorqueNm`, `peakTorqueRpm`, `peakPowerRpm` and a `runningGear` block on every preset, and `npx vitest run tests/catalog-validation.test.ts tests/catalog-quality.test.ts` adds the plausibility ranges in `src/config/catalog-quality.ts`.
 
 ## Example files
 
@@ -139,7 +139,7 @@ One file deviates from the pattern: `porsche_930_turbo.json` labels the car `Por
 
 1. Drop one file into `src/config/cars/` named `<id>.json`, following the shape above. No registry edit is needed.
 2. Keep `gears` ordered from short (largest ratio) to tall (smallest). The loader and the validator both reject a rising list.
-3. Satisfy the validator, then the tests: `npm run lint:catalog` validates the raw files, gear spread and anchor plausibility, and `npx vitest run tests/presets.test.ts` checks the catalog count, tires, ratios, reverse ratios and running gear.
+3. Satisfy the validator, then the tests: `npx vitest run tests/catalog-validation.test.ts tests/catalog-quality.test.ts` validates the raw files, gear spread and anchor plausibility, and `npx vitest run tests/presets.test.ts` checks the catalog count, tires, ratios, reverse ratios and running gear.
 4. Bump the expected count in `tests/presets.test.ts` when you add a vehicle; it asserts `Object.keys(presets)` has length 26.
 5. Run `npx tsc --noEmit` and `npm test` before committing, as described in [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
@@ -215,5 +215,5 @@ Differential ids are stored in saved setups and in the `rg_dm` share key, so kee
 | `tests/presets.test.ts` | 26 presets, parsable tires, `fd > 1`, redline ≥ 6000, at least 4 gears, descending gears, power and mass present, exact reverse ratios, running-gear enums, unique ids, `factory`/`community` groups. |
 | `tests/catalog-validation.test.ts` | The validator itself: rejects missing fields, rising gears, unknown enums, `finalDrives` without the stock `fd`, bad gearsets, unknown LSD ids and unknown compounds. |
 | `tests/catalog-quality.test.ts` | Lints every raw file in `src/config/cars/`, checks the file name matches the `id`, and exercises the plausibility rules. |
-| `npm run lint:catalog` | Runs the validation and quality suites together. |
+| `npx vitest run tests/catalog-validation.test.ts tests/catalog-quality.test.ts` | Runs the validation and quality suites together (there is no `lint:catalog` script in `package.json`). |
 | `tests/diff-presets.test.ts` | Differential catalog order, lock range and i18n labels. |

@@ -1,15 +1,20 @@
 # Testing
 
-Haguruma is a pure client-side SPA with no backend: physics and codec modules are
-unit-tested with Vitest, catalog JSON is linted as data, and one host-speed
-benchmark guards the acceleration solver. There are no integration, browser or
-end-to-end suites in the repository.
+Haguruma is a pure client-side SPA with no backend: physics, codec and
+presentation modules are unit-tested with Vitest, the vehicle catalog is
+checked as data, and one warm-run timing guard keeps the acceleration solver
+from regressing. There are no integration, browser or end-to-end suites in the
+repository.
 
 The suite lives in `tests/` and mirrors `src/`. Commands come from
 `package.json`; the CI workflow is `.github/workflows/ci.yml`. For module layout
 see [architecture.md](./architecture.md), for the relations under test see
 [../MATH.md](../MATH.md), and for the pull-request process see
 [../CONTRIBUTING.md](../CONTRIBUTING.md).
+
+All statements below come from the repository files cited inline. The commands
+in this page were run while writing it: `npx tsc --noEmit` passed and
+`npm test` passed with **58 test files and 513 tests**.
 
 ## Commands
 
@@ -18,19 +23,27 @@ see [architecture.md](./architecture.md), for the relations under test see
 | `npm test` | `vitest run` — the whole suite (all `tests/**/*.test.ts`) |
 | `npx vitest run tests/<file>.test.ts` | One suite only |
 | `npx tsc --noEmit` | TypeScript type checking of `src/` and `vite.config.ts` |
-| `npm run lint:catalog` | Catalog contract plus raw-file data-quality lint |
-| `npm run bench` | Warm acceleration benchmark and the isolated wall-clock gate |
+| `npm run bench` | `vitest bench --run` — the acceleration benchmark workload |
 | `npm run build` | `npx tsc --noEmit && npx vite build` (typecheck, then production bundle) |
+
+There is **no lint script**: the catalog checks are ordinary suites
+(`tests/catalog-validation.test.ts`, `tests/catalog-quality.test.ts`) and run
+with `npm test`.
 
 ### `npm test`
 
 `package.json` defines `"test": "vitest run"`, so the suite runs once and exits
-instead of watching. Vitest is configured through `vite.config.ts`; that file has
-no `test` block, so the default Node environment applies. `jsdom` and `happy-dom`
-are not dependencies, which means DOM-touching modules are exercised through
-hand-built stubs (for example `tests/accordion-height.test.ts`,
-`tests/graph-layers.test.ts`, `tests/performance-recorder.test.ts`) rather than a
+instead of watching. Vitest is configured through `vite.config.ts`; that file
+has no `test` block, so the default Node environment applies. `jsdom` and
+`happy-dom` are not dependencies, which means DOM-touching modules are exercised
+through hand-built stubs (for example `tests/accordion-height.test.ts`,
+`tests/accordion-chrome.test.ts`, `tests/theme-events.test.ts`) rather than a
 real document. Run one file with `npx vitest run tests/tire-math.test.ts`.
+
+The suite also includes the performance guard
+`tests/accel-performance.test.ts`, which runs unconditionally — it is not
+gated behind a separate command (see
+[The acceleration timing guard](#the-acceleration-timing-guard)).
 
 ### `npx tsc --noEmit`
 
@@ -40,20 +53,15 @@ real document. Run one file with `npx vitest run tests/tire-math.test.ts`.
 
 One detail worth knowing: `tsconfig.json` sets `"include": ["src",
 "vite.config.ts"]`, so **the `tests/` directory is not part of the `tsc`
-program**. A type error inside a test file is not reported by `npx tsc --noEmit`;
-Vitest transpiles tests without type checking. Type safety of production code is
-what this step guards.
-
-### `npm run lint:catalog`
-
-Runs two suites only: `tests/catalog-validation.test.ts` and
-`tests/catalog-quality.test.ts`. See [Catalog data quality](#catalog-data-quality).
+program**. A type error inside a test file is not reported by
+`npx tsc --noEmit`; Vitest transpiles tests without type checking. Type safety
+of production code is what this step guards.
 
 ### `npm run bench`
 
-Runs `vitest bench --run tests/accel-math.bench.ts --maxWorkers=1` followed by
-`vitest run tests/accel-performance.test.ts --maxWorkers=1`. See
-[The acceleration benchmark](#the-acceleration-benchmark).
+`"bench": "vitest bench --run"` — runs every `tests/**/*.bench.ts` file
+(currently `tests/accel-math.bench.ts`: anchor curve, 64-point Akima dyno and
+active-AWD runs) once and exits. It reports timings; it does not assert them.
 
 ### `npm run build`
 
@@ -63,35 +71,48 @@ build, so a type error fails it before Vite runs. `npm run build` does not run
 
 ## Test inventory
 
-46 `.test.ts` files plus one benchmark file, with fixtures in
-`tests/fixtures/` (`accel-benchmark.ts`, `efficiency-map.csv`).
+58 `.test.ts` files plus one benchmark file (`tests/accel-math.bench.ts`).
+Shared inputs live in `tests/dynamics-fixtures.ts` (the `dynamicsInput()`
+builder used by the solver, benchmark and timing guard) and
+`tests/fixtures/accel-benchmark.ts` (used by `tests/setup-sensitivity.test.ts`).
 
-### Physics and math (13 files)
+### Physics and math (17 files)
 
 | File | What it verifies |
 |:--|:--|
 | `accel-math.test.ts` | Forward-Euler acceleration solver: 0–100 and quarter-mile completion, determinism, monotonic response to mass, rotating mass, shift time and launch RPM, per-gear inertia, null metrics on invalid input, split ordering, reaction-time offset |
 | `aero-math.test.ts` | `kmhToMs`, drag force growth with speed², textbook drag formula, rolling resistance scaling, speed-sensitive `Crr`, road-load power band, kW/cv conversions, available wheel power with drivetrain efficiency, drag-limited top-speed bisection (including descent and crawl cases) |
 | `brake-math.test.ts` | Ideal front brake bias from load transfer at 1.2 G, rear-lock flag and `REAR_LOCK_SHARE`, `v²/2a` stopping distance with aero help and downhill penalty, guards returning 0/`Infinity` |
+| `braking-simulation.test.ts` | Stopping profiles from the per-wheel solver, wheel-lock and ABS cycling, combined service/engine braking demand and signed road-load behaviour |
 | `cruise-math.test.ts` | Highway check: gear selection at or above the RPM floor, RPM consistency with `rpmFromKmh`, power-deficit verdict, invalid-input nulls |
 | `dynamics-math.test.ts` | Static axle loads, longitudinal and lateral transfer, per-wheel loads conserving total weight, Kamm friction circle, differential limits (open/spool/Torsen/clutch), wheelspin onset, coast/engine-braking lock-up, tire-compound grip gain |
 | `engine-curve-akima.test.ts` | Akima interpolation over dyno nodes: in-place edit cache invalidation, exactness at nodes, no overshoot on monotone runs, smoothness across the peak, two-point linear fallback |
 | `inertia-math.test.ts` | Equivalent rotating mass reflected through the total ratio, growth with a shorter first gear, launch mass from first gear, guards |
+| `lap-sequence.test.ts` | Downshift validation (over-rev refusal), rev matching, bounded/fractional sequence commands, limiter hold, handbrake phases and corner/apex gear advice |
 | `recovery-math.test.ts` | Gear-drop recovery time against a hand computation, monotonicity with residual force, `Infinity`/0 boundary behaviour |
-| `shift-drops.test.ts` | Shift-drop peak visibility inside the plot, connector and landing-marker geometry, the guard that draws nothing when an upshift does not lose RPM or lands above the limiter, landing-RPM projection through a panned RPM window, per-pair landing-RPM and shift-speed deltas, coverage of every shared gear pair |
+| `setup-diagnostics.test.ts` | Cross-axle temperature imbalance (`AXLE_IMBALANCE_C`) verdicts and contradictory same-axle spring/ARB adjustments |
+| `setup-sensitivity.test.ts` | Signed finite-difference metrics for gearing, final drive, tire size, mass and grip without mutating the setup |
 | `speed-math.test.ts` | SI speed/RPM round-trip, km/h to mph consistency, zero instead of `NaN` on bad geometry, reverse top speed of the Eclipse preset |
 | `tire-math.test.ts` | Tire string parsing, circumference band, the ISO/ETRTO 0.975 rolling factor, load-sensitive dynamic radius, centrifugal growth and its cap |
 | `traction-math.test.ts` | Torque/power round-trip through `KW_TO_NM`, peak anchors, droop past peak power, curve validation, tractive force scaling, optimal shift per gear pair, dyno-point curves and the rev limiter |
 | `unit-utils.test.ts` | Speed step and unit labels, RPM ceiling rounding, kW/cv parsing and formatting |
+| `vehicle-dynamics.test.ts` | Fuel-cut and limiter behaviour, transfer feedback between solver and force profile, mapped (bilinear) efficiency and active-differential regression |
 
-### Dyno and measured data (2 files)
+### Measurement and tool math (9 files)
 
 | File | What it verifies |
 |:--|:--|
 | `dyno-csv.test.ts` | CSV parsing across header/header-less files, `,`/`;`/tab delimiters and decimal commas, kgm/cv conversions, resampling to the point cap, derived peak anchors, Gaussian/Savitzky-Golay/median smoothing, invalid-row rejection |
-| `efficiency-map.test.ts` | Measured efficiency maps: fractional-unit reading, rejection of blank/percentage cells, round-trip alongside the legacy compact share token, size and validity limits, effect on the acceleration model |
+| `fitment-math.test.ts` | Rim-channel sizing and the balloon-to-stretch fitment verdict |
+| `gear-optimizer.test.ts` | Heuristic gearset solver: final-drive/gear proposals against a Vmax target and shift-drop budget |
+| `gpx-track.test.ts` | GPX parsing and corner/straight track summaries used by the gear lab |
+| `inverse-dyno.test.ts` | Torque recovery from a single-gear acceleration trace |
+| `pyrometer-math.test.ts` | 3-zone tread analysis: camber advice from inner/outer spread, hot-pressure advice in 0.05 bar steps, working-window verdict |
+| `telemetry-math.test.ts` | Telemetry CSV parsing (`parseTelemetryCsv`), gear-ratio clustering/recovery and sample caps |
+| `timer-math.test.ts` | Phone speed-series split extraction (0-100, 0-60 mph, quarter mile) |
+| `track-gear.test.ts` | Track-archetype gear advice sizing 2nd/3rd off peak torque |
 
-### Catalog, presets and configuration data (8 files)
+### Catalog, presets and configuration data (7 files)
 
 | File | What it verifies |
 |:--|:--|
@@ -101,58 +122,47 @@ build, so a type error fails it before Vite runs. `npm run build` does not run
 | `diff-presets.test.ts` | Differential catalog order and composition, lock percentages inside [0, 1], i18n label resolution, legacy type mapping, `LSD_MODEL_IDS` gating of the lock inputs |
 | `tire-compounds.test.ts` | Compound catalog order (Eco 400TW → Slick), descending treadwear with ascending grip gain inside sane bounds, i18n labels, neutral legacy default |
 | `drivetrain-eff.test.ts` | FWD/RWD/AWD efficiency defaults stay distinct and inside the road-load input range |
-| `quick-spec.test.ts` | Quick-spec presets produce a saveable, curve-valid setup, and reject malformed ratios, unsafe names (`__proto__`) and out-of-range datasheet values |
-| `drivetrain-export.test.ts` | Assetto Corsa `.ini`, BeamNG `.jbeam`, MoTeC/AiM CSV and JSON export shapes, plus INI round-trip parsing and rejection of unusable input |
+| `gear-colors.test.ts` | 8-entry palette and wraparound colour lookup |
 
-### Storage, share and persistence (3 files)
+### Share, storage and export (6 files)
 
 | File | What it verifies |
 |:--|:--|
 | `share-utils.test.ts` | Verbose URL hash encode/decode round-trips (primary, comparison, running gear, simulation keys, downforce, dyno curve), rejection of out-of-range values, legacy-safe decoding of older hashes, patch application into the live store |
 | `share-compact.test.ts` | Packed Base64URL `c` token round-trips, is shorter than the verbose hash, packs the default state under 200 characters, rejects malformed tokens, falls back to verbose keys with a custom dyno curve |
+| `dynamics-share.test.ts` | The `d_*` dynamics sidecars and `rg_`/`crg_` extras append without touching the frozen v1 compact payload, and invalid values are ignored |
 | `custom-store.test.ts` | Gear list parsing, name slugification, storage fallback without a DOM, and migration of the versioned custom-preset envelope including legacy bare maps |
+| `session-backup.test.ts` | Session-log CSV/JSON export shape and full-state backup parse/validate/restore safety |
+| `drivetrain-export.test.ts` | Assetto Corsa `.ini`, BeamNG `.jbeam`, MoTeC/AiM CSV and JSON export shapes, plus INI round-trip parsing and rejection of unusable input |
 
-### Telemetry, GPS and session (2 files)
-
-| File | What it verifies |
-|:--|:--|
-| `performance-recorder.test.ts` | GPS recorder lifecycle: saved sessions survive a stop without an armed watch, arming happens once, callbacks are discarded after stop, only speed/time/accuracy channels are kept, rolling starts and low-accuracy/stale/future fixes are rejected, recording stops across a missing GPS interval |
-| `lap-sequence.test.ts` | Multi-phase lap sequences: bounded and fractional command validation, acceleration + upshift + braking + matched downshift integration, extra clutch spin-up drag on an unmatched downshift, refusal to downshift past the limiter, limiter hold, handbrake phases |
-
-### UI, graph, setup and i18n (11 files)
+### Graph, UI, setup and i18n (16 files)
 
 | File | What it verifies |
 |:--|:--|
-| `canvas-setup.test.ts` | Linear `toX`/`toY` mapping to plot edges and mid-scale, including a non-zero window minimum |
-| `graph-limits.test.ts` | Grip-curve normalization against the whole axis instead of the visible window, the curve staying inside the plot, and the same force projecting correctly onto a panned RPM window |
-| `graph-layers.test.ts` | Static-layer cache key stability and invalidation (frame, limits, unit, theme, redline), OffscreenCanvas fallback, aero-wall shading range |
-| `accordion-height.test.ts` | Open-height sync, clearing on close, recovery of a stale zero height, keeping the last height while unrendered, and the stylesheet no longer capping height at 1600 px |
-| `theme-events.test.ts` | The pure theme cycle helper dark → oled → light → dark. The helper is exported and tested but is not bound to a control: the drawer OLED / Dark / Light segment calls `setTheme` directly |
-| `gear-colors.test.ts` | 8-entry palette and wraparound colour lookup |
-| `setup-matrix.test.ts` | Wizard matrix coverage (three phases × four issues), ranked fixes with resolvable copy in both languages, dictionary-key existence, the front-ARB/aero trade-off case, guide sections and the eight procedure steps |
-| `setup-sensitivity.test.ts` | Signed finite-difference metrics for gearing and tire-size effects without mutating the setup |
-| `compare-utils.test.ts` | Comparison gear parsing/formatting, top-speed derivation, aligned delta with `null` for mismatched gear counts |
+| `graph-svg.test.ts` | Pure-function tests for the SVG plot engine: frame geometry and projection, fade rule, envelope crossing and ceiling, unclipped power axis, comparison envelope, layer gating (no DOM anywhere) |
+| `graph-viewport.test.ts` | Bounded zoom and pan window: clamping into axis limits, minimum spans, anchored zoom and pan offsets |
+| `dynamics-graph.test.ts` | Physical-unit force profiles and SVG stopping-distance plots for the alternate graph views |
+| `graph-legend.test.ts` | Palette mapping for the HTML legend swatches and layer-pill dots (`syncGraphSwatches`) |
+| `shift-drops.test.ts` | Shift-drop peak visibility inside the plot, connector and landing-marker geometry, the guard that draws nothing when an upshift does not lose RPM or lands above the limiter, landing-RPM projection through a panned RPM window, per-pair landing-RPM and shift-speed deltas |
+| `crosshair-snap.test.ts` | Snap-window tests for the crosshair shift-point lock |
+| `crosshair-tooltip.test.ts` | Pure readout rows of the free hover tooltip: per-gear RPM with over-rev flags, wheel power and the grip verdict |
+| `kpi-strip.test.ts` | KPI strip classifiers: WALL / OVERDRIVE / ECO flags and shift advisories |
+| `compare-utils.test.ts` | Dual-setup comparison helpers: gear parsing/formatting, top-speed derivation, aligned delta with `null` for mismatched gear counts |
+| `compare-gear-stack.test.ts` | Pure helpers of the prefix-parameterized primary/secondary gear stacks |
+| `accordion-height.test.ts` | Open-height sync, clearing on close, recovery of a stale zero height, keeping the last height while unrendered, and the stylesheet no longer capping height |
+| `accordion-chrome.test.ts` | The shared accordion recipe: no retired `accordion-header` alias, headers carry `section-header`, tool modules delegate to `buildToolShell`, table cells use the `.th`/`.td` role classes |
+| `setup-matrix.test.ts` | Wizard matrix coverage (three phases × four issues), ranked fixes with resolvable copy in every language, dictionary-key existence, the front-ARB/aero trade-off case, guide sections and the eight procedure steps |
 | `i18n.test.ts` | Identical key sets and non-empty values across every language, known translations, `t()` default/override behaviour |
-| `qr-svg.test.ts` | Dependency-free QR SVG: version scaling for share-URL lengths, rejection of empty/oversized/non-Latin-1 payloads |
+| `theme-events.test.ts` | The pure theme cycle helper dark → oled → light → dark. The helper is exported and tested but is not bound to a control: the drawer OLED / Dark / Light segment calls `setTheme` directly |
+| `qr-svg.test.ts` | Share-modal QR rendering (`src/core/share/qr-svg.ts` over the `qrcode` package): empty and oversized payloads rejected, non-latin-1 rejected, version-10/EC-L capacity honoured and the emitted SVG markup checked |
 
-### Platform contracts (2 files)
+### Platform and performance (3 files)
 
 | File | What it verifies |
 |:--|:--|
 | `pwa-utils.test.ts` | Service-worker eligibility (secure flag, https, loopback, plain http rejection), standalone detection, cacheable-request rules |
 | `android-manifest.test.ts` | `android/app/src/main/AndroidManifest.xml` declares coarse and fine location, no background location, GPS hardware not required, and a non-exported `FileProvider` |
-
-### Release regression bundles (4 files)
-
-These aggregate checks added for a release; they overlap the groups above and
-cover modules that have no dedicated suite file.
-
-| File | What it verifies |
-|:--|:--|
-| `release-physics.test.ts` | Advanced braking (`braking-simulation`), powertrain (`powertrain-math`), handbrake coupling, corner/downshift advice, setup diagnostics, plus the property-based checks below |
-| `release-storage.test.ts` | Backup import/export safety (`backup-store`), advanced share extensions, GPS session parsing and the `performance-session` estimators |
-| `release-telemetry.test.ts` | Telemetry CSV parsing and inverse-dyno (`telemetry-math`), the discrete gearset optimizer, GPX geometry (`gpx-track`) |
-| `release-graph.test.ts` | Graph window transforms and sharing, auto-fit, snapping, SVG/PNG export geometry, escaping of untrusted SVG metadata |
+| `accel-performance.test.ts` | Warm-median timing guard for a 64-point dyno run (see below) |
 
 ## What the tests do and do not prove
 
@@ -162,16 +172,16 @@ i18n parity, legacy-safe decoding) against values computed for those very
 relations. That is a correctness net for the code, not validation of the physics
 against independent measured vehicle data.
 
-`MATH.md` §29 ("Assumptions and limitations") lists what the model deliberately
+`MATH.md` §21 ("Assumptions and limitations") lists what the model deliberately
 does not include — no Pacejka slip curve, no load-sensitive µ, no suspension
 compliance, no turbo dynamics, no road curvature. No test can cover behaviour the
 model does not implement.
 
-A small number of checks do encode a documented external anchor. `MATH.md` §30
+A small number of checks do encode a documented external anchor. `MATH.md` §22
 ("Validation anchors") is the register, and these are the ones with a matching
 test:
 
-| Test | Anchor basis (`MATH.md` §30) |
+| Test | Anchor basis (`MATH.md` §22) |
 |:--|:--|
 | `tests/speed-math.test.ts` (`Eclipse reverse top speed`) | ≈ 61 km/h; the test accepts a 55–68 km/h band |
 | `tests/aero-math.test.ts` (`dragLimitedSpeedKmh`) | Eclipse 1G 5th-gear Vmax 215–220 km/h (README anchor); the test is titled "near 215-225 kmh" and asserts 205 < limit < 235 km/h |
@@ -181,54 +191,46 @@ test:
 | `tests/brake-math.test.ts` (`stoppingDistanceM`) | 100–0 km/h on µ 1.0, `v²/2a`. Note this test recomputes the same closed form, so it proves the implementation matches the formula, not an independently measured stop |
 | `tests/presets.test.ts` (`Eclipse 1G GS hero preset`) | owner data: mass 1270 kg, Cd 0.29, frontal area 1.95 m², ratios and 3.083 reverse |
 
-Everything else — including all of `dynamics-math.test.ts`, `dyno-csv.test.ts`,
-`share-*.test.ts` and the release bundles — checks internal consistency. Treat
-the physics numbers as a documented model, not as verified against a datasheet
-corpus. `src/config/catalog-quality.ts` states the same caveat about itself.
+Everything else — including all of `dynamics-math.test.ts`, `dyno-csv.test.ts`
+and `share-*.test.ts` — checks internal consistency. Treat the physics numbers
+as a documented model, not as verified against a datasheet corpus.
+`src/config/catalog-quality.ts` states the same caveat about itself.
 
-## Property-based tests
+There are **no property-based tests**: `fast-check` is not a dependency of the
+repository, and no suite imports it.
 
-`fast-check` 3.23.2 is a dev dependency. Exactly one file uses it:
-`tests/release-physics.test.ts`, in the `physical properties` block, with
-`numRuns: 300` per property.
+## The acceleration timing guard
 
-1. **Speed/RPM round-trip.** For RPM in [500, 15000], total ratio in [0.4, 6],
-   final drive in [1, 8] and circumference in [1, 3] m, `speedKmh` is finite,
-   `rpmFromKmh(speedKmh(...))` returns the input RPM to 7 decimals, and speed
-   grows with RPM.
-2. **Tractive force.** For any ratio in [0.4, 5], `tractiveForceAt` at 4000 RPM
-   is finite and increases with a taller total ratio.
-
-## The acceleration benchmark
-
-Two files, one workload. The shared input is `tests/fixtures/accel-benchmark.ts`:
-a 1400 kg car, six gears, and a **64-point dense dyno curve**, run through
+Two files, one workload. The shared input comes from `tests/dynamics-fixtures.ts`
+(`dynamicsInput()`): a car with a **64-point dense dyno curve**, run through
 `simulateAcceleration` from `src/core/math/accel-math.ts` — curve validation,
 shift-target calculation and the full Euler loop.
 
-- `tests/accel-math.bench.ts` is a `vitest bench` workload
-  (`time: 1500`, `warmupTime: 500`, `iterations: 100`) reporting the throughput
-  of one complete run.
-- `tests/accel-performance.test.ts` is the pass/fail gate. Its test is declared
-  with `it.skipIf(...)`, so it is **skipped in the ordinary suite** and only
-  executes when `npm_lifecycle_event` is `bench` or `HAGURUMA_PERF_GATE=1`. It
-  warms up with 50 runs, then asserts the mean of 100 runs is **below 3 ms**.
+- `tests/accel-math.bench.ts` is a `vitest bench` workload reporting the
+  throughput of one complete run for three cases: anchor curve with live
+  transfer, 64-point Akima dyno, and 64-point dyno with active AWD. It reports
+  timings and asserts nothing; run it with `npm run bench`.
+- `tests/accel-performance.test.ts` is the pass/fail gate and runs inside the
+  ordinary `npm test` suite (no `skipIf`). For each of RWD and AWD it warms up
+  with 30 runs, measures 31 more, and asserts that the **median** run stays
+  under `BUDGET_MS = 6` (8 ms when the `CI` variable is set, because shared
+  runners are slower and noisier). The comment in the file describes it as a
+  blow-up detector rather than a micro-benchmark: a warm 64-point run costs
+  roughly 2.5–4 ms on ordinary hardware.
 
-`npm run bench` runs both with `--maxWorkers=1`, so the timing test is not
-disturbed by parallel workers. CI runs `npm run bench` as a step of its own.
+Caveats:
 
-Caveats, stated in `README.md` as well:
-
-- The 3 ms target is a wall-clock threshold, so it depends on the host, the
-  Node/V8 version and competing load. It is a regression tripwire for this
-  project's CI runner, not a universal performance guarantee, and not a
-  statement about browser performance.
-- No measured number is recorded in this document. The benchmark has not been
-  run as part of writing it.
+- The budget is a wall-clock threshold, so it depends on the host, the
+  Node/V8 version and competing load. It is a regression tripwire, not a
+  universal performance guarantee, and not a statement about browser
+  performance.
+- The label inside `tests/accel-math.bench.ts` still says "target: mean <3 ms";
+  that text predates the current median-based budget and does not gate anything.
 
 ## Catalog data quality
 
-Two layers guard the vehicle catalog.
+Two layers guard the vehicle catalog; both are plain suites inside
+`npm test`.
 
 **Contract validation** — `src/config/car-catalog.ts` defines
 `validateCatalogEntry()` (structure, strictly decreasing ratios, `finalDrives`
@@ -260,16 +262,23 @@ pushes to `main` and pull requests targeting `main`. Steps, in order:
 | Step | Guards |
 |:--|:--|
 | `actions/checkout@v4` | Source availability |
-| `actions/setup-node@v4` (`node-version: '24'`, `cache: npm`) | A Node release inside `package.json` `engines` (`^20.19.0 \|\| ^22.12.0 \|\| >=24.0.0`) |
+| `actions/setup-node@v4` (`node-version: '20'`, `cache: npm`) | A Node release matching the workflow line; `package.json` declares no `engines` field |
 | `npm ci` | Lockfile-installed dependencies |
 | `npx tsc --noEmit` | Types in `src/` and `vite.config.ts` |
-| `npm test` | The whole Vitest suite |
-| `npm run lint:catalog` | Catalog contract plus raw-file data quality |
-| `npm run bench` | Warm acceleration timing against the 3 ms mean gate |
-| `npm run build` | The production bundle still builds |
+| `npm test` | The whole Vitest suite, timing guard included |
+| `npm run build` | The production bundle still builds (typecheck runs again inside the script) |
 
-`.github/workflows/cd.yml` (see [deployment.md](./deployment.md)) runs only
-`npm ci` and `npm run build`; it does not run the suite.
+There is no lint step and no bench step: the catalog checks are part of
+`npm test`, and the benchmark is an on-demand command.
+
+`.github/workflows/cd.yml` (see [deployment.md](./deployment.md)) runs
+`npm ci` and `npm run build` on Node 20 and publishes `dist/` to GitHub Pages;
+it does not run the suite.
+
+`.github/workflows/build-apk.yml` (manual or release-triggered) runs `npm ci`
+and `npm run build`, then assembles the debug APK with JDK 21 and Android SDK
+`platforms;android-35` + `build-tools;35.0.0`. **It does not run `npm test`** —
+the APK path trusts CI to have passed.
 
 ## Manual checks
 
@@ -279,13 +288,13 @@ to perform by hand; nothing in the repository records that they were run.
 - `npx tsc --noEmit` — zero type errors.
 - `npm test` — all Vitest suites pass.
 - `npm run build && npm run preview` — manual smoke test of tire validation, the
-  km/h / mph toggle, preset load, comparison, theme cycle, tooltip, gear
+  km/h / mph toggle, preset load, comparison, theme selection, tooltip, gear
   add/remove.
 - Verify light-mode overrides if new Tailwind colour classes were added.
 
 ## Coverage map
 
-`MATH.md` §33 ("Test coverage map") is the per-suite map grouped by area, and it
+`MATH.md` §25 ("Test coverage map") is the per-suite map grouped by area, and it
 is the authoritative list of what each suite pins. The tables above group the
-same suites by domain; use §33 when you need the exact assertions behind a
+same suites by domain; use §25 when you need the exact assertions behind a
 particular physics relation.

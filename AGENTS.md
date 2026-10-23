@@ -27,7 +27,7 @@ src/
     state/app-state.ts            # defaultState + singleton
     state/engine-curve.ts         # active engine curve (anchors vs sanitized dyno points)
     units/unit-utils.ts           # getSpeedStep(), getUnitLabel(), getPowerUnitLabel(), formatPower(), getMaxRpm()
-    i18n/                         # dictionary.en.ts + dictionary.it.ts + language.ts (applyI18n)
+    i18n/                         # dictionary.en/it/de/es/fr.ts + language.ts (applyI18n)
     share/share-utils.ts          # URL hash encode/decode (verbose keys, compact `c` token, curve, rg_/crg_ running gear)
     share/running-gear-share.ts   # rg_/crg_ encode/decode block + numeric param helper
     share/share-compact.ts        # Packed Base64URL full-state codec (v1) + legacy primary token, no dependencies
@@ -95,8 +95,8 @@ android/                          # Committed Capacitor scaffold (generated outp
 - Every file starts with `@file` + `@brief`.
 - Feature modules must stay **under 400 lines**, functions **under 50 lines**.
 - Exempt from the file cap: `index.html` (app shell), `styles/main.css` (import hub),
-  and the dictionary system (`src/core/i18n/dictionaries.ts` wires the per-language
-  `dictionary.en.ts` / `dictionary.it.ts` files and owns the `DictKey` union).
+  and the dictionary system (`src/core/i18n/dictionaries.ts` wires the five per-language
+  `dictionary.en/it/de/es/fr.ts` files and owns the `DictKey` union).
   New static markup belongs in component-owned `inject*Shell()` builders, not in `index.html`.
 - Avoid nested conditionals deeper than 3 levels.
 - One component per file in `components/card/` (base `Card`, specialized cards, `index.ts` barrel). Cards receive data via props/options, render with `textContent` only, and cause no side effects.
@@ -147,7 +147,7 @@ Layer switches live in `state.graphLayers` (`core/models.ts`). The four `[data-g
 - `data-i18n` for text content → `applyI18n()` sets `el.textContent = t(key)`.
 - `data-i18n-tip` for tooltip attributes → sets `title`, `data-tip`, `aria-label`.
 - `data-i18n-ph` for placeholder attributes.
-- All English copy lives in `dictionary.en.ts`, all Italian copy in `dictionary.it.ts` (compile-time parity). Data modules hold `DictKey` references and resolve via `t(key, lang)` — never inline user-facing strings.
+- All user-facing copy lives in the five dictionaries (`dictionary.en/it/de/es/fr.ts`, compile-time parity via `DictKey`). Data modules hold `DictKey` references and resolve via `t(key, lang)` — never inline user-facing strings.
 - All static elements are resolved in `element-refs.ts` via `document.getElementById()`.
 - Feature shells are injected by `inject*Shell(mount)` builders called in `bootstrap()` **before** `getElementRefs()`, so ids, `[data-accordion]` sections and `[data-i18n]` nodes exist for refs, accordion binding and `applyI18n()`.
 - Accordions are never height-capped: `.section-content.open` is `max-height: none` and `services/dom/accordion-height.ts` mirrors `scrollHeight` into an inline value so the transition still animates. Heights self-heal via a document mutation observer, a resize observer on each open section's children and a `<details>` toggle hook; `renderAll()` also re-measures as its last step.
@@ -219,7 +219,7 @@ Layer switches live in `state.graphLayers` (`core/models.ts`). The four `[data-g
 ## v3
 - `vite.config.ts` uses `base: './'` for GitHub Pages deployment.
 - `tsconfig.json`: strict mode, `noEmit`, `moduleResolution: bundler`.
-- Tailwind loaded via CDN (`cdn.tailwindcss.com`) with custom colors in `index.html`.
+- Tailwind is compiled into the bundle through PostCSS (no CDN script); custom colors live in the theme tokens. Only Google Fonts is loaded remotely, from `index.html`.
 
 ## v0.7 dynamics
 - `state.dynamics` owns limiter/gearbox timing, mapped efficiency, ABS/brake settings, apex inputs, timed sequence CSV and graph view. `dynamics-input.ts` builds shared primary simulation/braking/force inputs.

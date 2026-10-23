@@ -5,7 +5,7 @@ This page covers observable problems: rejected inputs, suspicious results, impor
 Two things apply to everything below:
 
 - Every number the app produces is a model estimate. A surprising result is usually an input difference, not a defect.
-- The application has no backend: imported files are parsed in the browser and persisted only in `localStorage`. The page itself does load third-party assets (the Tailwind CDN script and Google Fonts in `index.html`), which are ordinary requests to those hosts.
+- The application has no backend: imported files are parsed in the browser and persisted only in `localStorage`. The page itself loads Google Fonts from `index.html`; everything else (including Tailwind, compiled into the bundle through PostCSS) is served from the origin.
 
 ## Invalid or inconsistent inputs
 
@@ -16,8 +16,8 @@ Two things apply to everything below:
 When the string does not parse:
 
 - the status dot next to the field turns red and the message **"Invalid format (e.g. 225/45R17)"** appears (`primary.tireError` in `src/core/i18n/dictionary.en.ts`, rendered through `#tire-error`);
-- the typed string is still written to `state.primaryTire` (`src/services/events/primary-events.ts`), so it also travels in the share link;
-- everything that needs a circumference calls `parseTire` and refuses instead of guessing. Tools then report **"Check the highlighted values and try again."** (`lab.invalid`).
+- an invalid entry is ignored and the previous value is kept (`applyTireInput` / `applyTirePill` in `src/services/events/setup-controls-events.ts` return early on non-positive or non-finite input), so a red dot always means the stored string itself does not parse;
+- everything that needs a circumference calls `parseTire` and refuses instead of guessing. Tools then report their own message (for example the gear lab shows **"Check solver inputs."**, `opt.invalid`).
 
 Fix the tire string, or reload a preset to restore a valid one.
 
@@ -35,33 +35,34 @@ A field that silently does nothing is usually one of these guards, not a frozen 
 
 ### Tool fields
 
-`toolNumber` sets `min`, `max` and `step`, and `toolValue` (`src/components/tool-form.ts`) rejects empty, non-finite or out-of-range values. On rejection it sets `aria-invalid="true"` on the field and moves focus there; the tool prints its own message. The invalid state is styled by `.track-tool [aria-invalid='true']` in `src/styles/track-tools.css`.
+Tool cards validate their own fields and print a fixed message (keys in `src/core/i18n/dictionary.en.ts`):
 
-| Surface | Message | Focus behaviour |
-| --- | --- | --- |
-| Most tools | "Check the highlighted values and try again." (`lab.invalid`) | focus moves to the rejected field |
-| Custom car form | "Check the highlighted fields." (`custom.invalid`) | invalid fields get a red border, focus does not move |
-| Spec-sheet quick add | "Enter a name, valid tire, 2–8 decreasing ratios, FD 1–10, 3000–12000 RPM, 300–4000 kg and 5–1500 kW; then review again." (`quick.invalid`) | focus moves to the name field |
-| Advanced shift times | "Enter one finite shift time from 0 to 3 seconds for each forward upshift." (`advanced.invalidTimes`) | focus moves to the shift-time field |
-| Lap sequence | "Use the five-column header and 1–60 phases, each 0.01–60 seconds, at most 180 seconds total…" (`lap.invalid`) | focus moves to the command box |
-| Pyrometer / sensitivity | `lab.invalid` | focus moves to the rejected field |
+| Surface | Message |
+| --- | --- |
+| Custom car form | "Check the highlighted fields." (`custom.invalid`) |
+| Spec-sheet quick add | "Check the highlighted fields." (`wiz.invalid`) |
+| Gear lab solver, track advice and GPX import | "Check solver inputs." (`opt.invalid`) |
+| Wheel fitment tool | "Invalid tire or rim" (`fit.invalid`) |
+| Tire size tool | "Invalid tire format" (`tiretool.invalid`) |
+| Telemetry gear recovery and inverse dyno | "No usable rpm/speed rows." (`tele.invalid`) |
+| Secondary gear list | "Check secondary gears (e.g. 3.58, 2.05, 1.38)." (`compare.invalid`) |
+| Lap sequence (Dynamics card, `src/components/dynamics-tool.ts`) | "Invalid sequence or unsafe downshift (over-rev)." (`dynamics.invalidSequence`) — the field also gets `aria-invalid` |
 
 ### Rejected CSV and JSON files
 
-Each importer validates the whole file and rejects it rather than importing a partial result. Files that fail are not partially applied: the previous state stays active.
+Each importer validates what it can and rejects rather than importing a partial result where the format allows it. Dyno CSV and INI rejection leave the previous state untouched; the garage and preset-bundle importers instead **skip invalid entries and save the valid ones** (documented in `docs/data-formats.md` §7–§8).
 
 | Importer | Rejection message | Practical limits |
 | --- | --- | --- |
-| Dyno CSV (`src/core/math/dyno-csv.ts`) | "Invalid CSV: need rows with rpm + torque Nm (or power kW/cv)." (`engine.csvError`) | 5 MB file cap, at least two non-comment rows, a recognisable header or 2–3 numeric columns, and at least two usable points after sanitising. The result is resampled to 64 points (`MAX_CURVE_POINTS`). |
-| Telemetry CSV (`src/core/math/telemetry-math.ts`) | "Choose a CSV under 10 MB with increasing time in seconds, engine RPM and speed in km/h." (`telemetry.invalid`) | 10 MB file cap, a header containing both an RPM-like and a speed-like channel, a time channel, no `mph`/`mps` speed column, 50 000-row cap, and at least 3 usable rows before ratios are shown. |
-| Inverse dyno from telemetry | "No usable steady-gear acceleration. Include the gear column and a full-throttle run on a known grade." (`telemetry.noDyno`) | Needs a full-throttle steady-gear run. |
-| Efficiency map (`src/core/math/efficiency-map.ts`) | "Use a CSV headed rpm,load,efficiency with 2–256 unique samples: RPM 500–15000, load 0–1, efficiency above 0 and at most 1. Maximum 50 kB." (`advanced.invalidMap`) | Exact header, 50 kB cap, 2–256 unique samples, fractions rather than percentages. |
-| Lap command box (`src/core/math/lap-sequence.ts`) | `lap.invalid` | Exact header `duration_s,gear,throttle,brake,rev_match` plus an optional `handbrake` column, 1–60 phases, 0.01–60 s per phase, 180 s total, gear 1–8, pedals 0–1, `rev_match` 0 or 1, 8000-character box. |
-| GPX track (`src/core/math/gpx-track.ts`) | `lab.invalid` | 5 MB cap, `<!DOCTYPE`/`<!ENTITY` rejected, at least 3 valid trackpoints. |
-| Assetto Corsa INI (`src/services/events/export-events.ts`) | "Could not parse drivetrain.ini" (`export.iniError`) | 1 MB cap, at least one `GEAR_n` and a `FINAL` key. Nothing is applied on failure. |
-| Saved GPS run (`src/core/presets/performance-store.ts`) | "No valid saved run. Arm a new GPS run first." (`timer.noSession`) | Session must be `schemaVersion: 1`, at most 5000 samples, strictly increasing time, speed 0–500 km/h, accuracy 0–15 m. |
-| Backup file (`src/core/presets/backup-store.ts`) | "Invalid backup. Choose a Haguruma JSON backup smaller than 2 MB." (`backup.invalid`) | 2 MB cap, `schemaVersion: 1`, allowlisted keys only. |
-| Garage file (`src/core/presets/backup-store.ts`) | `backup.invalid` | 2 MB cap, every car validated, at most 500 cars, never a silently filtered subset. |
+| Dyno CSV (`src/core/math/dyno-csv.ts`) | "Invalid CSV: need rows with rpm + torque Nm (or power kW/cv)." (`engine.csvError`) | 5 MiB file cap (`MAX_DYNO_CSV_BYTES`), at least two non-comment rows, a recognisable header or 2–3 numeric columns, and at least two usable points after sanitising. The result is resampled to 64 points (`MAX_CURVE_POINTS`). |
+| Telemetry CSV (pasted text, `src/core/math/telemetry-math.ts`) | "No usable rpm/speed rows." (`tele.invalid`) | 20 000-row cap per pass (`TELEMETRY_MAX_SAMPLES`), at least 5 samples, RPM and speed both positive; decimal comma accepted only in semicolon files. No file-size cap — the input is a textarea, not a file picker. |
+| Inverse dyno (pasted trace, `src/core/math/inverse-dyno.ts`) | "No usable rpm/speed rows." (`tele.invalid`) | at least 6 pairs, strictly increasing time, non-decreasing speed, valid vehicle data. |
+| Efficiency map CSV (`src/core/math/efficiency-map.ts`) | Parser only — no UI control calls it | Exact header `rpm,load,efficiency`, 2–256 unique samples, RPM 500–15000, load 0–1, efficiency above 0 and at most 1 (fractions, not percentages), 50 000-character cap. Dormant: documented in `docs/data-formats.md` §3. |
+| Lap sequence textarea (`src/core/math/lap-sequence.ts`) | `dynamics.invalidSequence` | Four comma-separated cells per line `duration_s,gear,throttle,brake_g`; up to 32 rows and 4000 characters, at most 60 s per phase and 60 s summed across all phases; gear 1–8, pedals 0–1, brake 0–3 g; the whole input is rejected on one bad cell. |
+| GPX track (`src/core/math/gpx-track.ts`) | "Check solver inputs." (`opt.invalid`) | At least 3 valid trackpoints with finite coordinates; no file-size cap and no `DOCTYPE`/`ENTITY` screening in the current parser. |
+| Assetto Corsa INI (`src/services/events/export-events.ts`) | "Could not parse drivetrain.ini" (`export.iniError`) | 1 MB cap (`MAX_DRIVETRAIN_INI_BYTES`), at least one `GEAR_n` and a `FINAL` key. Nothing is applied on failure. |
+| Full-state backup (`src/core/backup/state-backup.ts`) | "Invalid backup file." (`data.error`) | Envelope must carry `schemaVersion: 1` and a `values` object; non-string values are dropped. No size cap. |
+| Garage / preset bundle (`src/components/backup-tool.ts`, drawer path) | Success counts cars in ("… cars imported", `data.carsIn`); there is no dedicated failure message | Every entry must pass the `isPreset` guard; invalid entries are skipped and valid ones saved individually. Malformed JSON logs to the browser console and nothing is written. No size cap. |
 
 ## Unexpected or suspicious model outputs
 
@@ -75,7 +76,7 @@ Check these in order before assuming a defect. All of them are inputs or view st
 | Running gear | `state.runningGear` | Front weight distribution, CoG height, wheelbase, track, road friction coefficient, tire compound, differential model and bias, and spring rates all feed the grip curve and the coast lock-up readout. |
 | Comparison | `state.compareEnabled` | With the comparison on, dashed curves and a second grip curve are drawn, and the table shows tire and shift deltas against the secondary car. |
 | Setup level | `haguruma-setup-level` / `haguruma-comp-level` | An input you expect to see may be hidden: the gears section is Full only, the engine and road-load sections are Medium, `rg-tire` is Easy while `rg-diff` and the chassis rows are Full, and the comparison's gear rows are Full. |
-| Graph window | `state.graphWindow`, shared as `z_min`/`z_max`/`z_rmin`/`z_rmax` | The visible window is independent of the axis maximum. A zoomed window can put a curve outside the plot. Floors are 5 km/h and 250 RPM; ceilings are 2000 km/h and 30 000 RPM. Use the reset or fit control (or a double-tap) to return to the full view; changing the axis maximum also clears the window. |
+| Graph window | `state.graphWindow`, **not shared** in the URL | The visible window is independent of the axis maximum. A zoomed window can put a curve outside the plot. Floors are 5 km/h and 250 RPM (`VIEW_LIMITS.minSpanKmh/minSpanRpm`); ceilings are 2000 km/h and 30 000 RPM (`VIEW_LIMITS.maxKmh/maxRpm`). Use the fit control (or `Home`/`0` with the plot focused) to return to the full view; changing the axis maximum keeps the window, clamped into the new axis (`clampWindow`). |
 
 Markers that look like errors but are results:
 
@@ -87,7 +88,7 @@ If the model still disagrees with another tool, the models are documented approx
 
 ## Local storage and data recovery
 
-All persisted state uses eight allowlisted keys (`BACKUP_KEYS` in `src/core/presets/backup-store.ts`):
+All persisted state uses eight allowlisted keys (`BACKUP_KEYS` in `src/core/backup/state-backup.ts`):
 
 | Key | Contents |
 | --- | --- |
@@ -98,18 +99,18 @@ All persisted state uses eight allowlisted keys (`BACKUP_KEYS` in `src/core/pres
 | `haguruma-power-unit` | `kw` or `cv`. |
 | `haguruma-setup-level` | Primary setup level. |
 | `haguruma-comp-level` | Comparison setup level. |
-| `haguruma-performance-session` | Last saved GPS run. |
+| `haguruma-sessions` | Session log runs (versioned envelope). |
 
-When storage is unavailable or full, the backup and quick-add paths report **"Browser storage is unavailable or full. Keep your backup file and try again."** (`backup.storageError`) and the restore path rolls back the keys it had already written. One gap is worth knowing: `storeCustomPresets` (`src/core/presets/custom-store.ts`) swallows storage errors, so a car saved from the custom-car form can appear to succeed and then not persist. If saved cars vanish after a reload, check private-browsing mode or storage quota and use the Tools card backup path, which does report the failure.
+When storage is unavailable or full, the backup and preset-bundle paths report the storage error and continue; a key whose write fails is skipped rather than rolled back (the restore returns the count of written keys). One gap is worth knowing: `storeCustomPresets` (`src/core/presets/custom-store.ts`) swallows storage errors, so a car saved from the custom-car form can appear to succeed and then not persist. If saved cars vanish after a reload, check private-browsing mode or storage quota and use the Tools card backup path.
 
-**Before any destructive step, export a full backup.** Tools → Local Backup → "Export Full Backup" writes `haguruma-backup.json` containing the values of the eight keys above. That file is the recovery path.
+**Before any destructive step, export a full backup.** Tools → Local Backup → "Export Full Backup" writes `haguruma-backup-<YYYY-MM-DD>.json` containing the values of the eight keys above. That file is the recovery path.
 
 What each import replaces:
 
 | Import | Effect |
 | --- | --- |
-| Backup JSON (Tools → Local Backup) | Validated first and shown as a preview. Applying it replaces the keys present in the file and leaves every other key unchanged; reload the app to apply restored preferences ("Backup restored. Reload the app to apply the restored preferences."). |
-| Garage / custom-car JSON (My Cars) | Merges into the saved cars, replacing cars with matching names while others stay unchanged. A confirmation dialog appears when a name would be overwritten ("This file replaces saved cars with matching names. Other cars stay unchanged. Import these cars?"). |
+| Backup JSON (Tools → Local Backup) | **Direct apply, no preview and no rollback.** Validating the envelope (`schemaVersion: 1`, object `values`, string values only) writes each allowlisted key immediately; keys absent from the file are left untouched and unrelated keys are never written. The page is not reloaded, so a manual reload may be needed before every restored preference shows. |
+| Garage / preset bundle (My Cars / Tools) | Merges into the saved cars: each valid entry is stored individually (incoming wins on a matching name), invalid entries are skipped, and the card reports how many cars were stored. No confirmation dialog appears. |
 
 ## Stale offline assets
 
@@ -125,22 +126,22 @@ A stale interface therefore means either the app is running offline from the cac
 1. **Reload** the page. Navigations are network-first, so a normal reload normally picks up a new shell.
 2. If it is still stale, **clear the site data for this origin** (browser settings → site data), or unregister the service worker and reload.
 
-The consequence of step 2 is that all eight `localStorage` keys go with it: saved cars, language, theme, units, setup levels and the saved GPS run. **Export a full backup first** if any of that matters.
+The consequence of step 2 is that all eight `localStorage` keys go with it: saved cars, language, theme, units, setup levels and the logged session runs. **Export a full backup first** if any of that matters.
 
 ## Sharing and export limits
 
-The share hash carries setup fields only. Language, theme, speed unit, power unit and setup levels stay in `localStorage` and are not part of a link (`src/core/share/share-utils.ts`).
+The share hash carries setup fields only. Language, theme, speed/power unit and setup levels stay in `localStorage` and are not part of a link (`src/core/share/share-utils.ts`).
 
 | Aspect | Behaviour |
 | --- | --- |
-| Primary encoding | The packed Base64URL `c` token. Verbose keys are the fallback and are used whenever the token cannot encode the setup. |
+| Primary encoding | The packed Base64URL `c` token (version byte 1). Verbose keys are the fallback and are used whenever the token cannot encode the setup (for example with a custom curve or a non-default tire compound). A legacy token is decoded when the v1 token fails. |
 | Dyno curve | Always verbose: `curve=rpm:torque;rpm:torque;…`, decimal dot, capped at 64 points. |
-| Graph window | `z_min`, `z_max`, `z_rmin`, `z_rmax`. All four must be present and in range (span ≥ 5 km/h, ≥ 250 RPM); otherwise the window is ignored and the full view is used. |
+| Graph window | **Not shared.** Only the axis maximum travels, as `max` (50–500 km/h). |
+| Advanced dynamics | Non-default `d_*` sidecar keys (`d_limiter`, `d_gearbox`, `d_shiftTimesS`, `d_abs`, `d_sequenceCsv`, …) and the extended running-gear keys `rg_dp`/`rg_af`/`rg_cl`/`rg_tv`/`rg_hd`/`rg_ha` with their `crg_` mirrors. See `docs/data-formats.md` §11 for the full tables. |
 | Unknown or out-of-range keys | Ignored. Only known keys are read, and numeric values outside their documented ranges are dropped. |
-| Unknown differential model ids | Ignored, so a link from an older build still loads (`rg_dm`). |
-| Advanced extension | `view=force`, `margin=1`, `sim=<json>` (under 25 000 characters), `rgx`/`crgx` (under 1000 characters). |
-| QR modal | Generated locally with no network access. The encoder handles latin-1 payloads up to version 10-L (271 data bytes); beyond that the modal shows "Setup too large for a QR code". |
-| Exports | Graph PNG and SVG, print/PDF through the browser dialog, and drivetrain files: `haguruma-drivetrain.ini`, `haguruma-drivetrain.json`, `haguruma-transmission.jbeam`, `haguruma-gears-motec.csv`, `haguruma-gears-aim.csv`. Tools also export `haguruma-sequence.csv`, `haguruma-run.csv`, `haguruma-run.json`, `haguruma-backup.json` and one `<car name>.json` per saved car. |
+| Unknown differential model or compound ids | Ignored, so a link from an older build still loads (`rg_dm`, `rg_tc`). |
+| QR modal | Generated locally with no network access. The encoder handles Latin-1 payloads up to version 10-L (271 data bytes); beyond that the modal shows "Setup too large for a QR code". |
+| Exports | Graph PNG and SVG, print/PDF through the browser dialog, and drivetrain files: `haguruma-drivetrain.ini`, `haguruma-drivetrain.json`, `haguruma-transmission.jbeam`, `haguruma-gears-motec.csv`, `haguruma-gears-aim.csv`. Tools also export `haguruma-backup-<date>.json`, `haguruma-my-cars-<date>.json`, `haguruma-garage.json`, dated `haguruma-sessions-<date>.csv`/`.json` and one `<car name>.json` per saved car. There is no sequence CSV export; lap results render in the card only. |
 
 A share link is not a backup: it carries the setup, not your garage, preferences or saved run.
 
@@ -148,10 +149,9 @@ A share link is not a backup: it carries the setup, not your garage, preferences
 
 | Feature | Requirement | When unavailable |
 | --- | --- | --- |
-| GPS performance timer | `navigator.geolocation`, a secure context and location permission | Permission failure or a 15 s timeout reports "GPS access failed. Check location permission and secure-context support, then arm a new run." (`timer.permission`). With no geolocation object at all, `PerformanceRecorder` reports `hardware.unsupported`, whose text is the screen-awake wording: "This device could not enable screen awake. Check permissions and power-saving settings." — misleading for a GPS problem. |
-| GPS precision gates | Accuracy ≤ 15 m, speed ≤ 500 km/h, fresh timestamp | "GPS speed unavailable or accuracy worse than 15 m. Move to an open area and wait." (`timer.accuracy`); starting above 1 km/h reports `timer.standstill`; samples more than 2 s apart stop the run with `timer.gap`. Recording also stops after 120 s or 5000 samples, when the page is hidden, or on `pagehide`. Coordinates are discarded; only time, speed and accuracy are kept. |
-| Screen wake lock | Capacitor `KeepAwake`, and a device that reports support | "This device could not enable screen awake. Check permissions and power-saving settings." (`hardware.unsupported`). The request is released when the document becomes hidden. |
-| Native haptics | A native platform (the Capacitor wrapper) | The toggle only sets a flag and prints no status. On the web build it has no visible effect, and failures are swallowed (`src/services/hardware/device-feedback.ts`). |
+| GPS timer (Session tool) | `navigator.geolocation`, a secure context and location permission | Without a geolocation object the tool prints "GPS unavailable here." (`sess.nogps`) and does not start. A `watchPosition` error callback (permission denied, timeout, position unavailable) paints the same `sess.nogps` line. |
+| GPS sampling | `watchPosition` with `enableHighAccuracy: true`, `maximumAge: 0` | Fixes whose `coords.speed` is null, non-finite or negative are dropped; otherwise every fix appends to the attempt and updates the live speed line. Stopping the timer clears the watch and scores the attempt with `splitsFromSpeedSeries` (`src/core/math/timer-math.ts`): 0–100 km/h, 0–60 mph, 0–160 km/h, 60 ft, quarter-mile and trap speed, each `null` when the series never reaches that mark. There is no accuracy gate, sample cap or auto-stop in the current implementation. |
+| Screen wake lock | `navigator.wakeLock` (`src/services/wake-lock.ts`) and a secure context | The request is silent: `acquireWakeLock` returns `false` on unsupported or denied and the toggle simply stays off, with no error message. The lock is a held sentinel released explicitly by the toggle. |
 | Service worker | Secure context or loopback host | Registration is skipped, and the app runs online-only. |
 
 ## Build and native-wrapper problems
@@ -170,12 +170,10 @@ npm run androidAPP
 # npm run build && npx cap sync android && cd android && .\gradlew.bat assembleDebug
 ```
 
-The APK workflow (`.github/workflows/build-apk.yml`) runs on Node 24, installs **JDK 21** (temurin), installs `platforms;android-35` and `build-tools;35.0.0`, runs `npx cap sync android`, then `./gradlew assembleDebug`. It uploads the `haguruma-debug-apk` artifact and, on a published release, attaches the APK to the release. The APK is debug-signed with the SDK debug key: sideload and test only.
+The APK workflow (`.github/workflows/build-apk.yml`) runs on Node 20, installs **JDK 21** (temurin), installs `platforms;android-35` and `build-tools;35.0.0`, runs `npx cap sync android`, then `./gradlew assembleDebug`. It uploads the `haguruma-debug-apk` artifact and, on a published release, attaches the APK to the release. The APK is debug-signed with the SDK debug key: sideload and test only. Use JDK 21 locally to match CI.
 
 The committed `android/` scaffold excludes generated outputs. `.gitignore` ignores `android/app/build/`, `android/.gradle/`, `android/app/src/main/assets/`, `android/capacitor-cordova-android-plugins/` and `android/local.properties`, so a clean checkout needs `npx cap sync android` before Gradle will assemble anything.
 
-**Documentation contradiction (JDK version).** The workflow pins JDK 21 and [../CONTRIBUTING.md](../CONTRIBUTING.md) also says JDK 21, but the committed `README.md` (`git show HEAD:README.md`) states the workflow "assembles `app-debug.apk` (JDK 17)". JDK 21 is the version the build actually uses; the JDK 17 claim in that README text was wrong. The README currently in the working tree no longer states a JDK version, so this only matters if you read the older text. Use JDK 21 locally to match CI.
-
 ## Native behaviour is documented, not verified
 
-No Android device or emulator is available in this environment. Everything above about the wrapper, screen wake lock, native haptics, the manifest and the APK pipeline is read from source and configuration, not exercised on hardware. Treat native symptoms as unverified until reproduced on a real device.
+No Android device or emulator is available in this environment. Everything above about the wrapper, screen wake lock, the manifest and the APK pipeline is read from source and configuration, not exercised on hardware. Treat native symptoms as unverified until reproduced on a real device.

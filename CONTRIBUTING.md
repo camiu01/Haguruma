@@ -24,7 +24,7 @@ src/
     math/                          # tire-math, speed-math, aero-math, traction-math, shift-math, accel-math, inertia-math, cruise-math, dynamics-math, dyno-csv (CSV parser + resampling + smoothing), engine-curve-core (anchor/dyno engine curve)
     state/app-state.ts             # defaultState + mutable singleton
     units/unit-utils.ts            # getSpeedStep(), getUnitLabel(), getMaxRpm()
-    i18n/                          # dictionary.en.ts + dictionary.it.ts + language.ts
+    i18n/                          # dictionary.en/it/de/es/fr.ts + language.ts
     setup/                         # setup-matrix.ts (wizard data) + setup-guide-content.ts (handbook copy)
     theme/theme.ts                 # dark / oled / light toggle
     presets/custom-store.ts        # localStorage persistence for custom cars
@@ -80,7 +80,7 @@ android/                           # committed Capacitor scaffold (generated out
    ```ts
    { id: 'lsd_2_5way', labelKey: 'running.diff25Way', type: 'clutch_lsd', accLock: 0.55, coastLock: 0.35 }
    ```
-2. Add EN + IT dictionary keys for `labelKey` (parity is compile-time checked).
+2. Add the `labelKey` to all five dictionaries (`dictionary.en/it/de/es/fr.ts`; `DictKey` parity is compile-time checked).
 3. Keep `id` stable — it is stored in `RunningGear.differentialModelId` and share hash `rg_dm`.
 4. Add the id to `LSD_MODEL_IDS` only if it uses clutch-LSD physics and shows the accel/coast lock inputs.
 5. Cover with `tests/diff-presets.test.ts` (catalog order, lock range, i18n labels).
@@ -89,7 +89,7 @@ android/                           # committed Capacitor scaffold (generated out
 
 ## Adding a New i18n Key
 
-1. Add the English copy to `src/core/i18n/dictionary.en.ts` and the Italian copy under the same key to `src/core/i18n/dictionary.it.ts` (one file per language; `it` is compile-time checked for full parity).
+1. Add the display copy to all five dictionaries under the same key (`src/core/i18n/dictionary.en/it/de/es/fr.ts`; `it` and the others are compile-time checked for full parity).
 2. Reference long-form copy from data modules via `DictKey` (e.g. `setup.fix.*`, `setup.feel.*`) and resolve with `t(key, lang)` — never inline user-facing strings in feature files.
 3. Use `data-i18n` (text), `data-i18n-tip` (tooltip), or `data-i18n-ph` (placeholder) in the HTML.
 4. Do **not** nest help-dot spans inside `data-i18n` elements — `textContent` replacement strips children.
@@ -107,7 +107,7 @@ android/                           # committed Capacitor scaffold (generated out
 ## Adding a Graph Layer
 
 1. Create a leaf module in `src/services/graph/graph-<layer>.ts` exporting one focused function.
-2. Wire it in `src/services/graph/graph-renderer.ts` inside `drawGraph()` in the correct paint order: cached static bitmap (`graph-layers.ts`: background → grids → redline band → titles) → curves → shift drops → aero-wall shading → comparison → grip limits.
+2. Wire it in `src/services/graph/graph-renderer.ts` inside `composeNodes()` in the correct paint order: defs → background and grid → gear rays → shift drops → aero wall → power envelope → comparison rays and wall → grip limit → titles, then the crosshair group last (the full order is pinned in `AGENTS.md`).
 3. Document with TSDoc (`@brief`, `@param`, `@return`).
 4. Add tests for pure logic in `tests/`.
 

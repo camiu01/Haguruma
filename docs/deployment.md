@@ -32,9 +32,8 @@ type error fails the build before any bundling happens. `vite.config.ts` sets:
 `./assets/index-<hash>.js`, instead of rooting them at `/assets/...`. That is
 what makes the bundle usable from a sub-path, not only from a domain root.
 
-A `rollup-plugin-visualizer` plugin also writes `dist/bundle-report.html`
-(gzip and brotli sizes) into the output directory, so it is part of any
-deployment that uploads `dist/` as-is.
+Tailwind is compiled into the bundle through PostCSS (no CDN script); the only
+remote requests the page makes at runtime are Google Fonts.
 
 ### Hosting requirements
 
@@ -43,10 +42,10 @@ deployment that uploads `dist/` as-is.
 - **No rewrite or fallback rules are needed.** The application is a single page
   whose state lives in the URL hash (`#...`); the hash is never sent to the
   server, so every URL the app produces already resolves to `index.html`.
-- The page loads Tailwind and web fonts from CDNs at runtime (`index.html`:
-  `https://cdn.tailwindcss.com`, `fonts.googleapis.com`, `fonts.gstatic.com`). A
-  client without outbound access to those hosts gets unstyled output; they are
-  not bundled.
+- The page loads web fonts from Google Fonts at runtime (`index.html`:
+  `fonts.googleapis.com`, `fonts.gstatic.com`). A client without outbound
+  access to those hosts falls back to the local font stack; everything else,
+  including Tailwind, is served from the origin as part of the bundle.
 
 `npm run preview` starts Vite's preview server over the built `dist/` for a local
 check. The config only overrides the dev-server port, so the preview port is
@@ -61,7 +60,7 @@ and manual `workflow_dispatch`. Permissions: `contents: read`, `pages: write`,
 | Job | Step | Detail |
 |:--|:--|:--|
 | `build` | `actions/checkout@v4` | — |
-| | `actions/setup-node@v4` | `node-version: '24'`, `cache: npm` |
+| | `actions/setup-node@v4` | `node-version: '20'`, `cache: npm` |
 | | `npm ci` | Lockfile install |
 | | `npm run build` | Typecheck + Vite build into `dist/` |
 | | `actions/upload-pages-artifact@v3` | `path: dist` |
@@ -125,11 +124,11 @@ payload is re-fetched instead of served.
 ### Offline scope and limits
 
 - The precache holds three **same-origin** URLs. No cross-origin resource is
-  precached, so the Tailwind CDN and Google Fonts stylesheets are not part of the
-  app-shell cache, and a cold client with no network cannot render the app
-  correctly. A previously fetched cross-origin response can still end up in the
-  runtime cache through `cache.put` in the stale-while-revalidate branch, but
-  that is not guaranteed.
+  precached, so the Google Fonts stylesheets are not part of the app-shell
+  cache; a cold client with no network falls back to the local font stack
+  instead of failing. A previously fetched cross-origin response can still end
+  up in the runtime cache through `cache.put` in the stale-while-revalidate
+  branch, but that is not guaranteed.
 - The hashed JS/CSS bundles under `./assets/` are same-origin and cached on first
   use, so after one online visit the app shell and its scripts are available
   offline.
@@ -177,7 +176,8 @@ Build settings come from the scaffold: `android/variables.gradle` sets
 `android/build.gradle` uses the Android Gradle Plugin `8.7.2`;
 `android/gradle/wrapper/gradle-wrapper.properties` pins Gradle `8.11.1`;
 `android/app/build.gradle` sets `applicationId "com.haguruma.app"`,
-`versionCode 6` and `versionName "0.5.1"`.
+`versionCode 11` and `versionName "0.8.0"`. Note the version lag: `package.json`
+reports `0.9.0`, so the native `versionName` has not been bumped to match.
 
 Local build (`package.json`), Windows-oriented:
 
@@ -193,7 +193,7 @@ npm run androidAPP   # npm run build && npx cap sync android && cd android && .\
 | Step | Detail |
 |:--|:--|
 | `actions/checkout@v4` | — |
-| `actions/setup-node@v4` | `node-version: '24'`, `cache: npm` |
+| `actions/setup-node@v4` | `node-version: '20'`, `cache: npm` |
 | `npm ci` | Lockfile install |
 | `npm run build` | Typecheck + web build (no `npm test` in this workflow) |
 | `actions/setup-java@v5` | `distribution: temurin`, `java-version: '21'` |
@@ -224,13 +224,9 @@ publication steps because the repository contains none.
 ### JDK
 
 The workflow requests **JDK 21** (temurin) via `actions/setup-java@v5`, and the
-Android Gradle Plugin 8.7.2 / Gradle 8.11.1 combination runs on it. `CONTRIBUTING.md`
-also states JDK 21.
-
-`README.md` contradicts this: its "Android APK" section says the workflow
-"typechecks, tests, builds the web app, syncs Capacitor and assembles
-`app-debug.apk` (JDK 17)". The workflow is authoritative and uses 21; it also
-does not run tests. The JDK 17 mention in `README.md` is stale.
+Android Gradle Plugin 8.7.2 / Gradle 8.11.1 combination runs on it.
+[../CONTRIBUTING.md](../CONTRIBUTING.md) and [../README.md](../README.md) also
+state JDK 21.
 
 A JDK is required for any local native build; `npm run androidAPP` relies on
 whatever `JAVA_HOME` the machine provides, not on the workflow's setup step.
@@ -241,20 +237,20 @@ whatever `JAVA_HOME` the machine provides, not on the workflow's setup step.
 
 | Declaration | Why |
 |:--|:--|
-| `android.permission.INTERNET` | The WebView loads remote runtime assets (Tailwind CDN, Google Fonts) |
-| `android.permission.ACCESS_COARSE_LOCATION` | Speed/GPS sessions; `src/components/performance-timer.ts` passes `navigator.geolocation` to `PerformanceRecorder` (`src/services/hardware/performance-recorder.ts`) |
+| `android.permission.INTERNET` | The WebView loads Google Fonts at runtime and fetches updated assets |
+| `android.permission.ACCESS_COARSE_LOCATION` | Speed/GPS sessions; `src/components/session-tool.ts` calls `navigator.geolocation.watchPosition` with `enableHighAccuracy` |
 | `android.permission.ACCESS_FINE_LOCATION` | Same, for accurate speed traces |
 | `<uses-feature android:name="android.hardware.location.gps" android:required="false" />` | GPS is optional hardware; the app installs on devices without it |
 
 No background-location permission is declared, and no other permission is
 requested. Location access is foreground-only, requested by the Web Geolocation
-API at the moment a session is armed. `tests/android-manifest.test.ts` asserts
-exactly this contract, including that `ACCESS_BACKGROUND_LOCATION` is absent and
-that the `FileProvider` is not exported.
+API at the moment the session timer is started. `tests/android-manifest.test.ts`
+asserts exactly this contract, including that `ACCESS_BACKGROUND_LOCATION` is
+absent and that the `FileProvider` is not exported.
 
-Plugins linked into the native project (`android/capacitor.settings.gradle`) are
-`@capacitor/android`, `@capacitor-community/keep-awake` and `@capacitor/haptics`;
-none of them adds a permission entry.
+The only Capacitor plugin linked into the native project
+(`android/capacitor.settings.gradle`) is `@capacitor/android` itself; it adds no
+permission entry.
 
 ## Not verified
 
@@ -266,5 +262,5 @@ none of them adds a permission entry.
   from `.github/workflows/build-apk.yml`, not observed.
 - The published Pages URL is not derivable from this repository; only the
   workflow's `page_url` output knows it.
-- Timing or size numbers from `npm run build` and `dist/bundle-report.html` are
-  not quoted here because the build was not run.
+- Bundle size numbers are not quoted here; no size report is generated by the
+  build.
