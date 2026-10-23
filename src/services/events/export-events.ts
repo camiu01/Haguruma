@@ -8,6 +8,7 @@ import { renderGearsList } from '../../components/gear-list';
 import { syncUrlHash } from '../../core/share/share-utils';
 import type { ElementRefs } from '../dom/element-refs';
 import { exportGraphPng, exportGraphSvg } from '../graph/graph-export';
+import { graphExportMetadata } from '../graph/graph-export-footer';
 import {
 	buildAssettoCorsaIni,
 	buildBeamngJbeam,
@@ -31,8 +32,10 @@ const MAX_INI_BYTES = 1_000_000;
  * @return void
  */
 export const bindExportEvents = (refs: ElementRefs, render: () => void): void => {
-	refs.btnExportPng.addEventListener('click', () => exportGraphPng(refs.canvas));
-	refs.btnExportSvg.addEventListener('click', () => exportGraphSvg(refs.canvas));
+	const metadata = (): string => refs.graphExportFooter.checked
+		? graphExportMetadata(refs.presetSelector.selectedOptions[0]?.textContent ?? 'Haguruma') : '';
+	refs.btnExportPng.addEventListener('click', () => exportGraphPng(refs.canvas, metadata()));
+	refs.btnExportSvg.addEventListener('click', () => exportGraphSvg(refs.canvas, metadata()));
 	refs.btnPrint.addEventListener('click', () => window.print());
 	refs.btnExportGo.addEventListener('click', () => {
 		exportDrivetrainAs(refs.exportFormat.value);
