@@ -124,9 +124,10 @@ The service worker is `public/sw.js`, cache name `haguruma-v3`. It is registered
 A stale interface therefore means either the app is running offline from the cache, or the service worker itself has not been replaced yet. Try, in order:
 
 1. **Reload** the page. Navigations are network-first, so a normal reload normally picks up a new shell.
-2. If it is still stale, **clear the site data for this origin** (browser settings → site data), or unregister the service worker and reload.
+2. If it is still stale, **unregister the service worker and reload** (browser settings → service workers). This refreshes the cached assets without touching `localStorage`.
+3. Only if it is still stale, **clear the site data for this origin** (browser settings → site data). Clearing site data removes cached assets **and** locally stored application data, not just the cache: all eight `localStorage` keys go with it — saved cars, language, theme, units, setup levels and the logged session runs.
 
-The consequence of step 2 is that all eight `localStorage` keys go with it: saved cars, language, theme, units, setup levels and the logged session runs. **Export a full backup first** if any of that matters.
+**Before step 3, export what you want to keep.** Tools → Local Backup → "Export Full Backup" writes `haguruma-backup-<date>.json` with the values of all eight keys, so restoring it brings back the garage, preferences, setup levels and the session log (see [Local storage and data recovery](#local-storage-and-data-recovery)). Narrower exports cover only part: the garage / preset bundle carries saved cars, and the session CSV/JSON carries the run log. Even a full backup cannot restore the current in-memory setup — an imported dyno curve is never written to `localStorage`, so re-apply it (for example from a share URL) after clearing.
 
 ## Sharing and export limits
 

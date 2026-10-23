@@ -2,9 +2,9 @@
 
 Haguruma ships to three targets from one Vite build: a static web bundle
 (`dist/`), the same bundle published to GitHub Pages, and a Capacitor-wrapped
-debug APK for Android. There is no server component, no database and no runtime
-configuration. See [../README.md](../README.md) for the feature overview,
-[architecture.md](./architecture.md) for module layout and
+debug APK for Android. There is no server component and no database; deployment
+serves static files only. See [../README.md](../README.md) for the feature
+overview, [architecture.md](./architecture.md) for module layout and
 [testing.md](./testing.md) for the checks that run before a deploy.
 
 All statements below come from reading the repository files cited inline. No

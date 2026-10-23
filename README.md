@@ -1,7 +1,5 @@
 # HAGURUMA
 
-**Heuristic Application for Gear-ratio, Up-shift, & Redline Unit Mapping Architecture**
-
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4.5-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.2.0-purple.svg)](https://vitejs.dev/)
@@ -12,12 +10,22 @@ HAGURUMA is a client-side TypeScript single-page application for exploring
 vehicle setups: it plots engine RPM against vehicle speed for every gear,
 computes shift drops, estimates road-load physics (mass, aero drag, rolling
 resistance, grade), and prescribes shift points through tractive-force
-analysis. Everything runs in the browser — there is no server, no account and
-no runtime configuration. Setups live in `localStorage` and travel as URL
-hashes.
+analysis. Everything runs in the browser: there is no application backend, no
+account and no server-side configuration. User preferences, saved cars and
+session logs are stored locally in the browser, while shareable setup
+parameters are encoded in URL hashes.
 
-Version **0.9.0** (`package.json`). The physics model, its assumptions and its
-validation anchors are documented in [MATH.md](MATH.md).
+**Heuristic Application for Gear-ratio, Up-shift, & Redline Unit Mapping
+Architecture** — Version **0.9.0** (`package.json`). The physics model, its
+assumptions and its validation anchors are documented in
+[MATH.md](MATH.md).
+
+[What it does](#what-it-does) · [Requirements](#requirements) ·
+[Build and run](#build-and-run) ·
+[Controls and everyday use](#controls-and-everyday-use) ·
+[Configuration](#configuration) · [Architecture](#architecture) ·
+[Limitations and troubleshooting](#limitations-and-troubleshooting) ·
+[Development](#development) · [Credits and license](#credits-and-license)
 
 ## See it in action
 
@@ -63,62 +71,60 @@ canonical page: [docs/presets.md](docs/presets.md),
 | Purpose | Requirement |
 |:---|:---|
 | Run the dev server, build, test | **Node.js 20 or newer** and npm. All three GitHub workflows pin Node 20; no `engines` field is declared in `package.json`. |
-| Use the app | Any current browser with ES modules, `localStorage` and inline SVG. No account, no backend. |
+| Use the app | A browser with ES modules, `localStorage` and inline SVG support. No account, no backend; no specific browser is certified by the repository's test suites. |
 | Build the Android APK locally | JDK **21**, Android SDK platform `android-35`, build-tools `35.0.0`, and the committed Gradle wrapper under `android/`. The CI workflow installs exactly these. |
 | Clone the repository | Git (optional — the repo is not required to use a published build). |
 
 ## Build and run
 
-1. Clone and install:
+### 1. Prerequisites
 
-   ```bash
-   git clone https://github.com/camiu01/haguruma.git
-   cd haguruma
-   npm install
-   ```
+**Node.js 20 or newer** with npm (all three GitHub workflows pin Node 20; no
+`engines` field is declared in `package.json`), plus Git for cloning. See
+[Requirements](#requirements) for the Android toolchain.
 
-2. Start the dev server (Vite on `http://localhost:5173`):
+### 2. Clone
 
-   ```bash
-   npm run dev
-   ```
+```bash
+git clone https://github.com/camiu01/haguruma.git
+cd haguruma
+```
 
-3. Run the checks — a clean typecheck is required before committing:
+### 3. Install dependencies
 
-   ```bash
-   npx tsc --noEmit   # typecheck, no output on success
-   npm test           # vitest run
-   ```
+```bash
+npm install
+```
 
-4. Produce the production bundle (`npx tsc --noEmit && npx vite build` → `dist/`)
-   and serve it locally:
+### 4. Run locally
 
-   ```bash
-   npm run build
-   npm run preview
-   ```
+```bash
+npm run dev   # Vite dev server on http://localhost:5173
+```
 
-   `vite.config.ts` sets `base: './'`, so `dist/` works from any static path,
-   including a subfolder.
+Before committing, run the typecheck and the test suite (details in
+[Development](#development) and [docs/testing.md](docs/testing.md)):
 
-5. Optional — benchmark the hot math paths (`vitest bench --run`, suite in
-   `tests/accel-math.bench.ts`):
+```bash
+npx tsc --noEmit   # typecheck, no output on success
+npm test           # vitest run
+```
 
-   ```bash
-   npm run bench
-   ```
+### 5. Build and preview
 
-6. Optional — build the Android debug APK locally (Windows shown; the Gradle
-   wrapper script is `.\\gradlew.bat` there and `./gradlew` elsewhere):
+```bash
+npm run build    # = npx tsc --noEmit && npx vite build → dist/
+npm run preview  # serve dist/ locally
+```
 
-   ```bash
-   npm run androidAPP
-   # = npm run build && npx cap sync android && cd android && .\gradlew.bat assembleDebug
-   ```
+`vite.config.ts` sets `base: './'`, so `dist/` works from any static path,
+including a subfolder.
 
-   The output is `android/app/build/outputs/apk/debug/app-debug.apk`
-   (debug-signed, for sideloading only). CI does the same through the
-   **Build APK** workflow — see [Development](#development).
+Optional extras live outside this quick start: the benchmark
+(`npm run bench`) in [Development](#development) and
+[docs/testing.md](docs/testing.md), and the local Android APK build
+(`npm run androidAPP`) in [Development](#development) and
+[docs/deployment.md](docs/deployment.md).
 
 ## Controls and everyday use
 
@@ -137,8 +143,9 @@ the technical specs.
 **Setup sections.** Accordion cards for vehicle, comparison, engine, running
 gear and tools. Tire geometry is a pill row (width / aspect / rim); final drive
 and rev limiter are ± steppers with live circumference, diameter and 200 km/h
-drag readouts. Every section re-renders through a single `renderAll()` pass,
-so no control can drift out of sync with the graph.
+drag readouts. Every refresh goes through a single `renderAll()` entry point,
+so control changes are coordinated with the graph through one shared render
+pass.
 
 **Graph.** Above the plot: the view selector (RPM / force / braking), the
 layer pills, the traction-overlay toggle (force view) and the fullscreen
@@ -165,8 +172,15 @@ JSON or a full-state backup.
 
 ## Configuration
 
-There are no config files and no environment variables. Everything is either
-stored in the browser or encoded in the URL.
+The application needs no server-side or environment configuration: there is no
+backend and no `.env`-style settings to supply. Runtime choices — language,
+speed/power unit, theme, setup level — are made in the UI and persisted in the
+browser (`localStorage` keys below). Development and build settings live in
+repository config files (`vite.config.ts`, `tsconfig.json`,
+`postcss.config.cjs`, `tailwind.config.cjs`, `capacitor.config.ts`) and apply
+only when building from source. Not every piece of state is persisted: the
+current setup itself (including an imported dyno curve) lives in memory and is
+carried only by the URL hash when shared — see below.
 
 **`localStorage` keys**
 
@@ -223,21 +237,24 @@ unit-tested modules:
 The full directory tree, module tables and render order live in
 [docs/architecture.md](docs/architecture.md).
 
-## Limitations
+## Limitations and troubleshooting
 
 - **Every number is a model estimate.** No manufacturer data is bundled; the
   efficiency map, ABS constants and compound gains are engineering assumptions
   (see the assumptions section of [MATH.md](MATH.md)). Use the results for
   setup exploration, not for safety-critical or on-track decisions.
-- **Data never leaves the browser.** There is no backend and no sync: clearing
-  site data loses saved cars and sessions unless you exported a backup or a
-  garage file.
+- **Saved data is local, with no backend sync.** Saved cars, preferences and
+  session logs are stored in this browser's `localStorage` for this origin; the
+  application does not provide backend synchronization. Clearing site data
+  removes them unless you exported a backup or a garage file first.
 - **Storage is per origin and per browser.** Sharing a URL shares the setup,
   not your saved cars.
 - **Offline caching can go stale.** The service worker keeps same-origin GET
   assets in a 60-entry stale-while-revalidate runtime cache (only cached
-  `.json` responses expire after 7 days); if an update looks missing, clear
-  the site data (see
+  `.json` responses expire after 7 days); if an update looks missing, reload
+  first (navigations are network-first). If that fails, clearing site data
+  removes locally stored application data and preferences as well as cached
+  assets — export a full backup and any session files first (see
   [docs/troubleshooting.md](docs/troubleshooting.md)).
 - **Some platform features are optional.** Clipboard copy falls back to a
   textarea, the wake lock and geolocation are feature-detected, and graph
@@ -262,10 +279,25 @@ are ordinary unit tests):
 | `npm run bench` | `vitest bench --run`. |
 | `npm run androidAPP` | Web build, `cap sync android`, `gradlew assembleDebug`. |
 
-**Verified in this session:** `npx tsc --noEmit` passed and `npm test` passed
-with **58 test files / 513 tests**. The performance regression test
-(`tests/accel-performance.test.ts`) fails only if a warm 64-point dyno run
-exceeds a 6 ms median locally (8 ms under CI); the benchmark script is separate.
+**Benchmarks** (`npm run bench`) run every `tests/**/*.bench.ts` file
+(currently `tests/accel-math.bench.ts`: anchor curve, 64-point Akima dyno and
+active-AWD runs) and report timings without asserting them. The pass/fail
+performance guard is separate: `tests/accel-performance.test.ts` runs inside
+the ordinary `npm test` suite and fails only if a warm 64-point dyno run
+exceeds a 6 ms median locally (8 ms under CI). Full detail in
+[docs/testing.md](docs/testing.md).
+
+**Android.** `npm run androidAPP` is `npm run build && npx cap sync android &&
+cd android && .\gradlew.bat assembleDebug` (Windows shown; `./gradlew` on
+other platforms), producing the debug-signed
+`android/app/build/outputs/apk/debug/app-debug.apk` for sideloading. CI does
+the same through the **Build APK** workflow; the toolchain and hosting paths
+are documented in [docs/deployment.md](docs/deployment.md).
+
+**Verification record.** [docs/testing.md](docs/testing.md) carries the
+test inventory and the dated results of the last verified run together with
+its commit; re-run `npx tsc --noEmit` and `npm test` to check the current
+tree.
 
 **CI.** `.github/workflows/ci.yml` runs on pushes and pull requests to `main`
 with Node 20: `npm ci` → `npx tsc --noEmit` → `npm test` → `npm run build`.

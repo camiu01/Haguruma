@@ -12,9 +12,15 @@ see [architecture.md](./architecture.md), for the relations under test see
 [../MATH.md](../MATH.md), and for the pull-request process see
 [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-All statements below come from the repository files cited inline. The commands
-in this page were run while writing it: `npx tsc --noEmit` passed and
-`npm test` passed with **58 test files and 513 tests**.
+All statements below come from the repository files cited inline, except the
+verification record, which comes from an executed run.
+
+**Verification record.** On **2026-10-23**, at commit `5b51077` ("docs: align
+documentation with v0.9.0 implementation", with only uncommitted documentation
+edits in the tree), `npx tsc --noEmit` passed and `npm test` passed with
+**58 test files and 513 tests**. The static file count can be re-checked with
+`ls tests/*.test.ts | wc -l`; the test count requires a run — re-run the
+commands in [Commands](#commands) to verify against a newer tree.
 
 ## Commands
 
