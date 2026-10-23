@@ -45,13 +45,6 @@ export const bindEngineEvents = (refs: ElementRefs, render: () => void): void =>
 };
 
 /**
- * @brief Largest dyno CSV accepted, in bytes.
- * @brief A dyno sheet is a few kilobytes; anything larger is a wrong file and
- * @brief would be split line by line before the parser could reject it.
- */
-const MAX_DYNO_CSV_BYTES = 5_000_000;
-
-/**
  * @brief Bind the dyno CSV file picker and the back-to-anchors action.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback.
@@ -67,10 +60,6 @@ const bindCsvImport = (refs: ElementRefs, render: () => void): void => {
 		if (!file) {
 			return;
 		}
-		if (file.size > MAX_DYNO_CSV_BYTES) {
-			showCsvStatus(refs, 'error', 0);
-			return;
-		}
 		void readCsvFile(file).then((text) => {
 			applyDynoCsv(refs, text, render);
 		});
@@ -82,12 +71,20 @@ const bindCsvImport = (refs: ElementRefs, render: () => void): void => {
 	});
 };
 
+/** Largest dyno CSV accepted by the importer, in bytes. */
+export const MAX_DYNO_CSV_BYTES = 5 * 1024 * 1024;
+
 /**
  * @brief Read one CSV file as text without ever rejecting.
+ * @brief Files above `MAX_DYNO_CSV_BYTES` are refused before the read, so a
+ * @brief runaway export cannot freeze the tab while it is parsed.
  * @param file File chosen from the hidden input.
- * @return Resolves with the file text, empty on read errors.
+ * @return Resolves with the file text, empty when refused or unreadable.
  */
 const readCsvFile = (file: File): Promise<string> => {
+	if (file.size > MAX_DYNO_CSV_BYTES) {
+		return Promise.resolve('');
+	}
 	return new Promise((resolve) => {
 		const reader = new FileReader();
 		reader.onload = () => resolve(String(reader.result ?? ''));

@@ -1,0 +1,14 @@
+<!-- @file qr-modal.html -->
+<!-- @brief Static application shell fragment. -->
+<!-- QR share modal -->
+	<div id='qr-modal-backdrop' class='hidden fixed inset-0 z-[80]'></div>
+	<div id='qr-modal' role='dialog' aria-modal='true' aria-labelledby='qr-modal-title' class='hidden fixed z-[90] bg-surface max-h-[85vh] overflow-y-auto'>
+		<div class='sticky top-0 bg-surface z-10 flex items-center justify-between px-5 pt-3 pb-2 border-b border-border'>
+			<h2 id='qr-modal-title' class='card-title' data-i18n='share.qrTitle'>Scan to load setup</h2>
+			<button id='qr-modal-close' type='button' class='btn btn--md btn--solid' data-i18n='drawer.close'>Close</button>
+		</div>
+		<div class='p-5 flex flex-col items-center gap-3'>
+			<div id='qr-image' class='bg-white p-3 rounded-lg max-w-full'></div>
+			<p class='fs-small text-text-dim text-center' data-i18n='share.qrNote'>Point a phone camera at the code to open this setup.</p>
+		</div>
+	</div>

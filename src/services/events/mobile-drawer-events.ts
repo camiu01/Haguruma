@@ -85,10 +85,12 @@ const bindNavViewButtons = (refs: ElementRefs): void => {
 		compare: '[data-accordion="compare"]',
 		secondaryCar: '[data-accordion="compare"]',
 		dynamics: '#running-gear-accordion',
-		setup: '[data-accordion="setup"]',
+		setup: '#setup-guide-mount',
 		handbook: '[data-accordion="handbook"]',
+		pyrometer: '#pyrometer-mount',
 		cruise: '[data-accordion="cruise"]',
-		tools: '[data-accordion="cruise"]',
+		tools: '#cruise-mount',
+		presets: '#preset-anchor',
 	};
 	document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((btn) => {
 		btn.addEventListener('click', () => {

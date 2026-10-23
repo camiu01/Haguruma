@@ -16,9 +16,6 @@ import type { PowerUnit } from '../../core/models';
 import { powerFromTorque } from '../../core/math/traction-math';
 import type { ElementRefs } from '../dom/element-refs';
 
-const ACTIVE_BTN = 'px-3 py-1 text-xs font-semibold rounded bg-gray-200 text-black';
-const IDLE_BTN = 'px-3 py-1 text-xs font-semibold rounded text-gray-400 hover:text-white';
-
 /**
  * Bind kmh/mph toggle buttons.
  * @brief Switch display unit, persist it and refresh labels.
@@ -33,8 +30,7 @@ export const bindUnitEvents = (refs: ElementRefs, render: () => void): void => {
 		}
 		state.unit = 'kmh';
 		storeUnit('kmh');
-		refs.unitKmh.className = ACTIVE_BTN;
-		refs.unitMph.className = IDLE_BTN;
+		syncUnitToggle(refs);
 		applyUnitLabels(refs);
 		if (state.maxGraphSpeed === 180) {
 			state.maxGraphSpeed = 300;
@@ -48,8 +44,7 @@ export const bindUnitEvents = (refs: ElementRefs, render: () => void): void => {
 		}
 		state.unit = 'mph';
 		storeUnit('mph');
-		refs.unitMph.className = ACTIVE_BTN;
-		refs.unitKmh.className = IDLE_BTN;
+		syncUnitToggle(refs);
 		applyUnitLabels(refs);
 		if (state.maxGraphSpeed === 300) {
 			state.maxGraphSpeed = 180;
@@ -153,8 +148,8 @@ export const applyPowerLabels = (refs: ElementRefs): void => {
  * @return void
  */
 export const syncUnitToggle = (refs: ElementRefs): void => {
-	refs.unitKmh.className = state.unit === 'kmh' ? ACTIVE_BTN : IDLE_BTN;
-	refs.unitMph.className = state.unit === 'mph' ? ACTIVE_BTN : IDLE_BTN;
+	refs.unitKmh.classList.toggle('is-active', state.unit === 'kmh');
+	refs.unitMph.classList.toggle('is-active', state.unit === 'mph');
 };
 
 /**
@@ -164,6 +159,6 @@ export const syncUnitToggle = (refs: ElementRefs): void => {
  * @return void
  */
 export const syncPowerUnitToggle = (refs: ElementRefs): void => {
-	refs.powerUnitKw.className = state.powerUnit === 'kw' ? ACTIVE_BTN : IDLE_BTN;
-	refs.powerUnitCv.className = state.powerUnit === 'cv' ? ACTIVE_BTN : IDLE_BTN;
+	refs.powerUnitKw.classList.toggle('is-active', state.powerUnit === 'kw');
+	refs.powerUnitCv.classList.toggle('is-active', state.powerUnit === 'cv');
 };

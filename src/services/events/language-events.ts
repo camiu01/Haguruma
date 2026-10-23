@@ -1,41 +1,43 @@
 /**
  * @file language-events.ts
- * @brief Bind the interface language selector.
+ * @brief Bind the interface language toggle.
  */
 import { applyI18n, getLang, setLang } from '../../core/i18n/language';
-import type { Lang } from '../../core/i18n/dictionaries';
+import { LANGS, type Lang } from '../../core/i18n/dictionaries';
 import type { ElementRefs } from '../dom/element-refs';
 import { renderGearsList } from '../../components/gear-list';
 import { renderSetupGuide } from '../../components/setup-guide';
 import { renderCruise } from '../../components/cruise-card';
 import { applyPowerLabels } from './unit-events';
 
-const ACTIVE_BTN = 'px-3 py-1 text-xs font-semibold rounded bg-gray-200 text-black';
-const IDLE_BTN = 'px-3 py-1 text-xs font-semibold rounded text-gray-400 hover:text-white';
-
 /**
- * @brief Pair every language with its selector button in layout order.
+ * @brief Resolve the toggle button of every supported language.
+ * @brief Driven by `LANGS`, so adding a dictionary and a button is enough to
+ * @brief make the language switchable: no per-language branch anywhere.
  * @param refs Cached DOM handles.
- * @return Language codes with their buttons.
+ * @return One button per language, in toggle order.
  */
-const langButtons = (refs: ElementRefs): { lang: Lang; button: HTMLButtonElement }[] => [
-	{ lang: 'en', button: refs.langEn },
-	{ lang: 'it', button: refs.langIt },
-	{ lang: 'de', button: refs.langDe },
-	{ lang: 'es', button: refs.langEs },
-	{ lang: 'fr', button: refs.langFr },
-];
+const langButtons = (refs: ElementRefs): Record<Lang, HTMLButtonElement> => {
+	return {
+		en: refs.langEn,
+		it: refs.langIt,
+		de: refs.langDe,
+		es: refs.langEs,
+		fr: refs.langFr,
+	};
+};
 
 /**
- * @brief Paint the language selector to match the active language.
+ * @brief Paint the language toggle to match the active language.
  * @param refs Cached DOM handles.
  * @return void
  */
 export const syncLangToggle = (refs: ElementRefs): void => {
 	const lang = getLang();
-	langButtons(refs).forEach((entry) => {
-		entry.button.className = entry.lang === lang ? ACTIVE_BTN : IDLE_BTN;
-	});
+	const buttons = langButtons(refs);
+	for (const code of LANGS) {
+		buttons[code].classList.toggle('is-active', lang === code);
+	}
 };
 
 /**
@@ -58,5 +60,8 @@ export const bindLanguageEvents = (refs: ElementRefs, render: () => void): void 
 		renderCruise(refs);
 		render();
 	};
-	langButtons(refs).forEach((entry) => entry.button.addEventListener('click', () => switchTo(entry.lang)));
+	const buttons = langButtons(refs);
+	for (const code of LANGS) {
+		buttons[code].addEventListener('click', () => switchTo(code));
+	}
 };

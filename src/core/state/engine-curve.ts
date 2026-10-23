@@ -21,3 +21,20 @@ export const activeEngineCurve = (): EngineCurve | null => {
 		points: state.torqueCurvePoints,
 	});
 };
+
+/**
+ * @brief Assemble the secondary engine curve from the comparison anchors.
+ * @brief The comparison slot always uses its anchors: an imported dyno CSV
+ * @brief belongs to the primary car and never leaks into the second curve.
+ * @return Validated curve, or null when the comparison anchors are unusable.
+ */
+export const compEngineCurve = (): EngineCurve | null => {
+	return validateCurve({
+		redline: state.compRedline,
+		peakTorqueRpm: state.compPeakTorqueRpm,
+		peakTorqueNm: state.compPeakTorqueNm,
+		peakPowerRpm: state.compPeakPowerRpm,
+		peakPowerKw: state.compPowerKw,
+		points: null,
+	});
+};

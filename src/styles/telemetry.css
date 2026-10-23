@@ -1,0 +1,205 @@
+/**
+ * @file telemetry.css
+ * @brief v0.6.0 feature styles: graph pills, HUD, tire pills, tactile steppers
+ * @brief and status badges for the KPI strip and breakdown table.
+ */
+
+/* Graph layer toggles: recessed chip, accent border while the layer is on. */
+.graph-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.25rem 0.5rem;
+	border: 1px solid var(--border-hairline);
+	border-radius: var(--radius-xs);
+	background: var(--bg-surface-recessed);
+	color: var(--text-dim);
+	font-family: var(--font-mono);
+	font-size: 0.65rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	line-height: 1.2;
+	cursor: pointer;
+	transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+.graph-pill:hover {
+	color: var(--text-main);
+	border-color: var(--text-dim);
+}
+.graph-pill[aria-pressed='true'] {
+	color: var(--accent-cyan);
+	border-color: var(--accent-cyan);
+	background: var(--bg-surface-recessed);
+}
+.graph-pill .pill-dot {
+	width: 0.375rem;
+	height: 0.375rem;
+	border-radius: var(--radius-pill);
+	flex-shrink: 0;
+	opacity: 0.4;
+}
+.graph-pill[aria-pressed='true'] .pill-dot {
+	opacity: 1;
+}
+
+/* Snapping crosshair HUD (top-right overlay on the plot). */
+#graph-hud {
+	min-width: 0;
+}
+#graph-hud[data-empty='true'] {
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* SVG plot host: focus ring + crisp hairlines. */
+#graph-svg:focus-visible {
+	outline: 2px solid var(--focus-ring);
+	outline-offset: 2px;
+}
+
+/* Tire geometry chips (width / aspect / rim selector). */
+.tire-pill {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 40px;
+	padding: 0.25rem 0.75rem;
+	border: 1px solid var(--border-hairline);
+	border-radius: var(--radius-xs);
+	background: var(--bg-surface-recessed);
+	color: var(--text-dim);
+	font-size: 0.8rem;
+	font-weight: 700;
+	font-family: var(--font-mono);
+	cursor: pointer;
+	transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+.tire-pill:hover {
+	color: var(--text-main);
+	border-color: var(--text-dim);
+}
+.tire-pill.is-active {
+	color: var(--accent-cyan);
+	border-color: var(--accent-cyan);
+	background: var(--bg-surface-recessed);
+}
+
+/* Tactile steppers (final drive, revs per mile). */
+.stepper-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-xs);
+	background: var(--bg-surface-input);
+	color: var(--text-dim);
+	font-size: 1.05rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+.stepper-btn:hover {
+	color: var(--text-output);
+	border-color: var(--focus-ring);
+}
+.stepper-btn:active {
+	transform: scale(0.94);
+}
+
+/* Header hamburger tag (MENU / NAV). */
+.hamburger-label {
+	display: inline-flex;
+	align-items: center;
+	font-size: 0.6rem;
+	font-weight: 800;
+	letter-spacing: 0.14em;
+	line-height: 1;
+}
+
+/* Semantic status badges (table flags, verdicts). */
+.status-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	padding: 0.15rem 0.4rem;
+	border-radius: var(--radius-xs);
+	border: 1px solid var(--border);
+	background: var(--bg-surface-recessed);
+	font-family: var(--font-mono);
+	font-size: 0.65rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+.status-badge.is-ok {
+	color: var(--accent-green);
+	border-color: color-mix(in srgb, var(--accent-green) 40%, transparent);
+}
+.status-badge.is-warn {
+	color: var(--accent-warning);
+	border-color: color-mix(in srgb, var(--accent-warning) 40%, transparent);
+}
+.status-badge.is-bad {
+	color: var(--accent-red);
+	border-color: color-mix(in srgb, var(--accent-red) 40%, transparent);
+}
+
+/* Light theme readability for the SVG plot chrome. */
+[data-theme='light'] .graph-pill,
+[data-theme='light'] .tire-pill,
+[data-theme='light'] .stepper-btn {
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+/* Micro steppers on the gear stack rows (ratio ±0.005). */
+.gear-step-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border: 1px solid var(--border-hairline);
+	border-radius: var(--radius-xs);
+	background: var(--bg-surface-recessed);
+	color: var(--text-dim);
+	font-family: var(--font-mono);
+	font-size: 0.8rem;
+	font-weight: 700;
+	line-height: 1;
+	cursor: pointer;
+	transition: color 150ms ease, border-color 150ms ease, transform 120ms ease;
+}
+.gear-step-btn:hover {
+	color: var(--text-output);
+	border-color: var(--focus-ring);
+}
+.gear-step-btn:active {
+	transform: scale(0.9);
+}
+
+/* Weight-distribution rails (primary cyan, secondary amber). */
+#setupctl-weight-bar,
+#setupctl-weight-bar-rear,
+#comp-setupctl-weight-bar,
+#comp-setupctl-weight-bar-rear {
+	transition: width 200ms ease;
+}
+
+/* Setup B (comparison) accents: amber rails on the mirrored controls. */
+[data-setup-prefix='compare'] .tire-pill.is-active,
+[data-setup-prefix='compare'] .graph-pill[aria-pressed='true'] {
+	color: var(--accent-compare);
+	border-color: color-mix(in srgb, var(--accent-compare) 55%, transparent);
+}
+[data-setup-prefix='compare'] .stepper-btn:hover,
+[data-setup-prefix='compare'] .gear-step-btn:hover {
+	border-color: var(--accent-compare);
+	color: var(--accent-compare);
+}
+[data-theme='light'] .gear-step-btn {
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}

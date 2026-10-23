@@ -1,0 +1,220 @@
+/**
+ * @file controls.css
+ * @brief Shared typography scale and form-control classes: the single place
+ *        to edit text sizes (type scale) and the repeated label / input /
+ *        unit / title / caption styles used across the app.
+ */
+
+/* Type scale — edit sizes here only. The fs-* utilities and every role
+ * class below read from these variables. */
+:root {
+	--fs-micro: 0.5625rem;
+	--fs-tiny: 0.625rem;
+	--fs-small: 0.6875rem;
+	--fs-base: 0.75rem;
+	--fs-title: 0.8125rem;
+	--fs-lead: 0.875rem;
+	--fs-body: 1rem;
+	--fs-label: var(--fs-base);
+}
+
+/* Size utilities (drop-in replacements for text-xs / text-[…] tokens). */
+.fs-micro { font-size: var(--fs-micro); }
+.fs-tiny { font-size: var(--fs-tiny); }
+.fs-small { font-size: var(--fs-small); }
+.fs-base { font-size: var(--fs-base); line-height: 1rem; }
+.fs-title { font-size: var(--fs-title); }
+.fs-lead { font-size: var(--fs-lead); line-height: 1.25rem; }
+.fs-body { font-size: var(--fs-body); line-height: 1.5rem; }
+
+/* Label rendered above an input inside a field wrapper. */
+.field-label {
+	display: block;
+	margin-bottom: 4px;
+	font-size: var(--fs-label);
+	font-weight: 500;
+	line-height: 1.25;
+	color: var(--text-dim);
+}
+
+/* Monospaced, uppercase variant used by technical field labels. */
+.field-label--mono {
+	font-family: var(--font-mono);
+	font-size: var(--fs-tiny);
+	font-weight: 400;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted);
+}
+
+/* Text / select input shell (dark surface, mono, cyan focus border). */
+.field-input {
+	background: var(--bg-surface-input);
+	border: 1px solid var(--border-surface-border);
+	border-radius: var(--radius-xs);
+	padding: 8px 12px;
+	font-family: var(--font-mono);
+	font-size: var(--fs-base);
+	line-height: 1.25;
+	color: var(--text-output);
+	outline: none;
+}
+
+.field-input:focus {
+	border-color: var(--accent-cyan);
+}
+
+.field-input--compact { padding: 4px 8px; font-size: var(--fs-small); }
+.field-input--md { font-size: var(--fs-title); }
+.field-input--tall { padding: 10px 12px; }
+.field-input--upper { text-transform: uppercase; }
+.field-input--center { text-align: center; }
+
+/* Recessed variant: keeps the recessed surface and hairline border. */
+.field-input--recessed {
+	background: var(--bg-surface-recessed);
+	border-color: var(--border-hairline);
+}
+
+/* Static unit suffix pinned inside a relative field wrapper. */
+.field-unit {
+	position: absolute;
+	right: 10px;
+	top: 8px;
+	font-family: var(--font-mono);
+	font-size: var(--fs-tiny);
+	color: var(--text-muted);
+	pointer-events: none;
+}
+
+/* Half-width grid cell: two columns on phones, one from the sm breakpoint. */
+.field-half { grid-column: span 2 / span 2; }
+
+@media (min-width: 640px) {
+	.field-half { grid-column: span 1 / span 1; }
+}
+
+/* Card heading and uppercase section heading. */
+.card-title {
+	font-size: var(--fs-title);
+	font-weight: 600;
+	color: var(--text-main);
+}
+
+.section-title {
+	font-size: var(--fs-title);
+	font-weight: 600;
+	color: var(--text-main);
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+}
+
+/* Small monospaced annotations: uppercase caption and muted note. */
+.mono-cap {
+	font-family: var(--font-mono);
+	font-size: var(--fs-micro);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-dim);
+}
+
+.mono-note {
+	font-family: var(--font-mono);
+	font-size: var(--fs-micro);
+	color: var(--text-muted);
+}
+
+/* Standalone action button: one shell shared by every bordered button. */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	border: 1px solid transparent;
+	border-radius: var(--radius-xs);
+	font-size: var(--fs-base);
+	font-weight: 600;
+	line-height: 1.25;
+	cursor: pointer;
+	transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+.btn--xs { padding: 4px 8px; font-size: var(--fs-tiny); }
+.btn--sm { padding: 6px 10px; }
+.btn--md { padding: 8px 12px; }
+.btn--mono { font-family: var(--font-mono); }
+
+.btn--solid {
+	background: var(--bg-input);
+	border-color: var(--border);
+	color: var(--text-main);
+}
+
+.btn--solid:hover { color: var(--text-output); }
+
+.btn--icon {
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	color: var(--text-dim);
+}
+
+.btn--icon:hover {
+	color: var(--text-main);
+	background: var(--bg-surface-subtle);
+}
+
+/* Sunken trigger button (header car selector). */
+.btn--recessed {
+	background: var(--bg-surface-recessed);
+	border-color: var(--border-hairline);
+	color: var(--text-output);
+}
+
+.btn--recessed:hover {
+	background: var(--bg-input);
+	border-color: var(--border-input);
+}
+
+/* Segmented toggle button (drawer language, unit and power groups). */
+.seg-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 0;
+	padding: 4px 8px;
+	border-radius: var(--radius-xs);
+	font-size: var(--fs-base);
+	font-weight: 600;
+	color: var(--text-dim);
+	cursor: pointer;
+	transition: color 150ms ease, background-color 150ms ease;
+}
+
+.seg-btn--mono { font-family: var(--font-mono); }
+.seg-btn:hover { color: var(--text-output); }
+
+.seg-btn.is-active {
+	background: var(--text-main);
+	color: var(--bg-card);
+}
+
+/* Inline text button (list actions: load, export, delete). */
+.text-btn {
+	font-family: var(--font-mono);
+	font-size: var(--fs-small);
+	color: var(--text-dim);
+	cursor: pointer;
+	transition: color 150ms ease;
+}
+
+.text-btn:hover { color: var(--text-output); }
+
+.text-btn--compare { color: var(--accent-compare); }
+.text-btn--compare:hover { color: var(--accent-yellow); }
+
+.text-btn--accent { color: var(--text-muted); }
+.text-btn--accent:hover { color: var(--accent-cyan); }
+
+.text-btn--danger { color: var(--text-muted); }
+.text-btn--danger:hover { color: var(--accent-red); }

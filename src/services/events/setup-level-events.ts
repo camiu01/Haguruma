@@ -42,12 +42,19 @@ const ROW_LEVELS: Record<string, SetupLevel> = {
 	'rg-track': 'full',
 	'rg-spring-f': 'full',
 	'rg-spring-r': 'full',
+	'rg-differentialPreloadNm': 'full',
+	'rg-awdFrontShare': 'full',
+	'rg-centerDiffLock': 'full',
+	'rg-torqueVectoring': 'full',
+	'rg-handbrakeDisengage': 'full',
+	'rg-handbrakeApplied': 'full',
 };
 
 /** Minimum comparison level per secondary accordion section. */
 const COMP_SECTION_LEVELS: Record<string, SetupLevel> = {
 	'comp-engine': 'medium',
 	'comp-aero': 'medium',
+	'comp-gears': 'full',
 };
 
 /** Minimum comparison level per secondary control row, keyed by input id. */
@@ -68,6 +75,12 @@ const COMP_ROW_LEVELS: Record<string, SetupLevel> = {
 	'crg-track': 'full',
 	'crg-spring-f': 'full',
 	'crg-spring-r': 'full',
+	'crg-differentialPreloadNm': 'full',
+	'crg-awdFrontShare': 'full',
+	'crg-centerDiffLock': 'full',
+	'crg-torqueVectoring': 'full',
+	'crg-handbrakeDisengage': 'full',
+	'crg-handbrakeApplied': 'full',
 };
 
 /**
@@ -121,7 +134,7 @@ const clampCompLevel = (): void => {
  */
 const applyRowLevel = (id: string, min: SetupLevel, rank: number): void => {
 	const el = document.getElementById(id);
-	const row = el?.closest('.col-span-2') ?? el;
+	const row = el?.closest('.col-span-2, .field-half') ?? el;
 	if (row) {
 		row.classList.toggle('hidden', RANK[min] > rank);
 	}

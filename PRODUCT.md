@@ -27,7 +27,7 @@ Desktop analysis and mobile, trackside use, including operation without a networ
 - Offline operation and the Android wrapper are product requirements.
 - Simulations and diagnostic advice are indicative, not certified predictions or safety guarantees.
 - Existing saved setups and shared URLs must remain compatible.
-- The requested release scope is every milestone from 0.6.0 through 0.9.0 in `TODO.md`. Unfinished work must not be represented as released functionality.
+- The requested release scope is the 0.9.0 milestone in `TODO.md`; milestones 0.6.0 through 0.8.0 have shipped. Unfinished work must not be represented as released functionality.
 - English and Italian support must remain intact. German, Spanish and French dictionaries are implemented with compile-time key parity; their copy still needs review by native speakers.
 - The 1.0.0 milestone is outside the current implementation scope.
 
@@ -38,7 +38,9 @@ Preserve the HAGURUMA name and the existing application's identity while extendi
 ## Evidence on Hand
 
 - `README.md`: current capabilities and operating instructions.
+- `CHANGELOG.md`: completed work grouped by milestone.
 - `MATH.md`: documented formulas and modeling assumptions.
+- `docs/`: user guide, architecture, deployment, data formats, testing and troubleshooting pages.
 - `TODO.md`: release roadmap and completion ledger.
 - `AGENTS.md`: architecture, conventions and compatibility requirements.
 - `src/config/cars/`: vehicle catalog data.

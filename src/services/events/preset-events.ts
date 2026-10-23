@@ -15,7 +15,6 @@ import { DIFF_PRESETS, findDiffPreset } from '../../config/diff-presets';
 import { syncEngineInputs } from './engine-events';
 import { syncRoadLoadInputs } from './road-load-events';
 import { applyDiffModelTo, syncRunningGearInputs } from './running-gear-events';
-import { parseSimulationSettings } from '../../core/presets/simulation-settings';
 
 /** Catalog group to i18n group label key. */
 const GROUP_LABEL_KEYS: Record<string, 'preset.groupFactory' | 'preset.groupCommunity'> = {
@@ -61,10 +60,11 @@ export const applyPreset = (refs: ElementRefs, preset: GearPreset, render: () =>
 	}
 	state.rotatingMassKg = preset.rotatingMassKg ?? 0;
 	state.shiftTimeS = preset.shiftTimeS ?? 0;
-	state.simulation = preset.simulation ? parseSimulationSettings(preset.simulation) ?? undefined : undefined;
 	state.torqueCurvePoints = null;
-	state.runningGear = { ...defaultRunningGear, ...preset.runningGear };
-	state.drivetrainEff = efficiencyForLayout(state.runningGear.drivetrainLayout);
+	if (preset.runningGear !== undefined) {
+		state.runningGear = { ...defaultRunningGear, ...preset.runningGear };
+		state.drivetrainEff = efficiencyForLayout(state.runningGear.drivetrainLayout);
+	}
 	refs.primaryTire.value = preset.tire;
 	refs.primaryFd.value = String(preset.fd);
 	refs.primaryRedline.value = String(preset.redline);

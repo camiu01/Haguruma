@@ -34,13 +34,16 @@ export const bindAccordionEvents = (_refs: ElementRefs): void => {
 		if (!header || !content) {
 			return;
 		}
-		header.setAttribute('tabindex', '0');
-		header.setAttribute('role', 'button');
-		header.setAttribute('aria-expanded', String(content.classList.contains('open')));
+		if (header.querySelector('input, select, button, a[href], textarea')) {
+			bindHeaderToggle(section, header, content, chevron);
+		} else {
+			header.setAttribute('tabindex', '0');
+			header.setAttribute('role', 'button');
+			header.setAttribute('aria-expanded', String(content.classList.contains('open')));
+		}
 		header.addEventListener('click', (e) => {
-			// ignore clicks on form controls inside the header
 			const target = e.target as HTMLElement;
-			if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'BUTTON') {
+			if (target.closest('input, select, button, a[href], textarea')) {
 				return;
 			}
 			toggleSection(header, content, chevron);
@@ -57,6 +60,38 @@ export const bindAccordionEvents = (_refs: ElementRefs): void => {
 };
 
 /**
+ * @brief Give headers with form controls a separate keyboard-accessible toggle.
+ * @param section Accordion section that owns the header.
+ * @param header Header containing interactive controls.
+ * @param content Collapsible section body.
+ * @param chevron Existing indicator moved into the toggle.
+ * @return void
+ */
+const bindHeaderToggle = (
+	section: HTMLElement,
+	header: HTMLElement,
+	content: HTMLElement,
+	chevron: HTMLElement | null,
+): void => {
+	const button = document.createElement('button');
+	button.type = 'button';
+	button.className = 'accordion-toggle';
+	button.setAttribute('aria-expanded', String(content.classList.contains('open')));
+	const label = header.querySelector<HTMLElement>('[data-i18n]');
+	if (label) {
+		label.id ||= `accordion-label-${section.dataset.accordion}`;
+		button.setAttribute('aria-labelledby', label.id);
+	} else {
+		button.setAttribute('aria-label', header.textContent?.trim() ?? '');
+	}
+	if (chevron) {
+		button.appendChild(chevron);
+	}
+	header.appendChild(button);
+	button.addEventListener('click', () => toggleSection(header, content, chevron));
+};
+
+/**
  * @brief Open every collapsed accordion ancestor of an element.
  * @brief Keeps nav scrolling useful when a parent card is collapsed.
  * @param el Target element inside nested accordions.
@@ -69,7 +104,8 @@ export const openAccordionTree = (el: HTMLElement): void => {
 			node.classList.add('open');
 			syncAccordionHeight(node);
 			const section = node.parentElement;
-			section?.querySelector('[data-accordion-header]')?.setAttribute('aria-expanded', 'true');
+			section?.querySelector('[data-accordion-header][role="button"]')?.setAttribute('aria-expanded', 'true');
+			section?.querySelector('.accordion-toggle')?.setAttribute('aria-expanded', 'true');
 			section?.querySelector('[data-chevron]')?.classList.add('open');
 		}
 		node = node.parentElement;
@@ -89,5 +125,8 @@ const toggleSection = (header: HTMLElement, content: HTMLElement, chevron: HTMLE
 	if (chevron) {
 		chevron.classList.toggle('open');
 	}
-	header.setAttribute('aria-expanded', String(content.classList.contains('open')));
+	if (header.getAttribute('role') === 'button') {
+		header.setAttribute('aria-expanded', String(content.classList.contains('open')));
+	}
+	header.querySelector('.accordion-toggle')?.setAttribute('aria-expanded', String(content.classList.contains('open')));
 };

@@ -8,7 +8,6 @@ import { renderGearsList } from '../../components/gear-list';
 import { syncUrlHash } from '../../core/share/share-utils';
 import type { ElementRefs } from '../dom/element-refs';
 import { exportGraphPng, exportGraphSvg } from '../graph/graph-export';
-import { graphExportMetadata } from '../graph/graph-export-footer';
 import {
 	buildAssettoCorsaIni,
 	buildBeamngJbeam,
@@ -19,24 +18,16 @@ import {
 } from '../graph/drivetrain-export';
 
 /**
- * @brief Largest `drivetrain.ini` accepted, in bytes.
- * @brief A real file is a couple of kilobytes; the bound keeps a wrong pick
- * @brief from being read into memory and parsed line by line.
- */
-const MAX_INI_BYTES = 1_000_000;
-
-/**
  * @brief Wire export, print and drivetrain exchange buttons exactly once.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback.
  * @return void
  */
 export const bindExportEvents = (refs: ElementRefs, render: () => void): void => {
-	const metadata = (): string => refs.graphExportFooter.checked
-		? graphExportMetadata(refs.presetSelector.selectedOptions[0]?.textContent ?? 'Haguruma') : '';
-	refs.btnExportPng.addEventListener('click', () => exportGraphPng(refs.canvas, metadata()));
-	refs.btnExportSvg.addEventListener('click', () => exportGraphSvg(refs.canvas, metadata()));
+	refs.btnExportPng.addEventListener('click', () => exportGraphPng(refs));
+	refs.btnExportSvg.addEventListener('click', () => exportGraphSvg(refs));
 	refs.btnPrint.addEventListener('click', () => window.print());
+	bindExportMenu(refs);
 	refs.btnExportGo.addEventListener('click', () => {
 		exportDrivetrainAs(refs.exportFormat.value);
 	});
@@ -49,14 +40,52 @@ export const bindExportEvents = (refs: ElementRefs, render: () => void): void =>
 		if (!file) {
 			return;
 		}
-		if (file.size > MAX_INI_BYTES) {
-			showDrivetrainStatus(refs, false, 0);
-			return;
-		}
 		void readTextFile(file).then((text) => {
 			applyDrivetrainIni(refs, text, render);
 		});
 	});
+};
+
+/**
+ * @brief Wire the compact drivetrain export menu without changing legacy IDs.
+ * @param refs Cached DOM handles containing the hidden selector and action.
+ * @return void
+ */
+const bindExportMenu = (refs: ElementRefs): void => {
+	const trigger = document.getElementById('btn-export-menu');
+	const menu = document.getElementById('export-menu');
+	const label = document.getElementById('export-menu-label');
+	if (!(trigger instanceof HTMLButtonElement) || !menu || !label) {
+		return;
+	}
+	trigger.addEventListener('click', () => toggleExportMenu(trigger, menu));
+	menu.querySelectorAll<HTMLButtonElement>('[data-export-format]').forEach((option) => {
+		option.addEventListener('click', () => {
+			const format = option.dataset.exportFormat ?? 'ini';
+			refs.exportFormat.value = format;
+			label.textContent = `${t('export.go')} ${option.textContent?.trim() ?? format.toUpperCase()}`;
+			toggleExportMenu(trigger, menu, false);
+			refs.btnExportGo.click();
+		});
+	});
+	document.addEventListener('click', (event) => {
+		if (!menu.contains(event.target as Node) && !trigger.contains(event.target as Node)) {
+			toggleExportMenu(trigger, menu, false);
+		}
+	});
+};
+
+/**
+ * @brief Show or hide the export format menu and synchronize accessibility state.
+ * @param trigger Menu trigger button.
+ * @param menu Menu popover.
+ * @param force Optional explicit open state.
+ * @return void
+ */
+const toggleExportMenu = (trigger: HTMLButtonElement, menu: HTMLElement, force?: boolean): void => {
+	const open = force ?? menu.classList.contains('hidden');
+	menu.classList.toggle('hidden', !open);
+	trigger.setAttribute('aria-expanded', String(open));
 };
 
 /**
@@ -73,7 +102,7 @@ const currentDrivetrain = () => {
  * @param format Select value: ini, json, jbeam, motec or aim.
  * @return void
  */
-const exportDrivetrainAs = (format: string): void => {
+export const exportDrivetrainAs = (format: string): void => {
 	const input = currentDrivetrain();
 	if (format === 'json') {
 		downloadTextFile(buildDrivetrainJson(input), 'haguruma-drivetrain.json', 'application/json');
@@ -94,12 +123,20 @@ const exportDrivetrainAs = (format: string): void => {
 	downloadTextFile(buildAssettoCorsaIni(input), 'haguruma-drivetrain.ini', 'text/plain');
 };
 
+/** Largest drivetrain `.ini` accepted by the importer, in bytes. */
+export const MAX_DRIVETRAIN_INI_BYTES = 1024 * 1024;
+
 /**
  * @brief Read one text file without ever rejecting.
+ * @brief Files above `MAX_DRIVETRAIN_INI_BYTES` are refused before the read: a
+ * @brief gearbox `.ini` is a few kilobytes, so anything larger is a mistake.
  * @param file File chosen from the hidden input.
- * @return Resolves with the file text, empty on read errors.
+ * @return Resolves with the file text, empty when refused or unreadable.
  */
 const readTextFile = (file: File): Promise<string> => {
+	if (file.size > MAX_DRIVETRAIN_INI_BYTES) {
+		return Promise.resolve('');
+	}
 	return new Promise((resolve) => {
 		const reader = new FileReader();
 		reader.onload = () => resolve(String(reader.result ?? ''));

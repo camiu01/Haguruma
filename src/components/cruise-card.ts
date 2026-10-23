@@ -10,60 +10,25 @@ import { cruiseCheck, type CruiseResult } from '../core/math/cruise-math';
 import { fromDisplaySpeed } from '../core/math/speed-math';
 import { formatPower, getUnitLabel } from '../core/units/unit-utils';
 import type { ElementRefs } from '../services/dom/element-refs';
+import { buildToolShell } from './card/accordion-shell';
 
 /**
  * @brief Inject the cruising-check shell into its index.html mount point.
  * @brief Runs in bootstrap before refs resolve so ids and accordion exist.
+ * @brief The card fills its bare sidebar cell and carries no heading of its
+ * @brief own: the accordion header already renders t('cruise.title').
  * @param host Mount element hosting the card.
  * @return void
  */
 export const injectCruiseShell = (host: HTMLElement): void => {
 	host.replaceChildren();
-	const card = document.createElement('div');
-	card.className = 'card border border-border rounded-xl p-4';
-	const heading = document.createElement('h2');
-	heading.className = 'text-sm font-semibold text-text-main pb-3 mb-1 border-b border-border';
-	heading.setAttribute('data-i18n', 'tools.title');
-	heading.textContent = t('tools.title');
-	card.appendChild(heading);
-	const accordion = document.createElement('div');
-	accordion.setAttribute('data-accordion', 'cruise');
-	const header = document.createElement('div');
-	header.className = 'section-header';
-	header.setAttribute('data-accordion-header', '');
-	const headerLeft = document.createElement('div');
-	headerLeft.className = 'flex items-center gap-2';
-	const dot = document.createElement('span');
-	dot.className = 'w-2 h-2 rounded-full bg-neon-cyan';
-	const title = document.createElement('span');
-	title.className = 'text-sm font-semibold text-text-main';
-	title.setAttribute('data-i18n', 'cruise.title');
-	title.textContent = t('cruise.title');
-	const note = document.createElement('span');
-	note.className = 'text-[10px] text-text-dim';
-	note.setAttribute('data-i18n', 'cruise.note');
-	note.textContent = t('cruise.note');
-	headerLeft.append(dot, title, note);
-	const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-	chevron.setAttribute('class', 'chevron open');
-	chevron.setAttribute('data-chevron', '');
-	chevron.setAttribute('viewBox', '0 0 24 24');
-	chevron.setAttribute('fill', 'none');
-	chevron.setAttribute('stroke', 'currentColor');
-	chevron.setAttribute('stroke-width', '2');
-	chevron.setAttribute('aria-hidden', 'true');
-	const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-	poly.setAttribute('points', '6 9 12 15 18 9');
-	chevron.appendChild(poly);
-	header.append(headerLeft, chevron);
-	const content = document.createElement('div');
-	content.className = 'section-content open';
-	content.setAttribute('data-accordion-content', '');
-	content.appendChild(buildControls());
-	accordion.append(header, content);
-	card.appendChild(accordion);
-	card.appendChild(buildTireAccordion());
-	host.appendChild(card);
+	host.appendChild(buildToolShell({
+		id: 'cruise',
+		title: 'cruise.title',
+		note: 'cruise.note',
+		body: buildControls(),
+		bodyClass: 'flex flex-col gap-3',
+	}));
 };
 
 /**
@@ -73,11 +38,11 @@ export const injectCruiseShell = (host: HTMLElement): void => {
 const buildControls = (): DocumentFragment => {
 	const frag = document.createDocumentFragment();
 	const grid = document.createElement('div');
-	grid.className = 'grid grid-cols-2 gap-4 pt-1';
+	grid.className = 'grid grid-cols-2 gap-3';
 	const col = document.createElement('div');
-	col.className = 'col-span-2 sm:col-span-1';
+	col.className = 'field-half';
 	const label = document.createElement('label');
-	label.className = 'block text-xs font-medium text-text-dim mb-1';
+	label.className = 'field-label';
 	label.setAttribute('for', 'cruise-speed');
 	label.setAttribute('data-i18n', 'cruise.speed');
 	label.textContent = t('cruise.speed');
@@ -92,69 +57,21 @@ const buildControls = (): DocumentFragment => {
 	input.max = '400';
 	input.value = '130';
 	input.className =
-		'w-full bg-surface-input border border-surface-border focus:border-neon-cyan focus:ring-0 rounded-lg px-3 py-2 text-xs text-text-output font-mono focus:border-text-dim outline-none';
+		'w-full field-input field-input--md pr-9 font-semibold';
 	const unit = document.createElement('span');
-	unit.className = 'absolute right-2.5 top-2 text-[10px] font-mono text-zinc-500 pointer-events-none unit-label';
+	unit.className = 'field-unit unit-label';
 	unit.textContent = getUnitLabel(state.unit);
 	wrap.append(input, unit);
 	col.append(label, wrap);
 	grid.appendChild(col);
 	const result = document.createElement('div');
 	result.id = 'cruise-result';
-	result.className = 'col-span-2 sm:col-span-1 text-xs font-mono text-text-main pt-1';
+	result.className = 'field-half bg-surface-recessed border border-border-hairline rounded p-2 flex flex-col gap-0.5 fs-base font-mono text-text-main';
 	result.setAttribute('aria-live', 'polite');
 	result.textContent = '—';
 	grid.appendChild(result);
 	frag.appendChild(grid);
 	return frag;
-};
-
-/**
- * @brief Build the tire comparator accordion, mirroring card accordions.
- * @brief Header holds the title plus the live verdict pill; the tool shell
- * @brief mounts into the content node on bootstrap.
- * @return Accordion element with an empty mount point.
- */
-const buildTireAccordion = (): HTMLElement => {
-	const accordion = document.createElement('div');
-	accordion.setAttribute('data-accordion', 'tiresize');
-	accordion.className = 'border-t border-border mt-3';
-	const header = document.createElement('div');
-	header.className = 'section-header';
-	header.setAttribute('data-accordion-header', '');
-	const left = document.createElement('div');
-	left.className = 'flex items-center gap-2';
-	const dot = document.createElement('span');
-	dot.className = 'w-2 h-2 rounded-full bg-neon-cyan';
-	const title = document.createElement('span');
-	title.className = 'text-sm font-semibold text-text-main';
-	title.setAttribute('data-i18n', 'tiretool.title');
-	title.textContent = t('tiretool.title');
-	const pill = document.createElement('span');
-	pill.id = 'tiresize-pill';
-	pill.className = 'ml-auto text-[11px] font-mono font-semibold border rounded-full px-2.5 py-0.5 hidden';
-	left.append(dot, title);
-	header.append(left, pill);
-	const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-	chevron.setAttribute('class', 'chevron open');
-	chevron.setAttribute('data-chevron', '');
-	chevron.setAttribute('viewBox', '0 0 24 24');
-	chevron.setAttribute('fill', 'none');
-	chevron.setAttribute('stroke', 'currentColor');
-	chevron.setAttribute('stroke-width', '2');
-	chevron.setAttribute('aria-hidden', 'true');
-	const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-	poly.setAttribute('points', '6 9 12 15 18 9');
-	chevron.appendChild(poly);
-	header.appendChild(chevron);
-	const content = document.createElement('div');
-	content.className = 'section-content open';
-	content.setAttribute('data-accordion-content', '');
-	const mount = document.createElement('div');
-	mount.id = 'tire-size-mount';
-	content.appendChild(mount);
-	accordion.append(header, content);
-	return accordion;
 };
 
 /**
@@ -223,10 +140,10 @@ const buildLine = (text: string, cls: string): HTMLParagraphElement => {
  */
 const verdictClass = (verdict: CruiseResult['verdict']): string => {
 	if (verdict === 'over') {
-		return 'text-rose-400';
+		return 'text-neon-red';
 	}
 	if (verdict === 'high') {
-		return 'text-amber-300';
+		return 'text-accent-warning';
 	}
-	return 'text-emerald-300';
+	return 'text-neon-green';
 };

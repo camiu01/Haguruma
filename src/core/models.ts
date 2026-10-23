@@ -3,7 +3,7 @@
  * @brief Shared domain models for HAGURUMA.
  */
 import type { CornerPhase, HandlingIssue } from './setup/setup-matrix';
-import type { EfficiencySample } from './math/powertrain-math';
+import type { DynamicsSettings } from './state/dynamics-settings';
 
 /** Supported speed display units. */
 export type SpeedUnit = 'kmh' | 'mph';
@@ -52,18 +52,18 @@ export type DifferentialType = 'open' | 'clutch_lsd' | 'torsen' | 'spool';
  * @brief Weight distribution, geometry, grip and suspension inputs.
  */
 export interface RunningGear {
-	/** Requested front torque share for AWD, defaults to 0.5. */
-	awdFrontShare?: number;
-	/** Free center coupling for handbrake turn-in. */
-	centerDisengaged?: boolean;
-	/** Ideal capacity-based AWD center control, not a manufacturer calibration. */
-	activeCenter?: boolean;
-	/** Rear handbrake demand from zero to one. */
-	handbrakeFraction?: number;
-	/** Clutch pack breakaway torque, in Nm. */
+	/** Mechanical clutch preload at the axle, Nm; zero preserves legacy behavior. */
 	differentialPreloadNm?: number;
-	/** Effective radius used to convert differential preload to wheel force. */
-	preloadRadiusM?: number;
+	/** Nominal AWD front torque fraction, defaults to 0.5. */
+	awdFrontShare?: number;
+	/** Active center coupling strength, zero fixed split, one adaptive split. */
+	centerDiffLock?: number;
+	/** Lateral torque vectoring authority, [0, 1]. */
+	torqueVectoring?: number;
+	/** Disengage center coupling while the handbrake is applied. */
+	handbrakeDisengage?: boolean;
+	/** Current handbrake application for turn-in simulation. */
+	handbrakeApplied?: boolean;
 	/** Front static weight share, range [0.3, 0.7]. */
 	frontWeightDistribution: number;
 	/** Center-of-gravity height in mm, range [200, 800]. */
@@ -158,8 +158,6 @@ export interface GearPreset {
 	rotatingMassKg?: number;
 	/** Torque-interruption duration per upshift in seconds (accel solver). */
 	shiftTimeS?: number;
-	/** Optional advanced settings preserved by custom garage saves and backups. */
-	simulation?: AppState['simulation'];
 	/** Chassis and running-gear parameters for load-transfer physics. */
 	runningGear?: RunningGear;
 }
@@ -180,18 +178,8 @@ export interface SetupGuideSelection {
  * @brief Single source of truth shared by all renderers.
  */
 export interface AppState {
-	/** Optional advanced simulation settings; legacy setups keep existing defaults. */
-	simulation?: {
-		limiterMode: 'hard' | 'bounce';
-		shiftTimesS: number[];
-		efficiencyMap?: EfficiencySample[];
-	};
-	/** Graph physical quantity. */
-	graphMode?: 'rpm' | 'force';
-	/** Optional excess-force shading in the wheel-force view. */
-	showTractionMargin?: boolean;
-	/** Visible graph window in SI-friendly km/h and RPM; absent means full view. */
-	graphWindow?: { minKmh: number; maxKmh: number; minRpm: number; maxRpm: number };
+	/** Extended dynamics controls, carried separately from the frozen v1 token. */
+	dynamics: DynamicsSettings;
 	/** Active display unit. */
 	unit: SpeedUnit;
 	/** Active power display unit (state stores kW). */
@@ -272,6 +260,10 @@ export interface AppState {
 	setupLevel: SetupLevel;
 	/** Comparison detail level (same or smaller than the setup level). */
 	compLevel: SetupLevel;
+	/** Cartesian plot layer visibility switches. */
+	graphLayers: GraphLayerSettings;
+	/** Visible sub-window of the plot, null while the plot is not zoomed. */
+	graphWindow: GraphWindow | null;
 }
 
 /**
@@ -279,9 +271,6 @@ export interface AppState {
  * @brief Pixel geometry plus data limits for coordinate mapping.
  */
 export interface PlotFrame {
-	/** Visible lower bounds, zero for legacy frames. */
-	minSpeed?: number;
-	minRpm?: number;
 	/** Full canvas width in CSS pixels. */
 	width: number;
 	/** Full canvas height in CSS pixels. */
@@ -302,6 +291,43 @@ export interface PlotFrame {
 	maxSpeed: number;
 	/** Top edge of the Y axis in RPM. */
 	maxRpm: number;
+	/** Visible sub-window of both axes, full axis when the plot is not zoomed. */
+	window: GraphWindow;
+}
+
+/**
+ * Visible sub-window of the plot, in engine RPM and km/h.
+ * @brief Bounds are always inside the full axis; the viewport is the zoom and
+ * @brief pan state of the graph and is not part of the frozen v1 share token.
+ */
+export interface GraphWindow {
+	/** Left edge of the visible speed range in km/h. */
+	minKmh: number;
+	/** Right edge of the visible speed range in km/h. */
+	maxKmh: number;
+	/** Bottom edge of the visible engine-speed range in RPM. */
+	minRpm: number;
+	/** Top edge of the visible engine-speed range in RPM. */
+	maxRpm: number;
+}
+
+/**
+ * Visibility switches for the cartesian plot layers.
+ * @brief Toggled from the graph toolbar and the drawer display section.
+ */
+export interface GraphLayerSettings {
+	/** Show the shift-drop connectors and landing markers. */
+	shiftDrops: boolean;
+	/** Show the aerodynamic-wall shading and limit marker. */
+	aeroWall: boolean;
+	/** Show the friction grip-limit curve and wheelspin shading. */
+	gripLimit: boolean;
+	/** Show the available versus required wheel-power envelope. */
+	powerCurve: boolean;
+	/** Draw the fine background grid instead of the coarse one. */
+	fineGrid: boolean;
+	/** Snap the crosshair HUD to the nearest shift point. */
+	snapHud: boolean;
 }
 
 /**

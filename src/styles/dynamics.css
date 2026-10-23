@@ -1,0 +1,27 @@
+/**
+ * @file dynamics.css
+ * @brief Theme-token-only dynamics controls and readouts.
+ */
+.dynamics-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+}
+.dynamics-field { min-width: 0; }
+.dynamics-field .field-input { width: 100%; }
+.dynamics-wide { grid-column: 1 / -1; }
+.dynamics-readout {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 10px;
+	background: var(--bg-surface-recessed);
+	border: 1px solid var(--border-hairline);
+	color: var(--text-main);
+	font: var(--fs-small) var(--font-mono);
+}
+.dynamics-readout output { color: var(--accent-kinematic); }
+.dynamics-field [aria-invalid='true'] { outline: 2px solid var(--accent-warning); }
+@media (max-width: 380px) {
+	.dynamics-grid { grid-template-columns: 1fr; }
+}

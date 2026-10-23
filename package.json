@@ -1,34 +1,31 @@
 {
   "name": "haguruma",
-  "version": "0.5.1",
+  "version": "0.8.0",
   "private": true,
   "license": "GPL-3.0-only",
   "author": "Camiu (https://github.com/camiu01)",
   "type": "module",
-  "engines": {
-    "node": "^20.19.0 || ^22.12.0 || >=24.0.0"
-  },
   "scripts": {
     "dev": "vite",
     "build": "npx tsc --noEmit && npx vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "lint:catalog": "vitest run tests/catalog-validation.test.ts tests/catalog-quality.test.ts",
-    "bench": "vitest bench --run tests/accel-math.bench.ts --maxWorkers=1 && vitest run tests/accel-performance.test.ts --maxWorkers=1",
+    "bench": "vitest bench --run",
     "androidAPP": "npm run build && npx cap sync android && cd android && .\\gradlew.bat assembleDebug"
   },
   "devDependencies": {
     "@capacitor/cli": "7.6.9",
-    "fast-check": "3.23.2",
-    "rollup-plugin-visualizer": "5.14.0",
+    "@types/qrcode": "1.5.6",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.17",
     "typescript": "5.4.5",
-    "vite": "7.3.7",
-    "vitest": "4.1.12"
+    "vite": "5.2.0",
+    "vitest": "1.6.0"
   },
   "dependencies": {
-    "@capacitor-community/keep-awake": "7.1.0",
     "@capacitor/android": "7.6.9",
     "@capacitor/core": "7.6.9",
-    "@capacitor/haptics": "7.0.5"
+    "qrcode": "1.5.4"
   }
 }

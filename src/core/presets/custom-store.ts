@@ -4,7 +4,6 @@
  */
 import type { GearPreset } from '../models';
 import { defaultRunningGear } from '../state/app-state';
-import { parseSimulationSettings } from './simulation-settings';
 
 const STORAGE_KEY = 'haguruma-custom-presets';
 
@@ -65,7 +64,6 @@ export const isPreset = (value: unknown): value is GearPreset => {
 		typeof p.tire === 'string' &&
 		typeof p.fd === 'number' && p.fd > 0 &&
 		typeof p.redline === 'number' && p.redline > 0 &&
-		(p.simulation === undefined || parseSimulationSettings(p.simulation) !== null) &&
 		Array.isArray(p.gears) &&
 		p.gears.length > 0 &&
 		(p.gears as unknown[]).every((g) => typeof g === 'number' && g > 0)

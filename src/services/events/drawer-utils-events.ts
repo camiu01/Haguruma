@@ -4,11 +4,10 @@
  */
 import type { ElementRefs } from '../dom/element-refs';
 import { getTheme, setTheme, parseTheme } from '../../core/theme/theme';
-import { loadCustomPresets, CUSTOM_STORE_VERSION } from '../../core/presets/custom-store';
-import { parseGarageImport, restoreStateBackup } from '../../core/presets/backup-store';
+import { isPreset, loadCustomPresets, saveCustomPreset } from '../../core/presets/custom-store';
 import { refreshPresetOptions } from './preset-events';
 import { renderCustomList } from '../../components/custom-car';
-import { t } from '../../core/i18n/language';
+import type { GearPreset } from '../../core/models';
 
 /**
  * Bind drawer-only utility controls.
@@ -123,7 +122,7 @@ const exportCustomPresets = (): void => {
 
 /**
  * Read the selected file and persist valid presets.
- * @brief Validate the complete file and merge atomically after overwrite confirmation.
+ * @brief Accepts a single GearPreset or a name-keyed map; skips invalid entries.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback.
  * @return Resolves after storage refresh.
@@ -134,23 +133,44 @@ const importCustomPresets = async (refs: ElementRefs, render: () => void): Promi
 		return;
 	}
 	try {
-		if (file.size > 2_000_000) throw new Error('backup.invalid');
-		const incoming = parseGarageImport(await file.text(), file.name);
-		if (!incoming || Object.keys(incoming).length === 0) throw new Error('backup.invalid');
-		const saved = loadCustomPresets();
-		const overwrites = Object.keys(incoming).some((name) => Object.prototype.hasOwnProperty.call(saved, name));
-		if (overwrites && !window.confirm(t('backup.garageConfirm'))) return;
-		const value = JSON.stringify({ schemaVersion: CUSTOM_STORE_VERSION, presets: { ...saved, ...incoming } });
-		if (!restoreStateBackup(localStorage, { 'haguruma-custom-presets': value })) throw new Error('backup.storageError');
-		refs.customError.classList.add('hidden');
-		refreshPresetOptions(refs);
-		renderCustomList(refs, render);
-		render();
-	} catch (error) {
-		refs.customError.textContent = t(error instanceof Error && error.message === 'backup.storageError' ? 'backup.storageError' : 'backup.invalid');
-		refs.customError.setAttribute('aria-live', 'polite');
-		refs.customError.classList.remove('hidden');
+		const text = await file.text();
+		const parsed: unknown = JSON.parse(text);
+		const incoming = collectPresets(parsed, file.name);
+		for (const [name, preset] of incoming) {
+			saveCustomPreset(name, preset);
+		}
+		if (incoming.size > 0) {
+			refreshPresetOptions(refs);
+			renderCustomList(refs, render);
+			render();
+		}
+	} catch (err) {
+		console.error('Preset import failed.', err);
 	} finally {
 		refs.customImportInput.value = '';
 	}
+};
+
+/**
+ * Normalize imported JSON into name-preset pairs.
+ * @brief Supports a bare GearPreset or a name-keyed object map.
+ * @param data Parsed file content.
+ * @param fileName Fallback name for a bare preset object.
+ * @return Valid entries only.
+ */
+const collectPresets = (data: unknown, fileName: string): Map<string, GearPreset> => {
+	const out = new Map<string, GearPreset>();
+	if (isPreset(data)) {
+		const fallback = fileName.replace(/\.json$/i, '').slice(0, 40) || 'Imported car';
+		out.set(fallback, data);
+		return out;
+	}
+	if (typeof data === 'object' && data !== null) {
+		for (const [name, value] of Object.entries(data as Record<string, unknown>)) {
+			if (isPreset(value)) {
+				out.set(name.slice(0, 40), value);
+			}
+		}
+	}
+	return out;
 };

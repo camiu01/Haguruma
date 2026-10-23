@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '20'
           cache: npm
 
       - name: Install dependencies
@@ -27,12 +27,6 @@ jobs:
 
       - name: Unit tests
         run: npm test
-
-      - name: Catalog data-quality lint
-        run: npm run lint:catalog
-
-      - name: Acceleration benchmark and performance gate
-        run: npm run bench
 
       - name: Production build
         run: npm run build

@@ -17,7 +17,7 @@
 	gap: 2px;
 	background: var(--bg-surface-card);
 	border: 1px solid var(--border);
-	border-radius: 0.5rem;
+	border-radius: var(--radius-xs);
 }
 
 /* Material Symbols icon sizing */
@@ -31,7 +31,7 @@ button, select {
 	min-height: 44px;
 }
 input, select, textarea {
-	font-size: 16px;
+	font-size: var(--fs-body);
 }
 input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; margin: 0; accent-color: #f59e0b; cursor: pointer; }
 
@@ -64,7 +64,7 @@ input[type='range'] {
 }
 .graph-card.graph-fullscreen .graph-wrap {
 	aspect-ratio: auto;
-	height: calc(100dvh - 160px);
+	height: calc(100dvh - 190px);
 	min-height: 320px;
 }
 .graph-legend { display: flex; flex-direction: column; gap: 0.375rem; }
@@ -125,8 +125,8 @@ button, a {
 		justify-content: center;
 	}
 }
-@media (max-width: 640px) { .table-sticky { min-width: 880px; font-size: 11px; } .table-compare { min-width: 560px; font-size: 11px; } }
-@media (min-width: 641px) { .table-sticky { font-size: 12px; } }
+@media (max-width: 640px) { .table-sticky { min-width: 880px; font-size: var(--fs-small); } .table-compare { min-width: 560px; font-size: var(--fs-small); } }
+@media (min-width: 641px) { .table-sticky { font-size: var(--fs-base); } }
 
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
@@ -150,7 +150,7 @@ input[type='number'] {
 
 .custom-scroll::-webkit-scrollbar-thumb {
 	background: var(--border);
-	border-radius: 3px;
+	border-radius: var(--radius-xs);
 }
 
 .custom-scroll::-webkit-scrollbar-thumb:hover {

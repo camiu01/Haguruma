@@ -1,139 +1,209 @@
 /**
  * @file telemetry-math.ts
- * @brief Local CSV telemetry normalization, ratio recovery and inverse dyno.
+ * @brief Pure telemetry-log parsing and gear-ratio recovery.
+ * @brief Reads MoTeC, AiM, RaceChrono and OBD2 style CSV logs carrying engine
+ * @brief rpm and wheel speed, clusters the rpm-per-wheel-rev samples into gear
+ * @brief ratios and flags clutch or tire slip as off-cluster samples.
  */
-import { dragForce, gradeForce, rollingForceAtSpeed } from './aero-math';
-import type { TorqueCurvePoint } from '../models';
-import { sanitizeTorquePoints } from './engine-curve-core';
 
-export interface TelemetryRow { timeS: number; rpm: number; speedKmh: number; gear?: number }
-export interface RecoveredRatio { ratio: number; samples: number; slipFraction: number }
-
-/**
- * @brief Split a CSV record including quoted separators and escaped quotes.
- * @param line One CSV record.
- * @param separator Chosen field delimiter.
- * @return Unquoted cells.
- */
-const csvCells = (line: string, separator: string): string[] => {
-	const cells: string[] = [];
-	let cell = '';
-	let quoted = false;
-	for (let i = 0; i < line.length; i += 1) {
-		if (line[i] === '"' && line[i + 1] === '"' && quoted) {
-			cell += '"';
-			i += 1;
-		} else if (line[i] === '"') {
-			quoted = !quoted;
-		} else if (line[i] === separator && !quoted) {
-			cells.push(cell.trim());
-			cell = '';
-		} else {
-			cell += line[i];
-		}
-	}
-	return [...cells, cell.trim()];
-};
-
-/**
- * @brief Normalize common MoTeC, AiM, RaceChrono and OBD2 CSV channels.
- * @param text CSV text with headers and SI units, optionally a units row.
- * @return Strictly time-ordered usable samples, capped at 50000.
- */
-export const parseTelemetryCsv = (text: string): TelemetryRow[] => {
-	if (text.length > 10_000_000) return [];
-	const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
-	const headerIndex = lines.findIndex((line) => /rpm|engine.?speed/i.test(line) && /speed|velocity/i.test(line));
-	if (headerIndex < 0) return [];
-	const header = lines[headerIndex];
-	const separator = header.includes(';') ? ';' : header.includes('\t') ? '\t' : ',';
-	const names = csvCells(header, separator).map((cell) => cell.toLowerCase().replace(/[^a-z0-9]/g, ''));
-	const rpmIndex = names.findIndex((name) => /^(rpm|enginerpm|enginespeed)/.test(name));
-	const speedIndex = names.findIndex((name) => /^(wheelspeed|speed|gpsspeed|velocity)/.test(name));
-	const timeIndex = names.findIndex((name) => /^(time|elapsed|timestamp)/.test(name));
-	const gearIndex = names.findIndex((name) => /^(gear|gearindex)$/.test(name));
-	if (rpmIndex < 0 || speedIndex < 0 || timeIndex < 0 || /mph|mps/.test(names[speedIndex])) return [];
-	const rows: TelemetryRow[] = [];
-	for (const line of lines.slice(headerIndex + 1, headerIndex + 50002)) {
-		const cells = csvCells(line, separator);
-		const numeric = (index: number): number => cells[index]?.trim() ? Number(cells[index].replace(',', '.')) : NaN;
-		const timeS = numeric(timeIndex);
-		const rpm = numeric(rpmIndex);
-		const speedKmh = numeric(speedIndex);
-		const gear = numeric(gearIndex);
-		if (![timeS, rpm, speedKmh].every(Number.isFinite) || timeS < 0 || rpm < 0 || rpm > 30000 || speedKmh < 0 || speedKmh > 600) continue;
-		if (rows.length > 0 && timeS <= rows[rows.length - 1].timeS) continue;
-		rows.push({ timeS, rpm, speedKmh, ...(Number.isInteger(gear) && gear >= 1 && gear <= 8 ? { gear } : {}) });
-	}
-	return rows;
-};
-
-/**
- * @brief Recover discrete gearbox ratios from RPM and road speed.
- * @param rows Normalized telemetry.
- * @param circM Known effective tire circumference.
- * @param fd Known final drive.
- * @return Decreasing ratios with at least three samples and outlier fractions.
- */
-export const recoverGearRatios = (rows: TelemetryRow[], circM: number, fd: number): RecoveredRatio[] => {
-	if (![circM, fd].every(Number.isFinite) || circM <= 0 || fd <= 0) return [];
-	const groups: { center: number; values: number[] }[] = [];
-	for (const row of rows) {
-		if (row.speedKmh < 15 || row.rpm < 1000) continue;
-		const ratio = row.rpm * circM * 0.06 / (row.speedKmh * fd);
-		if (ratio < 0.3 || ratio > 8) continue;
-		const group = groups.find((entry) => Math.abs(entry.center - ratio) / entry.center < 0.06);
-		if (group) {
-			group.values.push(ratio);
-			group.center += (ratio - group.center) / group.values.length;
-		} else if (groups.length < 64) {
-			groups.push({ center: ratio, values: [ratio] });
-		}
-	}
-	return groups.filter((group) => group.values.length >= 3).map((group) => {
-		const sorted = [...group.values].sort((a, b) => a - b);
-		const median = sorted[Math.floor(sorted.length / 2)];
-		return { ratio: median, samples: sorted.length, slipFraction: sorted.filter((value) => Math.abs(value - median) / median > 0.03).length / sorted.length };
-	}).sort((a, b) => b.ratio - a.ratio).slice(0, 8);
-};
-
-export interface InverseDynoInput {
-	massKg: number;
-	gears: number[];
-	fd: number;
-	circM: number;
-	efficiency: number;
-	dragCd: number;
-	areaM2: number;
-	rollingCrr: number;
-	gradePercent: number;
+/** One synchronized telemetry sample. */
+export interface TelemetrySample {
+	/** Time in seconds since log start. */
+	t: number;
+	/** Engine speed in RPM. */
+	rpm: number;
+	/** Vehicle speed in km/h. */
+	speedKmh: number;
 }
 
+/** Recovered gear with its ratio estimate and slip share. */
+export interface RecoveredGear {
+	/** Gear number from shortest (1) to tallest. */
+	gear: number;
+	/** Median overall ratio (gear x final drive). */
+	ratio: number;
+	/** Samples assigned to this cluster. */
+	samples: number;
+	/** Share of samples over 5% off the median (slip), 0-100. */
+	slipPct: number;
+}
+
+/** Largest log accepted for one analysis pass. */
+export const TELEMETRY_MAX_SAMPLES = 20000;
+
+/** Clustering window: ratios within 3% join the same gear. */
+const CLUSTER_TOLERANCE = 0.03;
+
+/** Slip flag: samples over 5% off the cluster median. */
+const SLIP_TOLERANCE = 0.05;
+
+/** Minimum samples for a cluster to count as a gear. */
+const MIN_CLUSTER_SAMPLES = 5;
+
 /**
- * @brief Estimate full-throttle crank torque from a clean acceleration log.
- * @param rows Timed RPM/speed samples with known gears.
- * @param setup Known vehicle properties.
- * @return Sanitized torque points, null without steady-gear acceleration.
+ * @brief Split one CSV line on comma, semicolon or tab.
+ * @param line Raw line without the line break.
+ * @return Trimmed cell list.
  */
-export const inverseDyno = (rows: TelemetryRow[], setup: InverseDynoInput): TorqueCurvePoint[] | null => {
-	if (![setup.massKg, setup.fd, setup.circM, setup.efficiency, setup.dragCd, setup.areaM2, setup.rollingCrr, setup.gradePercent].every(Number.isFinite)
-		|| setup.massKg <= 0 || setup.fd <= 0 || setup.circM <= 0 || setup.efficiency <= 0 || setup.efficiency > 1) return null;
-	const bins = new Map<number, number[]>();
-	for (let i = 1; i < rows.length - 1; i += 1) {
-		const [a, row, b] = [rows[i - 1], rows[i], rows[i + 1]];
-		if (!row.gear || row.gear !== a.gear || row.gear !== b.gear || row.speedKmh < 15) continue;
-		const ratio = setup.gears[row.gear - 1];
-		const dt = b.timeS - a.timeS;
-		if (!ratio || dt <= 0 || dt > 2) continue;
-		const acceleration = (b.speedKmh - a.speedKmh) / (3.6 * dt);
-		if (acceleration <= 0 || acceleration > 20) continue;
-		const wheelForce = setup.massKg * acceleration + dragForce(row.speedKmh, setup.dragCd, setup.areaM2)
-			+ rollingForceAtSpeed(setup.massKg, setup.rollingCrr, row.speedKmh) + gradeForce(setup.massKg, setup.gradePercent);
-		const torque = wheelForce * setup.circM / (2 * Math.PI * ratio * setup.fd * setup.efficiency);
-		const rpm = Math.round(row.rpm / 250) * 250;
-		const values = bins.get(rpm) ?? [];
-		values.push(torque);
-		bins.set(rpm, values);
+const splitLine = (line: string): string[] => {
+	const delim = line.includes(';') ? ';' : line.includes('\t') ? '\t' : ',';
+	return line.split(delim).map((cell) => cell.trim());
+};
+
+/**
+ * @brief Parse one number accepting decimal commas on semicolon logs.
+ * @param raw Raw cell text.
+ * @param commaDecimals True when commas are decimal separators.
+ * @return Finite number or NaN.
+ */
+const parseNum = (raw: string, commaDecimals: boolean): number => {
+	const text = commaDecimals ? raw.replace(/\./g, '').replace(',', '.') : raw.replace(',', '');
+	return parseFloat(text);
+};
+
+/**
+ * @brief Locate the rpm, speed and optional time columns of a header row.
+ * @param cells Lower-cased header cells.
+ * @return Column indexes, -1 when a column is absent.
+ */
+const findColumns = (cells: string[]): { rpm: number; speed: number; time: number } => {
+	const out = { rpm: -1, speed: -1, time: -1 };
+	cells.forEach((cell, idx) => {
+		if (out.rpm < 0 && cell.includes('rpm')) {
+			out.rpm = idx;
+		} else if (out.speed < 0 && (cell.includes('speed') || cell.includes('kmh') || cell.includes('velocity') || cell.includes('mph'))) {
+			out.speed = idx;
+		} else if (out.time < 0 && (cell === 't' || cell.includes('time') || cell.includes('second'))) {
+			out.time = idx;
+		}
+	});
+	return out;
+};
+
+/**
+ * @brief Convert an mph column to km/h when the header says so.
+ * @param value Raw speed value.
+ * @param header Header cell text of the speed column.
+ * @return Speed in km/h.
+ */
+const toKmh = (value: number, header: string): number => {
+	return header.includes('mph') ? value * 1.609344 : value;
+};
+
+/**
+ * @brief Parse a telemetry CSV log into synchronized samples.
+ * @brief Accepts a header row (engine_rpm / wheel_speed_kmh style) or a
+ * @brief header-less rpm,speed / time,rpm,speed layout; semicolons and decimal
+ * @brief commas are supported.
+ * @param text Raw CSV text.
+ * @return Sample list capped at TELEMETRY_MAX_SAMPLES, or null when empty.
+ */
+export const parseTelemetryCsv = (text: string): TelemetrySample[] | null => {
+	if (!text || typeof text !== 'string') {
+		return null;
 	}
-	return sanitizeTorquePoints([...bins].map(([rpm, values]) => ({ rpm, torqueNm: values.reduce((sum, value) => sum + value, 0) / values.length })));
+	const lines = text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.length > 0);
+	if (lines.length === 0) {
+		return null;
+	}
+	const commaDecimals = lines[0].includes(';');
+	const first = splitLine(lines[0]).map((cell) => cell.toLowerCase());
+	const header = findColumns(first);
+	const hasHeader = header.rpm >= 0 && header.speed >= 0;
+	const rows = hasHeader ? lines.slice(1) : lines;
+	const out: TelemetrySample[] = [];
+	for (const line of rows) {
+		if (out.length >= TELEMETRY_MAX_SAMPLES) {
+			break;
+		}
+		const cells = splitLine(line);
+		let rpmRaw: string | undefined;
+		let speedRaw: string | undefined;
+		let timeRaw: string | undefined;
+		if (hasHeader) {
+			rpmRaw = cells[header.rpm];
+			speedRaw = cells[header.speed];
+			timeRaw = header.time >= 0 ? cells[header.time] : undefined;
+		} else if (cells.length >= 3) {
+			timeRaw = cells[0];
+			rpmRaw = cells[1];
+			speedRaw = cells[2];
+		} else if (cells.length === 2) {
+			rpmRaw = cells[0];
+			speedRaw = cells[1];
+		} else {
+			continue;
+		}
+		const rpm = parseNum(rpmRaw ?? '', commaDecimals);
+		const speed = parseNum(speedRaw ?? '', commaDecimals);
+		const time = timeRaw !== undefined ? parseNum(timeRaw, commaDecimals) : out.length * 0.1;
+		if (!Number.isFinite(rpm) || rpm <= 0 || !Number.isFinite(speed) || speed <= 0) {
+			continue;
+		}
+		out.push({
+			t: Number.isFinite(time) ? time : out.length * 0.1,
+			rpm,
+			speedKmh: hasHeader ? toKmh(speed, first[header.speed]) : speed,
+		});
+	}
+	return out.length > 0 ? out : null;
+};
+
+/**
+ * @brief Recover gear ratios from telemetry samples.
+ * @brief Forms the rpm-per-wheel-rev ratio of every sample, sorts them and
+ * @brief groups ratios within 3% into gears; samples over 5% off the cluster
+ * @brief median count as clutch or tire slip.
+ * @param samples Parsed telemetry samples.
+ * @param circM Tire rolling circumference in metres.
+ * @return Gears sorted shortest-first, or null when input is unusable.
+ */
+export const estimateGearRatios = (samples: TelemetrySample[], circM: number): RecoveredGear[] | null => {
+	if (!Array.isArray(samples) || samples.length < MIN_CLUSTER_SAMPLES) {
+		return null;
+	}
+	if (!Number.isFinite(circM) || circM <= 0) {
+		return null;
+	}
+	const ratios = samples.map((sample) => {
+		const wheelRevPerMin = ((sample.speedKmh * 1000) / 3600 / circM) * 60;
+		return wheelRevPerMin > 0 ? sample.rpm / wheelRevPerMin : NaN;
+	}).filter((ratio) => Number.isFinite(ratio) && ratio > 0);
+	if (ratios.length < MIN_CLUSTER_SAMPLES) {
+		return null;
+	}
+	ratios.sort((a, b) => a - b);
+	const clusters: number[][] = [];
+	for (const ratio of ratios) {
+		const open = clusters[clusters.length - 1];
+		const seed = open ? open[open.length - 1] : NaN;
+		if (open && Math.abs(ratio - seed) / seed <= CLUSTER_TOLERANCE) {
+			open.push(ratio);
+		} else {
+			clusters.push([ratio]);
+		}
+	}
+	const gears: RecoveredGear[] = [];
+	clusters.forEach((cluster) => {
+		if (cluster.length < MIN_CLUSTER_SAMPLES) {
+			return;
+		}
+		const sorted = [...cluster].sort((a, b) => a - b);
+		const median = sorted[Math.floor(sorted.length / 2)];
+		const slipped = cluster.filter((ratio) => Math.abs(ratio - median) / median > SLIP_TOLERANCE).length;
+		gears.push({
+			gear: 0,
+			ratio: Math.round(median * 1000) / 1000,
+			samples: cluster.length,
+			slipPct: Math.round((slipped / cluster.length) * 1000) / 10,
+		});
+	});
+	if (gears.length === 0) {
+		return null;
+	}
+	gears.sort((a, b) => b.ratio - a.ratio);
+	gears.forEach((gear, idx) => {
+		gear.gear = idx + 1;
+	});
+	return gears;
 };

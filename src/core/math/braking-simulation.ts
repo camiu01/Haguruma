@@ -1,112 +1,158 @@
 /**
  * @file braking-simulation.ts
- * @brief Bias-limited braking with load transfer, wheel lock and optional ABS.
+ * @brief Four-wheel braking integration with load transfer, sliding tires and ABS.
  */
-import type { RunningGear } from '../models';
-import { downforceN, wheelLoads, kammLimit, GRAVITY } from './dynamics-math';
-import { dragForce, gradeForce } from './aero-math';
+import { dragForce, gradeForce, rollingForceAtSpeed } from './aero-math';
+import { downforceN, GRAVITY, kammLimit, wheelLoads } from './dynamics-math';
 import { gripGainFor } from '../../config/tire-compounds';
+import type { RunningGear } from '../models';
 
 export interface BrakingInput {
-	speedKmh: number;
 	massKg: number;
 	runningGear: RunningGear;
-	frontBias: number;
-	abs: boolean;
-	dragCd: number;
-	areaM2: number;
-	gradePercent: number;
+	abs?: boolean;
+	frontBias?: number;
+	demandG?: number;
+	dragCd?: number;
+	frontalAreaM2?: number;
+	rollingCrr?: number;
+	roadGradePercent?: number;
+	/** Coast force already clamped by the driven-axle differential model. */
+	engineBrakeN?: number;
 }
-export interface BrakingPoint { timeS: number; distanceM: number; speedKmh: number; decelMps2: number }
-export interface BrakingTireForces {
-	forceN: number; frontForceN: number; rearForceN: number; frontCapacityN: number; rearCapacityN: number;
-	frontLock: boolean; rearLock: boolean;
+
+export interface BrakingSample {
+	timeS: number;
+	distanceM: number;
+	speedKmh: number;
+	decelMps2: number;
+	lockedWheels: number;
 }
+
 export interface BrakingResult {
 	distanceM: number | null;
 	timeS: number | null;
-	frontLock: boolean;
-	rearLock: boolean;
-	points: BrakingPoint[];
+	maxLockedWheels: number;
+	samples: BrakingSample[];
 }
 
 /**
- * @brief Resolve a wheel-lock-limited axle braking force.
- * @param demand Requested axle force.
- * @param capacity Tire friction budget.
- * @param abs Whether ABS reduces demand near the peak.
- * @param timeS Simulated time for ABS cycling.
- * @return Actual axle braking force.
+ * @brief Validate required physical inputs before stepping.
+ * @param input Vehicle and braking settings.
+ * @return True for a finite, positive mass and usable chassis geometry.
  */
-const axleForce = (demand: number, capacity: number, abs: boolean, timeS: number): number => {
-	if (demand <= capacity) {
-		return demand;
-	}
-	return capacity * (abs ? (timeS % 0.08 < 0.02 ? 0.9 : 1) : 0.75);
+export const validBrakingInput = (input: BrakingInput): boolean => {
+	const rg = input?.runningGear;
+	return !!rg && Number.isFinite(input.massKg) && input.massKg > 0
+		&& [rg.roadFrictionCoefficient, rg.frontWeightDistribution, rg.centerOfGravityHeightMm,
+			rg.wheelbaseMm, rg.trackWidthMm, rg.lateralG].every(Number.isFinite)
+		&& rg.roadFrictionCoefficient >= 0 && rg.wheelbaseMm > 0 && rg.trackWidthMm > 0
+		&& [input.frontBias ?? 0.65, input.demandG ?? 1.4, input.dragCd ?? 0,
+			input.frontalAreaM2 ?? 0, input.rollingCrr ?? 0, input.roadGradePercent ?? 0, input.engineBrakeN ?? 0].every(Number.isFinite);
 };
 
 /**
- * @brief Resolve tire braking independently of drag, shared by stop and lap solvers.
- * @param input Brake setup.
- * @param speedKmh Current road speed.
- * @param decel Previous deceleration magnitude.
- * @param timeS Simulation time for approximate ABS cycling.
- * @param fraction Pedal demand from zero to one.
- * @return Actual tire force and axle lock flags.
+ * @brief Evaluate one wheel's brake force with kinetic slip or ABS cycling.
+ * @param demandN Hydraulic demand.
+ * @param capacityN Friction-circle capacity.
+ * @param abs Anti-lock modulation enabled.
+ * @param timeS Time within the braking run.
+ * @return Transmitted force and whether the wheel is locked.
  */
-export const brakingTireForce = (input: BrakingInput, speedKmh: number, decel: number, timeS: number, fraction = 1): BrakingTireForces => {
+const wheelBrakeN = (demandN: number, capacityN: number, abs: boolean, timeS: number): { forceN: number; locked: boolean } => {
+	if (demandN <= capacityN) return { forceN: demandN, locked: false };
+	const modulation = 0.94 + 0.06 * Math.cos(2 * Math.PI * 12 * timeS);
+	return { forceN: capacityN * (abs ? modulation : 0.75), locked: !abs };
+};
+
+/**
+ * @brief Compute individual-wheel brake budgets including aero and lateral demand.
+ * @param input Vehicle and braking settings.
+ * @param speedKmh Current speed.
+ * @param decelMps2 Deceleration estimate for load transfer.
+ * @param timeS Simulation time for ABS modulation.
+ * @return Total tire braking force and count of locked wheels.
+ */
+const tireBrakes = (input: BrakingInput, speedKmh: number, decelMps2: number, timeS: number): { forceN: number; locked: number } => {
 	const rg = input.runningGear;
-	const mu = rg.roadFrictionCoefficient * gripGainFor(rg.tireCompoundId);
-	const loads = wheelLoads(rg, input.massKg, -decel);
-	const down = downforceN(rg.liftCoefficient ?? 0, rg.liftReferenceAreaM2 ?? input.areaM2, speedKmh);
-	const share = rg.downforceFrontShare ?? rg.frontWeightDistribution;
+	const loads = wheelLoads(rg, input.massKg, -decelMps2);
+	const down = Math.max(0, downforceN(rg.liftCoefficient ?? 0, rg.liftReferenceAreaM2 ?? 0, speedKmh));
+	const share = Math.max(0, Math.min(1, rg.downforceFrontShare ?? rg.frontWeightDistribution));
+	const fz = [loads.fl + down * share / 2, loads.fr + down * share / 2,
+		loads.rl + down * (1 - share) / 2, loads.rr + down * (1 - share) / 2];
+	const total = fz.reduce((sum, load) => sum + load, 0);
 	const lateral = input.massKg * GRAVITY * Math.abs(rg.lateralG);
-	const front = kammLimit(mu, loads.fl + loads.fr + down * share, lateral * rg.frontWeightDistribution);
-	const rear = kammLimit(mu, loads.rl + loads.rr + down * (1 - share), lateral * (1 - rg.frontWeightDistribution));
-	const demand = mu * (input.massKg * GRAVITY + down) * Math.max(0, Math.min(1, fraction));
-	const fd = demand * input.frontBias;
-	const rd = demand * (1 - input.frontBias);
-	const frontForceN = axleForce(fd, front, input.abs, timeS);
-	const rearForceN = axleForce(rd, rear, input.abs, timeS);
-	return { forceN: frontForceN + rearForceN, frontForceN, rearForceN, frontCapacityN: front, rearCapacityN: rear,
-		frontLock: !input.abs && fd > front + 1, rearLock: !input.abs && rd > rear + 1 };
+	const mu = rg.roadFrictionCoefficient * gripGainFor(rg.tireCompoundId);
+	const bias = Math.max(0, Math.min(1, input.frontBias ?? 0.65));
+	const demand = Math.max(0, input.demandG ?? 1.4) * input.massKg * GRAVITY;
+	const engineFront = rg.drivetrainLayout === 'FWD' ? 1 : rg.drivetrainLayout === 'RWD' ? 0 : rg.awdFrontShare ?? 0.5;
+	let forceN = 0;
+	let locked = 0;
+	for (let i = 0; i < 4; i += 1) {
+		const capacity = kammLimit(mu, fz[i], total > 0 ? lateral * fz[i] / total : 0);
+		const engine = Math.max(0, input.engineBrakeN ?? 0) * (i < 2 ? engineFront : 1 - engineFront) / 2;
+		const wheel = wheelBrakeN(demand * (i < 2 ? bias : 1 - bias) / 2 + engine, capacity, input.abs ?? true, timeS);
+		forceN += wheel.forceN;
+		locked += Number(wheel.locked);
+	}
+	return { forceN, locked };
 };
 
 /**
- * @brief Integrate a stop with aero, grade and dynamic axle capacities.
- * @param input Braking setup.
- * @return Stop metrics and sampled profile; null metrics if no stop is possible.
+ * @brief Resolve braking deceleration and dynamic transfer by relaxed iteration.
+ * @param input Vehicle and braking settings.
+ * @param speedKmh Current speed.
+ * @param timeS Simulation time.
+ * @return Signed retardation and locked-wheel count.
  */
-export const simulateBraking = (input: BrakingInput): BrakingResult => {
-	const result: BrakingResult = { distanceM: null, timeS: null, frontLock: false, rearLock: false, points: [] };
-	if (![input.speedKmh, input.massKg, input.frontBias, input.dragCd, input.areaM2, input.gradePercent].every(Number.isFinite)
-		|| input.speedKmh < 0 || input.speedKmh > 500 || input.massKg <= 0 || input.frontBias < 0 || input.frontBias > 1) {
-		return result;
+export const brakingAtSpeed = (input: BrakingInput, speedKmh: number, timeS = 0): { decelMps2: number; lockedWheels: number } => {
+	if (!validBrakingInput(input) || !Number.isFinite(speedKmh) || speedKmh < 0) return { decelMps2: 0, lockedWheels: 0 };
+	const road = dragForce(speedKmh, input.dragCd ?? 0, input.frontalAreaM2 ?? 0)
+		+ rollingForceAtSpeed(input.massKg, input.rollingCrr ?? 0, speedKmh)
+		+ gradeForce(input.massKg, input.roadGradePercent ?? 0);
+	let decel = 0;
+	let tires = { forceN: 0, locked: 0 };
+	for (let i = 0; i < 16; i += 1) {
+		tires = tireBrakes(input, speedKmh, decel, timeS);
+		const next = (tires.forceN + road) / input.massKg;
+		if (Math.abs(next - decel) < 0.001) {
+			decel = next;
+			break;
+		}
+		decel = (decel + next) / 2;
 	}
-	const rg = input.runningGear;
-	const mu = rg.roadFrictionCoefficient * gripGainFor(rg.tireCompoundId);
-	if (!Number.isFinite(mu) || mu <= 0) {
-		return result;
-	}
-	let v = input.speedKmh / 3.6;
+	return { decelMps2: decel, lockedWheels: tires.locked };
+};
+
+/**
+ * @brief Integrate a stopping run; truncate the final step at exactly zero speed.
+ * @param input Vehicle and braking settings.
+ * @param initialSpeedKmh Starting speed, bounded to 500 km/h.
+ * @return Stopping metrics, null if the vehicle cannot stop within 60 seconds.
+ */
+export const simulateBraking = (input: BrakingInput, initialSpeedKmh = 100): BrakingResult => {
+	const result: BrakingResult = { distanceM: null, timeS: null, maxLockedWheels: 0, samples: [] };
+	if (!validBrakingInput(input) || !Number.isFinite(initialSpeedKmh) || initialSpeedKmh <= 0 || initialSpeedKmh > 500) return result;
+	let speed = initialSpeedKmh / 3.6;
 	let distance = 0;
-	let decel = mu * GRAVITY;
-	if (v === 0) return { ...result, distanceM: 0, timeS: 0, points: [{ timeS: 0, distanceM: 0, speedKmh: 0, decelMps2: 0 }] };
-	result.points.push({ timeS: 0, distanceM: 0, speedKmh: input.speedKmh, decelMps2: decel });
-	for (let step = 0; step < 12000 && v > 0; step += 1) {
-		const braking = brakingTireForce(input, v * 3.6, decel, step * 0.01);
-		result.frontLock ||= braking.frontLock;
-		result.rearLock ||= braking.rearLock;
-		const force = braking.forceN
-			+ dragForce(v * 3.6, input.dragCd, input.areaM2) + gradeForce(input.massKg, input.gradePercent);
-		decel = force / input.massKg;
-		if (!Number.isFinite(decel) || decel <= 0) return result;
-		const dt = Math.min(0.01, v / decel);
-		const next = Math.max(0, v - decel * dt);
-		distance += (v + next) * 0.5 * dt;
-		v = next;
-		if (step % 10 === 0 || v === 0) result.points.push({ timeS: step * 0.01 + dt, distanceM: distance, speedKmh: v * 3.6, decelMps2: decel });
-		if (v === 0) { result.distanceM = distance; result.timeS = step * 0.01 + dt; }
+	let time = 0;
+	for (let step = 0; step < 6000; step += 1) {
+		const braking = brakingAtSpeed(input, speed * 3.6, time);
+		if (!Number.isFinite(braking.decelMps2)) return result;
+		result.maxLockedWheels = Math.max(result.maxLockedWheels, braking.lockedWheels);
+		if (step % 10 === 0) result.samples.push({ timeS: time, distanceM: distance, speedKmh: speed * 3.6, ...braking });
+		const dt = braking.decelMps2 > 0 ? Math.min(0.01, speed / braking.decelMps2) : 0.01;
+		const next = Math.max(0, speed - braking.decelMps2 * dt);
+		distance += (speed + next) * dt / 2;
+		time += dt;
+		speed = next;
+		if (speed < 1e-8) {
+			result.distanceM = distance;
+			result.timeS = time;
+			result.samples.push({ timeS: time, distanceM: distance, speedKmh: 0, ...braking });
+			break;
+		}
+		if (speed * 3.6 > 500) break;
 	}
 	return result;
 };

@@ -1,83 +1,178 @@
 /**
  * @file graph-viewport.ts
- * @brief Bounded zoom/pan geometry and redline-based axis fitting.
+ * @brief Bounded zoom and pan window of the RPM plot, DOM-free and testable.
+ *
+ * The plot is always drawn through `svg-frame.ts`, so zoom and pan only shrink
+ * the window every layer projects into. Bounds are expressed in physical units
+ * (km/h and RPM) rather than user units, which keeps the limits meaningful at
+ * every host size and keeps the module free of any DOM dependency.
  */
-import { state } from '../../core/state/app-state';
-import type { AppState } from '../../core/models';
-import { calculateSpeed, fromDisplaySpeed } from '../../core/math/speed-math';
-import { effectiveCircumferenceM, parseTire } from '../../core/math/tire-math';
-import { getMaxRpm } from '../../core/units/unit-utils';
+import type { GraphWindow } from '../../core/models';
+import { clampNum } from './svg-frame';
 
-export type GraphWindow = NonNullable<AppState['graphWindow']>;
+/** Axis limits the window may never leave, in km/h and RPM. */
+export const VIEW_LIMITS = {
+	/** Hard ceiling of the speed axis in km/h. */
+	maxKmh: 2000,
+	/** Hard ceiling of the engine-speed axis in RPM. */
+	maxRpm: 30000,
+	/** Narrowest zoomable speed span in km/h, keeps the grid readable. */
+	minSpanKmh: 5,
+	/** Narrowest zoomable engine-speed span in RPM. */
+	minSpanRpm: 250,
+	/** Largest zoom-in factor applied by one button press. */
+	step: 1.6,
+} as const;
+
+/** Pan gesture state carried between pointer events. */
+export interface PanStart {
+	/** Pointer X in viewport pixels at the gesture start. */
+	clientX: number;
+	/** Pointer Y in viewport pixels at the gesture start. */
+	clientY: number;
+	/** Window captured when the gesture started. */
+	window: GraphWindow;
+}
+
+/** Anchor of a zoom step, in the axis units of the active display unit. */
+export interface ZoomAnchor {
+	/** Anchor speed in display units, defaults to the window centre. */
+	speed?: number;
+	/** Anchor engine speed in RPM, defaults to the window centre. */
+	rpm?: number;
+}
 
 /**
- * @brief Return the current view in km/h and RPM.
- * @param none No parameters.
- * @return Independent window value.
+ * @brief Clamp a candidate window into the axis bounds.
+ * @brief The span is bounded first, then the offset is slid back inside the
+ * @brief axis, so a zoom at the far right of the plot cannot push the window
+ * @brief past the axis ceiling.
+ * @param window Candidate window.
+ * @param maxKmh Axis ceiling in km/h.
+ * @param maxRpm Axis ceiling in RPM.
+ * @return Window inside `[0, maxKmh] x [0, maxRpm]`.
  */
-export const currentGraphWindow = (): GraphWindow => ({
-	...(state.graphWindow ?? {
-		minKmh: 0, maxKmh: fromDisplaySpeed(state.maxGraphSpeed, state.unit),
-		minRpm: 0, maxRpm: getMaxRpm(state.compareEnabled ? Math.max(state.primaryRedline, state.compRedline) : state.primaryRedline),
-	}),
-});
-
-/**
- * @brief Keep a zoomed interval finite and within supported physical bounds.
- * @param min Requested lower bound.
- * @param span Requested interval width.
- * @param floorSpan Minimum interval width.
- * @param ceiling Upper physical bound.
- * @return Clamped lower/upper bounds.
- */
-const interval = (min: number, span: number, floorSpan: number, ceiling: number): [number, number] => {
-	const width = Math.max(floorSpan, Math.min(ceiling, span));
-	const low = Math.max(0, Math.min(ceiling - width, min));
-	return [low, low + width];
+export const clampWindow = (window: GraphWindow, maxKmh: number, maxRpm: number): GraphWindow => {
+	const ceilingKmh = Math.max(VIEW_LIMITS.minSpanKmh, maxKmh);
+	const ceilingRpm = Math.max(VIEW_LIMITS.minSpanRpm, maxRpm);
+	const spanKmh = clampNum(window.maxKmh - window.minKmh, VIEW_LIMITS.minSpanKmh, ceilingKmh);
+	const spanRpm = clampNum(window.maxRpm - window.minRpm, VIEW_LIMITS.minSpanRpm, ceilingRpm);
+	const minKmh = clampNum(window.minKmh, 0, ceilingKmh - spanKmh);
+	const minRpm = clampNum(window.minRpm, 0, ceilingRpm - spanRpm);
+	return { minKmh, maxKmh: minKmh + spanKmh, minRpm, maxRpm: minRpm + spanRpm };
 };
 
 /**
- * @brief Zoom both axes around an anchor and translate by normalized spans.
- * @param w Starting window.
- * @param factor Scale multiplier, below one zooms in.
- * @param x Horizontal anchor from zero to one.
- * @param y Vertical anchor measured from the bottom.
- * @param dx Horizontal pan in window widths.
- * @param dy Vertical pan in window heights.
- * @return Bounded window, unchanged for invalid inputs.
+ * @brief Build the window that shows the full axis.
+ * @param maxKmh Axis ceiling in km/h.
+ * @param maxRpm Axis ceiling in RPM.
+ * @return Unzoomed window covering the whole plot.
  */
-export const transformGraphWindow = (w: GraphWindow, factor: number, x = 0.5, y = 0.5, dx = 0, dy = 0): GraphWindow => {
-	if (![factor, x, y, dx, dy].every(Number.isFinite) || factor <= 0) {
-		return { ...w };
-	}
-	const width = w.maxKmh - w.minKmh;
-	const height = w.maxRpm - w.minRpm;
-	const [minKmh, maxKmh] = interval(w.minKmh + width * (x * (1 - factor) + dx), width * factor, 5, 2000);
-	const [minRpm, maxRpm] = interval(w.minRpm + height * (y * (1 - factor) + dy), height * factor, 250, 30000);
-	return { minKmh, maxKmh, minRpm, maxRpm };
+export const fullWindow = (maxKmh: number, maxRpm: number): GraphWindow => {
+	return clampWindow({ minKmh: 0, maxKmh, minRpm: 0, maxRpm }, maxKmh, maxRpm);
 };
 
 /**
- * @brief Fit the speed axis to all enabled forward-gear redline speeds.
- * @param margin Fraction of extra space, constrained to 0–50%.
- * @return Suggested axis maximum in the active display unit.
+ * @brief Check whether a window is the identity window.
+ * @param window Window to test.
+ * @param maxKmh Axis ceiling in km/h.
+ * @param maxRpm Axis ceiling in RPM.
+ * @return True when the window shows the full axis.
  */
-export const fittedGraphSpeed = (margin: number): number => {
-	let top = 0;
-	const setups = [{ tire: state.primaryTire, fd: state.primaryFd, gears: state.gears, redline: state.primaryRedline }];
-	if (state.compareEnabled) {
-		setups.push({ tire: state.compTire, fd: state.compFd, gears: state.compGears, redline: state.compRedline });
+export const isFullWindow = (window: GraphWindow, maxKmh: number, maxRpm: number): boolean => {
+	const full = fullWindow(maxKmh, maxRpm);
+	const epsilon = 1e-6;
+	return (
+		Math.abs(window.minKmh - full.minKmh) < epsilon &&
+		Math.abs(window.maxKmh - full.maxKmh) < epsilon &&
+		Math.abs(window.minRpm - full.minRpm) < epsilon &&
+		Math.abs(window.maxRpm - full.maxRpm) < epsilon
+	);
+};
+
+/**
+ * @brief Zoom one axis window around an anchor value.
+ * @param min Current lower bound.
+ * @param max Current upper bound.
+ * @param anchor Anchor kept under the cursor, defaults to the centre.
+ * @param factor Multiplier below 1 to zoom in, above 1 to zoom out.
+ * @param minSpan Narrowest span this axis may reach.
+ * @param ceiling Axis ceiling of this dimension.
+ * @return New lower and upper bounds.
+ */
+const zoomAxis = (min: number, max: number, anchor: number, factor: number, minSpan: number, ceiling: number): [number, number] => {
+	const span = max - min;
+	const nextSpan = clampNum(span * factor, minSpan, ceiling);
+	const focus = clampNum(Number.isFinite(anchor) ? anchor : (min + max) / 2, min, max);
+	const minNext = clampNum(focus - ((focus - min) / span) * nextSpan, 0, ceiling - nextSpan);
+	return [minNext, minNext + nextSpan];
+};
+
+/**
+ * @brief Zoom the window around a speed and engine-speed anchor.
+ * @param window Current window.
+ * @param factor Multiplier below 1 to zoom in, above 1 to zoom out.
+ * @param maxKmh Axis ceiling in km/h.
+ * @param maxRpm Axis ceiling in RPM.
+ * @param anchor Anchor values, defaults to the window centre.
+ * @return Zoomed window, clamped to the axis.
+ */
+export const zoomWindow = (window: GraphWindow, factor: number, maxKmh: number, maxRpm: number, anchor: ZoomAnchor = {}): GraphWindow => {
+	if (!Number.isFinite(factor) || factor <= 0) {
+		return clampWindow(window, maxKmh, maxRpm);
 	}
-	for (const setup of setups) {
-		const tire = parseTire(setup.tire);
-		if (!tire) {
-			continue;
-		}
-		const circ = effectiveCircumferenceM(tire, state.rollingFactor);
-		for (const ratio of setup.gears) {
-			top = Math.max(top, calculateSpeed(setup.redline, ratio, setup.fd, circ, state.unit));
-		}
+	const [minKmh, maxKmhNext] = zoomAxis(
+		window.minKmh,
+		window.maxKmh,
+		anchor.speed ?? (window.minKmh + window.maxKmh) / 2,
+		factor,
+		VIEW_LIMITS.minSpanKmh,
+		maxKmh,
+	);
+	const [minRpm, maxRpmNext] = zoomAxis(
+		window.minRpm,
+		window.maxRpm,
+		anchor.rpm ?? (window.minRpm + window.maxRpm) / 2,
+		factor,
+		VIEW_LIMITS.minSpanRpm,
+		maxRpm,
+	);
+	return clampWindow({ minKmh, maxKmh: maxKmhNext, minRpm, maxRpm: maxRpmNext }, maxKmh, maxRpm);
+};
+
+/**
+ * @brief Translate the window by a physical offset.
+ * @param window Current window.
+ * @param deltaKmh Speed offset in km/h, positive pans towards higher speeds.
+ * @param deltaRpm Engine-speed offset in RPM, positive pans upwards.
+ * @param maxKmh Axis ceiling in km/h.
+ * @param maxRpm Axis ceiling in RPM.
+ * @return Panned window, clamped to the axis.
+ */
+export const panWindow = (window: GraphWindow, deltaKmh: number, deltaRpm: number, maxKmh: number, maxRpm: number): GraphWindow => {
+	return clampWindow(
+		{
+			minKmh: window.minKmh + (Number.isFinite(deltaKmh) ? deltaKmh : 0),
+			maxKmh: window.maxKmh + (Number.isFinite(deltaKmh) ? deltaKmh : 0),
+			minRpm: window.minRpm + (Number.isFinite(deltaRpm) ? deltaRpm : 0),
+			maxRpm: window.maxRpm + (Number.isFinite(deltaRpm) ? deltaRpm : 0),
+		},
+		maxKmh,
+		maxRpm,
+	);
+};
+
+/**
+ * @brief Project a value into the visible fraction of one axis.
+ * @param value Value in axis units.
+ * @param min Window lower bound.
+ * @param max Window upper bound.
+ * @return Fraction between 0 and 1, NaN-safe.
+ */
+export const windowFraction = (value: number, min: number, max: number): number => {
+	const span = max - min;
+	if (!Number.isFinite(value) || !(span > 0)) {
+		return 0;
 	}
-	const safeMargin = Number.isFinite(margin) ? Math.max(0, Math.min(0.5, margin)) : 0.1;
-	return Math.max(60, Math.ceil(top * (1 + safeMargin) / 10) * 10);
+	return (value - min) / span;
 };

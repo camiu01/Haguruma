@@ -92,7 +92,7 @@ export const enhancePresetSearch = (select: HTMLSelectElement, options?: { fullW
 	input.setAttribute('data-i18n-ph', 'header.presetSearch');
 	input.placeholder = t('header.presetSearch');
 	const listbox = document.createElement('ul');
-	listbox.className = 'preset-search-listbox hidden';
+	listbox.className = 'preset-search-listbox hidden rounded-xl border border-border-hairline';
 	listbox.setAttribute('role', 'listbox');
 	wrapper.appendChild(input);
 	wrapper.appendChild(listbox);
@@ -183,7 +183,7 @@ const wireSearch = (
  */
 const renderEmpty = (listbox: HTMLElement): void => {
 	const empty = document.createElement('li');
-	empty.className = 'preset-search-empty';
+	empty.className = 'preset-search-empty rounded';
 	empty.textContent = t('preset.noResults');
 	listbox.appendChild(empty);
 };
@@ -197,7 +197,7 @@ const renderEmpty = (listbox: HTMLElement): void => {
  */
 const buildItem = (entry: SearchIndexEntry, isActive: boolean, onPick: () => void): HTMLElement => {
 	const item = document.createElement('li');
-	item.className = `preset-search-item${isActive ? ' is-active' : ''}`;
+	item.className = `preset-search-item rounded${isActive ? ' is-active' : ''}`;
 	item.setAttribute('role', 'option');
 	item.dataset.value = entry.value;
 	item.textContent = entry.label;

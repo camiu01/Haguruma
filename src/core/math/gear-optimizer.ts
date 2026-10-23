@@ -1,75 +1,146 @@
 /**
  * @file gear-optimizer.ts
- * @brief Discrete gearset search and track-archetype constraints.
+ * @brief Heuristic gearset solver constrained by Vmax and shift-drop limits.
+ * @brief Anchors top gear on the target straight-line speed at the rev
+ * @brief limiter, spaces the lower gears geometrically, then runs a bounded
+ * @brief coordinate descent over 0.01 steps penalizing drops past the allowed
+ * @brief maximum. The result is a starting proposal, not a measured optimum.
  */
-import { speedKmh, rpmFromKmh } from './speed-math';
-import { engineTorqueAt, validateCurve, type EngineCurve } from './traction-math';
 
-export const TRACK_PROFILES = {
-	tight: { targetKmh: 180, minimumLandingFraction: 0.7, cornerSpeedsKmh: [45, 70] },
-	balanced: { targetKmh: 240, minimumLandingFraction: 0.65, cornerSpeedsKmh: [80, 120] },
-	fast: { targetKmh: 300, minimumLandingFraction: 0.6, cornerSpeedsKmh: [120, 160] },
-} as const;
+/** Solver input driving one optimization pass. */
+export interface OptimizerInput {
+	/** Forward gear count, 2-8. */
+	gearCount: number;
+	/** Rev limiter in RPM. */
+	redline: number;
+	/** Tire rolling circumference in metres. */
+	circM: number;
+	/** Final drive ratio. */
+	fd: number;
+	/** Target top speed in km/h for the tallest gear. */
+	targetTopSpeedKmh: number;
+	/** Maximum allowed rpm drop per upshift, 0.05-0.6. */
+	maxDrop: number;
+}
 
-/** Explicit corner targets for second/third gear, using the active torque curve. */
-export interface TrackGearingTarget { cornerSpeedsKmh: readonly [number, number]; curve: EngineCurve }
+/** Solver output: proposed ratios with per-shift diagnostics. */
+export interface OptimizedGearset {
+	/** Proposed ratios shortest-first. */
+	ratios: number[];
+	/** Rpm drop fraction per upshift. */
+	drops: number[];
+	/** Tallest-gear speed at the limiter in km/h. */
+	topSpeedKmh: number;
+	/** True when every shift respects maxDrop. */
+	withinLimits: boolean;
+}
+
+/** Discrete search step for the coordinate descent. */
+const SEARCH_STEP = 0.01;
+
+/** Descent passes over the gear vector. */
+const SEARCH_PASSES = 40;
+
+/** Widest ratio the solver will propose. */
+const RATIO_MAX = 6;
+
+/** Tallest ratio the solver will propose. */
+const RATIO_MIN = 0.4;
 
 /**
- * @brief Keep second/third gear inside the useful torque band at the target corners.
- * @param gears Candidate gearset.
- * @param fd Candidate final drive.
- * @param circM Rolling circumference.
- * @param track Optional corner targets.
- * @return Whether each available corner gear avoids low torque and the limiter.
+ * @brief Validate one optimizer input.
+ * @param input Candidate solver input.
+ * @return True when every field sits inside its physical range.
  */
-const supportsCorners = (gears: number[], fd: number, circM: number, track?: TrackGearingTarget): boolean => {
-	if (!track) return true;
-	return track.cornerSpeedsKmh.every((speed, index) => {
-		const gear = gears[index + 1];
-		if (gear === undefined) return true;
-		const rpm = rpmFromKmh(speed, gear, fd, circM);
-		return rpm >= 1000 && rpm <= track.curve.redline * 0.95
-			&& engineTorqueAt(rpm, track.curve) >= track.curve.peakTorqueNm * 0.75;
-	});
+const validInput = (input: OptimizerInput): boolean => {
+	return (
+		Number.isInteger(input.gearCount) && input.gearCount >= 2 && input.gearCount <= 8 &&
+		Number.isFinite(input.redline) && input.redline >= 1000 &&
+		Number.isFinite(input.circM) && input.circM > 0 &&
+		Number.isFinite(input.fd) && input.fd > 0 &&
+		Number.isFinite(input.targetTopSpeedKmh) && input.targetTopSpeedKmh > 20 &&
+		Number.isFinite(input.maxDrop) && input.maxDrop >= 0.05 && input.maxDrop <= 0.6
+	);
 };
 
 /**
- * @brief Generate a small discrete catalog of geometric gearsets.
- * @param first First-gear ratio.
- * @param count Gear count.
- * @return Candidate decreasing gearsets with different spacing.
+ * @brief Tallest-gear total ratio placing the target speed at the limiter.
+ * @param input Validated solver input.
+ * @return Total ratio (gear x fd) for the target Vmax.
  */
-export const gearsetCandidates = (first: number, count: number): number[][] => {
-	if (!Number.isFinite(first) || first <= 0 || count < 2 || count > 8 || !Number.isInteger(count)) return [];
-	return [0.62, 0.66, 0.7, 0.74, 0.78, 0.82, 0.86].map((spacing) =>
-		Array.from({ length: count }, (_, index) => Number((first * spacing ** index).toFixed(3))));
+const topTotalRatio = (input: OptimizerInput): number => {
+	return (input.redline * input.circM * 60) / (input.targetTopSpeedKmh * 1000);
 };
 
 /**
- * @brief Choose the shortest feasible gearing reaching a straight-line target.
- * @param candidates Discrete gearsets.
- * @param finalDrives Available final drives.
- * @param circM Rolling circumference.
- * @param redline Rev limiter.
- * @param targetKmh Minimum speed at the top-gear limiter.
- * @param maxDropFraction Maximum fractional RPM loss at each upshift.
- * @param track Optional corner targets to avoid second/third-gear torque dead spots.
- * @return Best feasible gearset and final drive, null if constraints conflict.
+ * @brief Score one candidate gear vector.
+ * @brief Penalizes drops past maxDrop, rewards tight spacing and closeness of
+ * @brief the tallest-gear Vmax to the target.
+ * @param ratios Candidate ratios shortest-first.
+ * @param input Validated solver input.
+ * @return Cost, lower is better.
  */
-export const optimizeGearset = (candidates: number[][], finalDrives: number[], circM: number, redline: number, targetKmh: number, maxDropFraction: number, track?: TrackGearingTarget): { gears: number[]; fd: number; topKmh: number } | null => {
-	if (![circM, redline, targetKmh, maxDropFraction].every(Number.isFinite)
-		|| circM <= 0 || redline <= 0 || targetKmh <= 0 || maxDropFraction <= 0 || maxDropFraction >= 1) return null;
-	if (track && (!validateCurve(track.curve) || track.cornerSpeedsKmh.length !== 2
-		|| track.cornerSpeedsKmh.some((speed) => !Number.isFinite(speed) || speed <= 0 || speed > 400))) return null;
-	let best: { gears: number[]; fd: number; topKmh: number } | null = null;
-	for (const gears of candidates.slice(0, 1000)) {
-		if (gears.length < 2 || gears.length > 8 || gears.some((ratio, index) => !Number.isFinite(ratio) || ratio < 0.3 || ratio > 8
-			|| (index > 0 && (ratio >= gears[index - 1] || 1 - ratio / gears[index - 1] > maxDropFraction)))) continue;
-		for (const fd of finalDrives.slice(0, 100)) {
-			if (!Number.isFinite(fd) || fd <= 0 || !supportsCorners(gears, fd, circM, track)) continue;
-			const topKmh = speedKmh(redline, gears[gears.length - 1], fd, circM);
-			if (topKmh >= targetKmh && (!best || topKmh < best.topKmh)) best = { gears: [...gears], fd, topKmh };
+const scoreRatios = (ratios: number[], input: OptimizerInput): number => {
+	let cost = 0;
+	for (let idx = 0; idx < ratios.length - 1; idx += 1) {
+		const drop = 1 - ratios[idx + 1] / ratios[idx];
+		if (drop > input.maxDrop) {
+			cost += (drop - input.maxDrop) * 100;
+		}
+		cost += Math.abs(drop - input.maxDrop * 0.8);
+	}
+	const topSpeed = (input.redline * input.circM * 60) / (ratios[ratios.length - 1] * input.fd * 1000);
+	cost += Math.abs(topSpeed - input.targetTopSpeedKmh) / input.targetTopSpeedKmh;
+	return cost;
+};
+
+/**
+ * @brief Clamp one ratio into the solver search window.
+ * @param ratio Candidate ratio.
+ * @return Ratio within [RATIO_MIN, RATIO_MAX].
+ */
+const clampRatio = (ratio: number): number => {
+	return Math.min(RATIO_MAX, Math.max(RATIO_MIN, ratio));
+};
+
+/**
+ * @brief Run the heuristic gearset solver.
+ * @param input Gear count, limiter, tire, fd, Vmax target and drop limit.
+ * @return Proposed ratios with diagnostics, or null on invalid input.
+ */
+export const optimizeGearset = (input: OptimizerInput): OptimizedGearset | null => {
+	if (!validInput(input)) {
+		return null;
+	}
+	const topGear = clampRatio(topTotalRatio(input) / input.fd);
+	const firstGear = clampRatio(topGear * (1 + input.maxDrop * 0.8) ** (input.gearCount - 1));
+	const step = (firstGear / topGear) ** (1 / (input.gearCount - 1));
+	let ratios: number[] = [];
+	for (let idx = 0; idx < input.gearCount; idx += 1) {
+		ratios.push(clampRatio(firstGear / step ** idx));
+	}
+	let best = scoreRatios(ratios, input);
+	for (let pass = 0; pass < SEARCH_PASSES; pass += 1) {
+		for (let idx = 0; idx < ratios.length; idx += 1) {
+			for (const dir of [-1, 1]) {
+				const trial = [...ratios];
+				trial[idx] = clampRatio(trial[idx] + dir * SEARCH_STEP);
+				const ordered = [...trial].sort((a, b) => b - a);
+				const score = scoreRatios(ordered, input);
+				if (score < best) {
+					best = score;
+					ratios = ordered;
+				}
+			}
 		}
 	}
-	return best;
+	const rounded = ratios.map((ratio) => Math.round(ratio * 100) / 100);
+	const drops = rounded.slice(1).map((ratio, idx) => Math.round((1 - ratio / rounded[idx]) * 1000) / 1000);
+	const topSpeedKmh = Math.round(((input.redline * input.circM * 60) / (rounded[rounded.length - 1] * input.fd * 1000)) * 10) / 10;
+	return {
+		ratios: rounded,
+		drops,
+		topSpeedKmh,
+		withinLimits: drops.every((drop) => drop <= input.maxDrop + 1e-9),
+	};
 };

@@ -44,6 +44,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 
-# Local tooling artifacts (indexes, review output); not part of the project
+# Local analysis tooling (code graph index, design tooling state)
 .codegraph/
 .impeccable/
