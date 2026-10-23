@@ -3,6 +3,24 @@
  * @brief App shell pieces: header controls, modal and preset combobox.
  */
 /* My Cars modal: bottom sheet on phone/tablet, centered dialog on desktop */
+.app-header {
+	top: env(safe-area-inset-top, 0px);
+	padding-inline: max(0.75rem, env(safe-area-inset-left, 0px)) max(0.75rem, env(safe-area-inset-right, 0px));
+}
+main[class] {
+	padding-inline: max(var(--shell-gutter, 1rem), env(safe-area-inset-left, 0px)) max(var(--shell-gutter, 1rem), env(safe-area-inset-right, 0px));
+}
+#mobile-tabs {
+	padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
+}
+@media (min-width: 1024px) {
+	main[class] {
+		--shell-gutter: 1.5rem;
+	}
+	.app-header {
+		padding-inline: max(1.5rem, env(safe-area-inset-left, 0px)) max(1.5rem, env(safe-area-inset-right, 0px));
+	}
+}
 #mycars-modal,
 #qr-modal {
 	transition: transform 0.3s ease, opacity 0.3s ease;
@@ -16,6 +34,7 @@
 		bottom: 0;
 		border-radius: 16px 16px 0 0;
 		padding-bottom: env(safe-area-inset-bottom);
+		padding-inline: max(1rem, env(safe-area-inset-left, 0px)) max(1rem, env(safe-area-inset-right, 0px));
 		transform: translateY(100%);
 	}
 	#mycars-modal.open,

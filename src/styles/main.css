@@ -9,4 +9,6 @@
 @import './shell.css';
 @import './overrides.css';
 @import './setup-guide.css';
+@import './graph-interaction.css';
+@import './track-tools.css';
 @import './print.css';

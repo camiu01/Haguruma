@@ -757,21 +757,28 @@
 		</section>
 		<section class='order-1 xl:order-2 xl:col-span-7 flex flex-col gap-4'>
 			<div class='card graph-card border border-border rounded-xl p-4 flex flex-col'>
-				<div class='flex items-center justify-between mb-3 gap-2 flex-wrap'>
+				<div class='flex items-center justify-between pb-3 mb-3 border-b border-border gap-2 flex-wrap'>
 					<h2 class='text-sm font-semibold text-text-main' data-i18n='graph.title'>Engine RPM vs Vehicle Speed</h2>
-					<div class='flex items-center gap-1.5'>
-						<button id='btn-expand-graph' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='graph.expand' data-i18n-tip='graph.expandTip' title='Expand graph fullscreen' data-tip='Expand graph fullscreen' aria-label='Expand graph fullscreen' aria-expanded='false'>Expand</button>
-						<button id='btn-export-png' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.png' data-i18n-tip='export.pngTip' title='Export graph as PNG' data-tip='Export graph as PNG' aria-label='Export graph as PNG'>PNG</button>
-						<button id='btn-export-svg' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.svg' data-i18n-tip='export.svgTip' title='Export graph as vector SVG' data-tip='Export graph as vector SVG' aria-label='Export graph as vector SVG'>SVG</button>
-						<button id='btn-print' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='print.label' data-i18n-tip='print.tip' title='Print summary or save as PDF' data-tip='Print summary or save as PDF' aria-label='Print summary or save as PDF'>Print / PDF</button>
-						<select id='export-format' class='px-2 py-1 h-7 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main focus:outline-none focus:border-text-dim' data-i18n-tip='export.formatTip' title='Drivetrain export format' aria-label='Drivetrain export format'>
-							<option value='ini' data-i18n='export.ini'>INI</option>
-							<option value='json' data-i18n='export.gearJson'>JSON</option>
-							<option value='jbeam' data-i18n='export.jbeam'>JBeam</option>
-							<option value='motec' data-i18n='export.motec'>MoTeC</option>
-							<option value='aim' data-i18n='export.aim'>AiM</option>
-						</select>
-						<button id='btn-export-go' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.go' data-i18n-tip='export.goTip' title='Export drivetrain in the selected format' data-tip='Export drivetrain in the selected format' aria-label='Export drivetrain in the selected format'>Export</button>
+					<div class='graph-chips flex items-center gap-2 flex-wrap'>
+						<span class='chip-group'>
+							<span class='chip-group-label' data-i18n='export.groupGraph'>Graph</span>
+							<button id='btn-export-png' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.png' data-i18n-tip='export.pngTip' title='Export graph as PNG' data-tip='Export graph as PNG' aria-label='Export graph as PNG'>PNG</button>
+							<button id='btn-export-svg' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.svg' data-i18n-tip='export.svgTip' title='Export graph as vector SVG' data-tip='Export graph as vector SVG' aria-label='Export graph as vector SVG'>SVG</button>
+							<button id='btn-print' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold rounded bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='print.label' data-i18n-tip='print.tip' title='Print summary or save as PDF' data-tip='Print summary or save as PDF' aria-label='Print summary or save as PDF'>Print / PDF</button>
+						</span>
+						<span class='chip-group chip-group-divider'>
+							<span class='chip-group-label' data-i18n='export.groupDrivetrain'>Drivetrain</span>
+							<span class='chip-attached'>
+								<select id='export-format' class='px-2 py-1 h-7 text-xs font-mono font-semibold bg-input border border-border text-text-main focus:outline-none focus:border-text-dim' data-i18n-tip='export.formatTip' title='Drivetrain export format' aria-label='Drivetrain export format'>
+									<option value='ini' data-i18n='export.ini'>INI</option>
+									<option value='json' data-i18n='export.gearJson'>JSON</option>
+									<option value='jbeam' data-i18n='export.jbeam'>JBeam</option>
+									<option value='motec' data-i18n='export.motec'>MoTeC</option>
+									<option value='aim' data-i18n='export.aim'>AiM</option>
+								</select>
+								<button id='btn-export-go' type='button' class='px-2.5 py-1 text-xs font-mono font-semibold bg-input border border-border text-text-main hover:text-text-output transition' data-i18n='export.go' data-i18n-tip='export.goTip' title='Export drivetrain in the selected format' data-tip='Export drivetrain in the selected format' aria-label='Export drivetrain in the selected format'>Export</button>
+							</span>
+						</span>
 					</div>
 				</div>
 				<div class='graph-wrap relative w-full aspect-[16/9] bg-page rounded-lg border border-border overflow-hidden'>

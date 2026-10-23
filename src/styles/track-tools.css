@@ -1,0 +1,192 @@
+/**
+ * @file track-tools.css
+ * @brief Theme-token trackside forms, safe areas and diagnostic charts.
+ */
+.track-tools {
+	display: grid;
+	gap: 16px;
+	margin-top: 16px;
+}
+.track-tool {
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	/* 6px + the header's own 10px padding = the 16px card inset. */
+	padding: 6px 16px 16px;
+	background: var(--bg-card);
+	/* Same elevation recipe as .card so the tool cards sit level with the shell. */
+	box-shadow: var(--shadow-card);
+	min-width: 0;
+}
+.track-tool summary {
+	text-wrap: balance;
+}
+.track-tool form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: end;
+}
+.track-tool label {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 0;
+	flex: 1 1 160px;
+	font-size: 12px;
+	color: var(--text-dim);
+}
+.track-tool fieldset {
+	display: flex;
+	flex-wrap: wrap;
+	flex: 1 0 100%;
+	gap: 12px;
+	min-width: 0;
+	margin: 0;
+	padding: 0 0 16px;
+	border: 0;
+}
+.track-tool legend {
+	width: 100%;
+	padding-block: 12px;
+	font-weight: 600;
+	color: var(--text-main);
+}
+.track-tool .tool-wide-field {
+	flex-basis: 100%;
+}
+.track-tool input[type='file'] {
+	width: 100%;
+}
+.track-tool button:disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
+}
+.track-tool input,
+.track-tool select,
+.track-tool button,
+.track-tool textarea {
+	min-height: 44px;
+	min-width: 0;
+	max-width: 100%;
+	border: 1px solid var(--border-input);
+	border-radius: 8px;
+	padding: 8px 12px;
+	background: var(--bg-input);
+	color: var(--text-main);
+	font-variant-numeric: tabular-nums;
+	touch-action: manipulation;
+}
+.track-tool button:hover,
+.graph-controls button:hover {
+	border-color: var(--accent-cyan);
+	color: var(--text-main);
+}
+.track-tool output {
+	flex: 1 0 100%;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	font-size: 12px;
+	color: var(--text-output);
+	font-variant-numeric: tabular-nums;
+}
+.track-tool [aria-invalid='true'] {
+	border-color: var(--accent-red);
+}
+.braking-chart {
+	flex: 1 0 100%;
+	min-width: 0;
+	margin: 0;
+}
+.braking-chart canvas {
+	display: block;
+	width: 100%;
+	height: 260px;
+}
+.braking-chart figcaption {
+	white-space: pre-line;
+	font-size: 12px;
+	color: var(--text-output);
+	font-variant-numeric: tabular-nums;
+	line-height: 1.6;
+}
+.traction-margin {
+	display: none;
+	text-align: right;
+	white-space: nowrap;
+	color: var(--text-output);
+	font-variant-numeric: tabular-nums;
+}
+@media (min-width: 768px) {
+	.traction-margin {
+		display: table-cell;
+	}
+}
+.track-tool :focus-visible,
+.graph-controls :focus-visible,
+.graph-readout:focus-visible,
+#graph-canvas:focus-visible {
+	outline: 2px solid var(--accent-cyan);
+	outline-offset: 3px;
+}
+.sensitivity-results {
+	flex: 1 0 100%;
+	min-width: 0;
+}
+.sensitivity-table {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-output);
+}
+.sensitivity-table caption {
+	text-align: left;
+	line-height: 1.6;
+	margin-bottom: 16px;
+	color: var(--text-dim);
+}
+.sensitivity-table th,
+.sensitivity-table td {
+	padding: 8px 4px;
+	text-align: center;
+	overflow-wrap: anywhere;
+	border-bottom: 1px solid var(--border);
+}
+.sensitivity-table th:first-child {
+	text-align: left;
+}
+.sensitivity-delta {
+	position: relative;
+	height: 12px;
+	margin-bottom: 6px;
+}
+.sensitivity-delta::before {
+	content: '';
+	position: absolute;
+	left: 50%;
+	height: 100%;
+	border-left: 1px solid var(--text-dim);
+}
+.sensitivity-delta span {
+	position: absolute;
+	top: 2px;
+	height: 8px;
+	background: var(--accent-cyan);
+}
+.sensitivity-delta .negative {
+	background: var(--accent-red);
+}
+:root {
+	color-scheme: dark;
+}
+[data-theme='light'] {
+	color-scheme: light;
+}
+@supports (padding: env(safe-area-inset-left)) {
+	.graph-fullscreen {
+		padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+		padding-top: max(16px, env(safe-area-inset-top));
+		padding-bottom: max(16px, env(safe-area-inset-bottom));
+	}
+}

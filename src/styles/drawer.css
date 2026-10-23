@@ -92,6 +92,10 @@
 
 /* Slide-over drawer + backdrop. */
 #mobile-drawer {
+	padding-top: env(safe-area-inset-top, 0px);
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+	padding-left: env(safe-area-inset-left, 0px);
+	overscroll-behavior: contain;
 	transform: translateX(-100%);
 	transition: transform 0.22s ease;
 	border-radius: 0;

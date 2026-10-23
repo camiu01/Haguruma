@@ -130,7 +130,8 @@ details.accordion > summary::-webkit-details-marker {
 details.accordion > summary::marker {
 	content: '';
 }
-details.accordion:not([open]) .chevron {
+/* Open details point the icon up, exactly like the JS-toggled .chevron.open. */
+details.accordion[open] .chevron {
 	transform: rotate(180deg);
 }
 
