@@ -43,3 +43,7 @@ Thumbs.db
 
 # Temporary files
 *.tmp
+
+# Local tooling artifacts (indexes, review output); not part of the project
+.codegraph/
+.impeccable/
