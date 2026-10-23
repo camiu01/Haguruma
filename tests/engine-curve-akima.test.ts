@@ -16,6 +16,15 @@ const PEAKY: TorqueCurvePoint[] = [
 ];
 
 describe('torqueAtRpm Akima', () => {
+	it('invalidates cached tangents when a point is edited in place', () => {
+		const points = PEAKY.map((point) => ({ ...point }));
+		torqueAtRpm(points, 2500);
+		points[2].torqueNm = 170;
+		const fresh = points.map((point) => ({ ...point }));
+		expect(torqueAtRpm(points, 2500)).toBe(torqueAtRpm(fresh, 2500));
+		points.splice(2, 1);
+		expect(torqueAtRpm(points, 2500)).toBe(torqueAtRpm(points.map((point) => ({ ...point })), 2500));
+	});
 	it('is exact at every measured node', () => {
 		for (const p of PEAKY) {
 			expect(torqueAtRpm(PEAKY, p.rpm)).toBeCloseTo(p.torqueNm, 6);

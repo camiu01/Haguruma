@@ -18,13 +18,18 @@ import { initPowerUnit, initUnit, formatPowerInput } from './core/units/unit-uti
 import { syncThemeToggle } from './services/events/theme-events';
 import { applyUnitLabels, syncPowerUnitToggle, syncUnitToggle } from './services/events/unit-events';
 import { renderGearsList } from './components/gear-list';
-import { injectSetupGuideShell, renderSetupGuide } from './components/setup-guide';
-import { injectCruiseShell, renderCruise } from './components/cruise-card';
-import { injectTireSizeShell } from './components/tire-size-tool';
+import { renderSetupGuide } from './components/setup-guide';
+import { renderCruise } from './components/cruise-card';
 import { renderAll } from './views/render-all';
 import { initSetupLevel, syncSetupLevel } from './services/events/setup-level-events';
 import { state } from './core/state/app-state';
 import { resizeCanvas } from './services/graph/canvas-setup';
+import { injectAppShells } from './components/app-shells';
+import { injectTelemetryTools } from './components/telemetry-tools';
+import { injectOptimizerTools } from './components/optimizer-tools';
+import { syncUrlHash } from './core/share/share-utils';
+import { injectAdvancedDynamics } from './components/advanced-dynamics';
+import { injectQuickAddTools } from './components/quick-add-tools';
 
 /**
  * Bootstrap HAGURUMA.
@@ -32,29 +37,46 @@ import { resizeCanvas } from './services/graph/canvas-setup';
  * @return void
  */
 const bootstrap = (): void => {
-	const mount = document.getElementById('setup-guide-mount');
-	if (!mount) {
-		throw new Error('Missing required element: setup-guide-mount');
-	}
-	injectSetupGuideShell(mount);
-	const cruiseMount = document.getElementById('cruise-mount');
-	if (!cruiseMount) {
-		throw new Error('Missing required element: cruise-mount');
-	}
-	injectCruiseShell(cruiseMount);
-	const tireMount = document.getElementById('tire-size-mount');
-	if (!tireMount) {
-		throw new Error('Missing required element: tire-size-mount');
-	}
-	injectTireSizeShell(tireMount);
+	const tools = injectAppShells();
 	const refs = getElementRefs();
 	const render = (): void => renderAll(refs);
+	injectTelemetryTools(tools, render);
+	injectQuickAddTools(tools, () => {
+		refreshPresetOptions(refs);
+		renderCustomList(refs, render);
+	});
+	injectOptimizerTools(tools, (gears, fd) => {
+		state.gears = [...gears];
+		state.primaryFd = fd;
+		refs.primaryFd.value = String(fd);
+		renderGearsList(refs, render);
+		syncUrlHash();
+		render();
+	});
 	initLang();
 	state.unit = initUnit();
 	state.powerUnit = initPowerUnit();
 	initSetupLevel();
 	initTheme();
 	bindAllEvents(refs, render);
+	syncInitialControls(refs);
+	refreshPresetOptions(refs);
+	renderCustomList(refs, render);
+	renderGearsList(refs, render);
+	renderSetupGuide(refs);
+	restoreFromUrl(refs, render);
+	injectAdvancedDynamics(tools, render);
+	resizeCanvas(refs.canvas, refs.ctx);
+	renderCruise(refs);
+	renderAll(refs);
+};
+
+/**
+ * @brief Synchronize restored units, preferences and setup inputs.
+ * @param refs Cached DOM handles.
+ * @return void
+ */
+const syncInitialControls = (refs: ElementRefs): void => {
 	syncLangToggle(refs);
 	syncThemeToggle(refs);
 	syncUnitToggle(refs);
@@ -68,14 +90,6 @@ const bootstrap = (): void => {
 	syncCustomPowerField(refs);
 	refs.comparisonToggle.checked = state.compareEnabled;
 	applyComparisonVisibility(refs);
-	refreshPresetOptions(refs);
-	renderCustomList(refs, render);
-	renderGearsList(refs, () => render());
-	renderSetupGuide(refs);
-	restoreFromUrl(refs, render);
-	resizeCanvas(refs.canvas, refs.ctx);
-	renderCruise(refs);
-	renderAll(refs);
 };
 
 window.addEventListener('DOMContentLoaded', bootstrap);

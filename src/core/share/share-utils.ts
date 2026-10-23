@@ -11,6 +11,8 @@ import { sanitizeTorquePoints } from '../math/engine-curve-core';
 import { MAX_CURVE_POINTS, resampleTorquePoints } from '../math/dyno-csv';
 import { decodeGripParams, encodeRunningGear, numParam } from './running-gear-share';
 import { decodeCompactHash, decodeCompactSetup, encodeCompactHash } from './share-compact';
+import { decodeGraphWindow, encodeGraphWindow } from './graph-window-share';
+import { decodeAdvancedState, encodeAdvancedState } from './advanced-share';
 
 /**
  * @brief Serialize current state into a compact hash string.
@@ -21,6 +23,8 @@ import { decodeCompactHash, decodeCompactSetup, encodeCompactHash } from './shar
  */
 export const encodeState = (s: AppState): string => {
 	const p = new URLSearchParams();
+	encodeGraphWindow(p, s);
+	encodeAdvancedState(p, s);
 	if (encodeCompactPrimary(p, s)) {
 		return p.toString();
 	}
@@ -111,14 +115,16 @@ export const decodeState = (hash: string): Partial<AppState> => {
 	} catch {
 		return {};
 	}
-	return {
+	const decoded = {
 		...decodeCompactParams(params),
 		...decodePrimaryParams(params),
 		...decodeCompareParams(params),
 		...decodeRoadParams(params),
 		...decodeEngineParams(params),
 		...decodeGripParams(params),
+		...decodeGraphWindow(params),
 	};
+	return { ...decoded, ...decodeAdvancedState(params, decoded) };
 };
 
 /**

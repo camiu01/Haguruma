@@ -11,6 +11,7 @@
 import { rpmFromKmh, speedKmh, toDisplaySpeed } from './speed-math';
 import { CURVE_MIN_RPM, clamp, engineTorqueAt, type EngineCurve } from './engine-curve-core';
 import type { SpeedUnit } from '../models';
+import { mappedEfficiency, type EfficiencySample } from './powertrain-math';
 
 export {
 	KW_TO_NM,
@@ -114,6 +115,7 @@ export const dynamicRadiusM = (circM: number): number => {
  * @param curve Validated engine anchors (null makes the function return null).
  * @param drivetrainEff Drivetrain efficiency between 0 and 1.
  * @param unit Display unit for the shift speed.
+ * @param efficiencyMap Optional measured RPM/load efficiency map.
  * @return Optimal shift prescription.
  */
 export const optimalShiftFor = (
@@ -124,6 +126,7 @@ export const optimalShiftFor = (
 	curve: EngineCurve | null,
 	drivetrainEff: number,
 	unit: SpeedUnit = 'kmh',
+	efficiencyMap?: EfficiencySample[],
 ): OptimalShift | null => {
 	if (!Array.isArray(gears) || fromIndex < 0 || fromIndex >= gears.length - 1) {
 		return null;
@@ -147,8 +150,8 @@ export const optimalShiftFor = (
 		if (!Number.isFinite(landing) || landing < CURVE_MIN_RPM) {
 			return Number.NaN;
 		}
-		const forceNow = tractiveForceAt(rpm, current, finalDrive, radius, curve, drivetrainEff);
-		const forceNext = tractiveForceAt(landing, next, finalDrive, radius, curve, drivetrainEff);
+		const forceNow = tractiveForceAt(rpm, current, finalDrive, radius, curve, mappedEfficiency(efficiencyMap, rpm, 1, drivetrainEff));
+		const forceNext = tractiveForceAt(landing, next, finalDrive, radius, curve, mappedEfficiency(efficiencyMap, landing, 1, drivetrainEff));
 		if (!Number.isFinite(forceNow) || !Number.isFinite(forceNext)) {
 			return Number.NaN;
 		}
@@ -250,6 +253,7 @@ const refineCrossing = (loRpm: number, hiRpm: number, deltaForce: (rpm: number) 
  * @param curve Validated engine anchors (or null when invalid).
  * @param drivetrainEff Drivetrain efficiency between 0 and 1.
  * @param unit Display unit for shift speeds.
+ * @param efficiencyMap Optional measured RPM/load efficiency map.
  * @return One prescription per gear change.
  */
 export const optimalShiftsForAll = (
@@ -259,13 +263,14 @@ export const optimalShiftsForAll = (
 	curve: EngineCurve | null,
 	drivetrainEff: number,
 	unit: SpeedUnit = 'kmh',
+	efficiencyMap?: EfficiencySample[],
 ): OptimalShift[] => {
 	const out: OptimalShift[] = [];
 	if (!Array.isArray(gears) || !curve) {
 		return out;
 	}
 	for (let i = 0; i < gears.length - 1; i += 1) {
-		const shift = optimalShiftFor(gears, i, finalDrive, circM, curve, drivetrainEff, unit);
+		const shift = optimalShiftFor(gears, i, finalDrive, circM, curve, drivetrainEff, unit, efficiencyMap);
 		if (shift) {
 			out.push(shift);
 		}

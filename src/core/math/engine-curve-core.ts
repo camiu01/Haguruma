@@ -156,6 +156,23 @@ const akimaTangents = (slopes: number[]): number[] => {
 	return out;
 };
 
+const tangentCache = new WeakMap<TorqueCurvePoint[], { values: number[]; tangents: number[] }>();
+
+/**
+ * @brief Reuse tangents while checking coordinates for in-place curve edits.
+ * @param points Sorted dyno points.
+ * @return Tangents matching the current values, never a stale mutable curve.
+ */
+const curveTangents = (points: TorqueCurvePoint[]): number[] => {
+	const cached = tangentCache.get(points);
+	const unchanged = cached?.values.length === points.length * 2 && points.every((point, index) =>
+		point.rpm === cached.values[index * 2] && point.torqueNm === cached.values[index * 2 + 1]);
+	if (unchanged && cached) return cached.tangents;
+	const tangents = akimaTangents(segmentSlopes(points));
+	tangentCache.set(points, { values: points.flatMap((point) => [point.rpm, point.torqueNm]), tangents });
+	return tangents;
+};
+
 /**
  * @brief Cubic Hermite evaluation on one interval.
  * @param x0 Left RPM bound.
@@ -201,7 +218,7 @@ export const torqueAtRpm = (points: TorqueCurvePoint[], rpm: number): number => 
 		const k = span > 0 ? (rpm - points[0].rpm) / span : 0;
 		return points[0].torqueNm + (last.torqueNm - points[0].torqueNm) * k;
 	}
-	const tangents = akimaTangents(segmentSlopes(points));
+	const tangents = curveTangents(points);
 	for (let i = 1; i < points.length; i += 1) {
 		const hi = points[i];
 		if (rpm <= hi.rpm) {

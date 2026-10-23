@@ -197,7 +197,19 @@ const drivenAxleLimitN = (rg: RunningGear, massKg: number, speedKmh: number, acc
 	const fyOuter = latSum > 0 ? axleFy * driven.outerN / latSum : 0;
 	const fxIn = kammLimit(muOf(rg), driven.innerN, fyInner);
 	const fxOut = kammLimit(muOf(rg), driven.outerN, fyOuter);
-	return Math.max(0, diffLimit(rg.differentialType, bias, fxIn, fxOut));
+	if (awd && (rg.awdFrontShare !== undefined || rg.activeCenter || rg.centerDisengaged)) {
+		const front = drivenAxleLimitN({ ...rg, drivetrainLayout: 'FWD' }, massKg, speedKmh, accelMps2, bias);
+		if (rg.centerDisengaged) return front;
+		const rear = drivenAxleLimitN({ ...rg, drivetrainLayout: 'RWD' }, massKg, speedKmh, accelMps2, bias);
+		if (rg.activeCenter) return front + rear;
+		const split = clampNum(rg.awdFrontShare ?? 0.5, 0, 1);
+		if (split <= 0) return rear;
+		if (split >= 1) return front;
+		return Math.min(front / split, rear / (1 - split));
+	}
+	const preload = rg.differentialType === 'clutch_lsd'
+		? clampNum(rg.differentialPreloadNm ?? 0, 0, 1000) / Math.max(0.1, rg.preloadRadiusM ?? 0.3) : 0;
+	return Math.max(0, Math.min(fxIn + fxOut, diffLimit(rg.differentialType, bias, fxIn, fxOut) + preload));
 };
 
 /**

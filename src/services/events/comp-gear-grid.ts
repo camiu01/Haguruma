@@ -4,6 +4,7 @@
  */
 import { parseCompGears } from '../../core/compare/compare-utils';
 import type { ElementRefs } from '../dom/element-refs';
+import { getGearColor } from '../../config/gear-colors';
 
 /** CSS class of one ratio cell input inside #comp-gear-grid. */
 const CELL_CLASS = 'comp-gear-cell-input';
@@ -74,6 +75,8 @@ const rebuildGrid = (grid: HTMLElement, ratios: number[]): void => {
 		label.className = 'comp-gear-cell-label';
 		label.htmlFor = `comp-gear-cell-${idx}`;
 		label.textContent = `G${idx + 1}`;
+		label.style.borderInlineStart = `4px solid ${getGearColor(idx)}`;
+		label.style.paddingInlineStart = '8px';
 		const input = document.createElement('input');
 		input.type = 'number';
 		input.inputMode = 'decimal';

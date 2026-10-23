@@ -2,6 +2,28 @@
 <html lang='en' class='dark'>
 <head>
 	<meta charset='UTF-8' />
+	<script>
+		/**
+		 * @brief Restore visual preferences before styles and first paint.
+		 * @param none No parameters.
+		 * @return void
+		 */
+		(() => {
+			try {
+				const theme = localStorage.getItem('haguruma-theme');
+				const lang = localStorage.getItem('haguruma-lang');
+				if (['dark', 'oled', 'light'].includes(theme)) {
+					document.documentElement.dataset.theme = theme;
+					document.documentElement.classList.toggle('dark', theme !== 'light');
+				}
+				if (['en', 'it', 'de', 'es', 'fr'].includes(lang)) {
+					document.documentElement.lang = lang;
+				}
+			} catch {
+				/* Restricted storage keeps the default appearance. */
+			}
+		})();
+	</script>
 	<meta name='viewport' content='width=device-width, initial-scale=1.0, viewport-fit=cover' />
 	<meta name='theme-color' content='#0f141c' />
 	<meta name='apple-mobile-web-app-capable' content='yes' />
@@ -179,6 +201,9 @@
 					<div id='lang-group' class='inline-flex items-center rounded-lg bg-input p-0.5 border border-border h-8'>
 						<button id='lang-en' type='button' class='px-2 py-1 text-xs font-semibold rounded bg-text-main text-black'>EN</button>
 						<button id='lang-it' type='button' class='px-2 py-1 text-xs font-semibold rounded text-text-dim hover:text-text-output'>IT</button>
+						<button id='lang-de' type='button' class='px-2 py-1 text-xs font-semibold rounded text-text-dim hover:text-text-output'>DE</button>
+						<button id='lang-es' type='button' class='px-2 py-1 text-xs font-semibold rounded text-text-dim hover:text-text-output'>ES</button>
+						<button id='lang-fr' type='button' class='px-2 py-1 text-xs font-semibold rounded text-text-dim hover:text-text-output'>FR</button>
 					</div>
 				</div>
 			</div>

@@ -11,6 +11,8 @@ import type { ElementRefs } from '../services/dom/element-refs';
 import type { GearPreset } from '../core/models';
 import { applyPreset, refreshPresetOptions } from '../services/events/preset-events';
 import { applyCompPresetData } from '../services/events/comparison-events';
+import { lightHaptic } from '../services/hardware/device-feedback';
+import { parseSimulationSettings } from '../core/presets/simulation-settings';
 
 /** Target slot for a custom preset apply. */
 export type CustomTarget = 'primary' | 'compare';
@@ -108,6 +110,8 @@ const readCustomForm = (refs: ElementRefs): { name: string; preset: GearPreset }
 			peakPowerRpm: Math.round(powerRpm),
 			rotatingMassKg: rotMass ?? undefined,
 			shiftTimeS: shiftTime ?? undefined,
+			runningGear: { ...state.runningGear },
+			simulation: state.simulation ? parseSimulationSettings(state.simulation) ?? undefined : undefined,
 		},
 	};
 };
@@ -223,6 +227,7 @@ export const applyCustomFormToSlot = (refs: ElementRefs, target: CustomTarget, r
 		return false;
 	}
 	saveCustomPreset(parsed.name, parsed.preset);
+	void lightHaptic();
 	refreshPresetOptions(refs);
 	if (target === 'compare') {
 		applyCompPresetData(refs, parsed.preset, render);

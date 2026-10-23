@@ -112,6 +112,8 @@ export const restoreFromUrl = (refs: ElementRefs, render: () => void): void => {
 		return;
 	}
 	syncPrimaryInputs(refs);
+	refs.graphMode.value = state.graphMode ?? 'rpm';
+	refs.graphTractionMargin.checked = state.showTractionMargin ?? false;
 	syncRestoredCompInputs(refs);
 	syncRoadLoadInputs(refs);
 	syncEngineInputs(refs);

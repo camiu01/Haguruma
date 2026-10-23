@@ -23,6 +23,8 @@ import { getGearColor } from '../config/gear-colors';
 import { t } from '../core/i18n/language';
 import type { ElementRefs } from '../services/dom/element-refs';
 import { renderCompareTable, updateComparisonInfo } from './compare-table';
+import { appendTractionMargin } from './traction-margin';
+import { mappedEfficiency } from '../core/math/powertrain-math';
 
 /**
  * Render the theoretical top-speed and shift-drop table.
@@ -37,10 +39,14 @@ export const renderTable = (refs: ElementRefs): void => {
 	const circM = effectiveCircumferenceM(primaryTire, state.rollingFactor);
 	refs.breakdownBody.innerHTML = '';
 	state.gears.forEach((gearRatio, idx) => {
-		refs.breakdownBody.appendChild(buildTableRow(circM, gearRatio, idx));
+		const row = buildTableRow(circM, gearRatio, idx);
+		appendTractionMargin(row, gearRatio, circM);
+		refs.breakdownBody.appendChild(row);
 	});
 	if (state.reverseRatio !== null && state.reverseRatio > 0) {
-		refs.breakdownBody.appendChild(buildReverseRow(circM));
+		const row = buildReverseRow(circM);
+		appendTractionMargin(row, null, circM);
+		refs.breakdownBody.appendChild(row);
 	}
 	updateGripKpi();
 	updateSummaryKpis();
@@ -154,25 +160,15 @@ const describeTraction = (
 	}
 	const radius = dynamicRadiusM(circM);
 	const torque = engineTorqueAt(state.peakTorqueRpm, curve);
-	const force = tractiveForceAt(state.peakTorqueRpm, gearRatio, state.primaryFd, radius, curve, state.drivetrainEff);
-	const shifts = optimalShiftsForAll(state.gears, state.primaryFd, circM, curve, state.drivetrainEff, state.unit);
+	const efficiency = mappedEfficiency(state.simulation?.efficiencyMap, state.peakTorqueRpm, 1, state.drivetrainEff);
+	const force = tractiveForceAt(state.peakTorqueRpm, gearRatio, state.primaryFd, radius, curve, efficiency);
+	const shifts = optimalShiftsForAll(state.gears, state.primaryFd, circM, curve, state.drivetrainEff, state.unit, state.simulation?.efficiencyMap);
 	const shift = shifts.find((s) => s.fromIndex === idx);
 	return {
 		torqueDisplay: `${torque.toFixed(0)} Nm`,
 		forceDisplay: `${Math.round(force)} N`,
-		shiftDisplay: shift ? formatShiftAdvice(shift.shiftRpm, shift.atRedline) : '-',
+		shiftDisplay: shift ? `${Math.round(shift.shiftRpm)} ${shift.atRedline ? 'LIMIT' : 'rpm'}` : '-',
 	};
-};
-
-/**
- * Format the optimal shift advice.
- * @brief Redline shifts get a check, early shifts show the target RPM.
- * @param shiftRpm Prescribed shift RPM.
- * @param atRedline True when redline is already optimal.
- * @return Display string such as 6800 rpm or 6800 LIMIT.
- */
-const formatShiftAdvice = (shiftRpm: number, atRedline: boolean): string => {
-	return atRedline ? `${Math.round(shiftRpm)} LIMIT` : `${Math.round(shiftRpm)} rpm`;
 };
 
 /**
@@ -291,6 +287,7 @@ const buildAccelKey = (): string => {
 		state.drivetrainEff,
 		state.rotatingMassKg,
 		state.shiftTimeS,
+		state.simulation,
 		state.dragCd,
 		state.frontalAreaM2,
 		state.rollingCrr,
@@ -382,6 +379,7 @@ function applyKpiUnits(
 			drivetrainEff: state.drivetrainEff,
 			rotatingMassKg: state.rotatingMassKg,
 			shiftTimeS: state.shiftTimeS,
+			...state.simulation,
 			runningGear: state.runningGear ?? defaultRunningGear,
 			dragCd: state.dragCd,
 			frontalAreaM2: state.frontalAreaM2,

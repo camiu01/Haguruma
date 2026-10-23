@@ -37,6 +37,7 @@ export const bindPrimaryEvents = (refs: ElementRefs, render: () => void): void =
 		const v = parseInt((e.target as HTMLInputElement).value, 10);
 		if (v > 50) {
 			state.maxGraphSpeed = v;
+			state.graphWindow = undefined;
 			drawGraph(refs);
 		}
 	});

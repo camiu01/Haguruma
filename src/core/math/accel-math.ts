@@ -26,6 +26,8 @@ import {
 	type EngineCurve,
 } from './traction-math';
 import type { RunningGear } from '../models';
+import { limiterTorqueFactor, mappedEfficiency, type EfficiencySample } from './powertrain-math';
+import { handbrakeForceAtSpeed } from './handbrake-math';
 
 /** One quarter mile in metres (statute mile / 4). */
 export const QUARTER_MILE_M = 402.33928;
@@ -50,6 +52,12 @@ const SIM_MAX_SPEED_KMH = 500;
  * @brief Everything the integrator needs; road loads and launch/inertia are optional.
  */
 export interface SimInput {
+	/** Per-upshift interruption times; missing entries use shiftTimeS. */
+	shiftTimesS?: number[];
+	/** Rev-limiter torque gate. */
+	limiterMode?: 'hard' | 'bounce';
+	/** Optional measured efficiency samples; constant fallback stays valid. */
+	efficiencyMap?: EfficiencySample[];
 	/** Curb mass in kilograms (excludes rotating inertia). */
 	massKg: number;
 	/** Forward gear ratios from first to top gear. */
@@ -205,12 +213,12 @@ const resolveLaunchRpm = (launchRpm: number | undefined, redline: number): numbe
  * @param eff Drivetrain efficiency.
  * @return One target RPM per gear; Infinity for the top gear.
  */
-const buildShiftTargets = (gears: number[], fd: number, circM: number, curve: EngineCurve, eff: number): number[] => {
+const buildShiftTargets = (gears: number[], fd: number, circM: number, curve: EngineCurve, eff: number, efficiencyMap?: EfficiencySample[]): number[] => {
 	return gears.map((_, index) => {
 		if (index >= gears.length - 1) {
 			return Number.POSITIVE_INFINITY;
 		}
-		const opt = optimalShiftFor(gears, index, fd, circM, curve, eff);
+		const opt = optimalShiftFor(gears, index, fd, circM, curve, eff, 'kmh', efficiencyMap);
 		return Math.min(curve.redline, opt ? opt.shiftRpm : curve.redline);
 	});
 };
@@ -261,7 +269,7 @@ export const simulateAcceleration = (input: SimInput): SimResult => {
 	}
 	const shiftTime = Number.isFinite(input.shiftTimeS as number) ? Math.min(3, Math.max(0, input.shiftTimeS as number)) : 0;
 	const launchRpm = resolveLaunchRpm(input.launchRpm, curve.redline);
-	const targets = buildShiftTargets(input.gears, input.fd, input.circM, curve, input.drivetrainEff);
+	const targets = buildShiftTargets(input.gears, input.fd, input.circM, curve, input.drivetrainEff, input.efficiencyMap);
 	const reaction = Number.isFinite(input.reactionS as number) ? Math.min(5, Math.max(0, input.reactionS as number)) : 0;
 
 	let v = 0;
@@ -270,6 +278,7 @@ export const simulateAcceleration = (input: SimInput): SimResult => {
 	let gear = 0;
 	let cooldown = 0;
 	let pendingGear = -1;
+	let previousAccel = 0;
 	let t100: number | null = null;
 	let t60ft: number | null = null;
 	let t60mph: number | null = null;
@@ -292,31 +301,35 @@ export const simulateAcceleration = (input: SimInput): SimResult => {
 				shifting = false;
 			}
 		} else if (gear < input.gears.length - 1 && rpmRaw >= targets[gear]) {
-			if (shiftTime <= 0) {
+			const duration = input.shiftTimesS?.[gear] ?? shiftTime;
+			const currentShiftTime = Number.isFinite(duration) ? Math.max(0, Math.min(3, duration)) : shiftTime;
+			if (currentShiftTime <= 0) {
 				gear += 1;
 			} else {
 				pendingGear = gear + 1;
-				cooldown = shiftTime;
+				cooldown = currentShiftTime;
 				shifting = true;
 			}
 		}
 
 		let drive = 0;
 		if (!shifting) {
-			const rpm = torqueLookupRpm(rpmRaw, launchRpm);
-			drive = tractiveForceAt(rpm, input.gears[gear], input.fd, radius, curve, input.drivetrainEff);
+			const currentRpm = rpmFromKmh(speedBefore, input.gears[gear], input.fd, input.circM);
+			const rpm = torqueLookupRpm(currentRpm, launchRpm);
+			const eff = mappedEfficiency(input.efficiencyMap, rpm, 1, input.drivetrainEff);
+			drive = tractiveForceAt(rpm, input.gears[gear], input.fd, radius, curve, eff)
+				* limiterTorqueFactor(currentRpm, curve.redline, t, input.limiterMode);
 			if (input.runningGear && drive > 0) {
-				const grip = maxDriveForceAtSpeed(input.runningGear, input.massKg, speedBefore, drive, 0);
-				if (grip.limitN > 0 && drive > grip.limitN) {
-					drive = grip.limitN;
-				}
+				const grip = maxDriveForceAtSpeed(input.runningGear, input.massKg, speedBefore, drive, previousAccel);
+				drive = Math.min(drive, grip.limitN);
 			}
 		}
 		const mEff = input.massKg + resolveRotatingMass(input, input.gears[gear], radius);
 		const loads =
 			dragForce(speedBefore, input.dragCd ?? 0, input.frontalAreaM2 ?? 0) +
 			rollingForceAtSpeed(input.massKg, input.rollingCrr ?? 0, speedBefore) +
-			gradeForce(input.massKg, input.roadGradePercent ?? 0);
+			gradeForce(input.massKg, input.roadGradePercent ?? 0) +
+			handbrakeForceAtSpeed(input.runningGear, input.massKg, speedBefore, previousAccel);
 		let accel = (drive - loads) / mEff;
 		if (!Number.isFinite(accel)) {
 			return nullResult();
@@ -324,6 +337,7 @@ export const simulateAcceleration = (input: SimInput): SimResult => {
 		if (v <= 0 && accel < 0) {
 			accel = 0;
 		}
+		previousAccel = accel;
 		v = Math.max(0, v + accel * SIM_DT);
 		const stepDist = v * SIM_DT;
 		const distBefore = dist;

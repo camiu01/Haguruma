@@ -3,6 +3,7 @@
  * @brief Shared domain models for HAGURUMA.
  */
 import type { CornerPhase, HandlingIssue } from './setup/setup-matrix';
+import type { EfficiencySample } from './math/powertrain-math';
 
 /** Supported speed display units. */
 export type SpeedUnit = 'kmh' | 'mph';
@@ -51,6 +52,18 @@ export type DifferentialType = 'open' | 'clutch_lsd' | 'torsen' | 'spool';
  * @brief Weight distribution, geometry, grip and suspension inputs.
  */
 export interface RunningGear {
+	/** Requested front torque share for AWD, defaults to 0.5. */
+	awdFrontShare?: number;
+	/** Free center coupling for handbrake turn-in. */
+	centerDisengaged?: boolean;
+	/** Ideal capacity-based AWD center control, not a manufacturer calibration. */
+	activeCenter?: boolean;
+	/** Rear handbrake demand from zero to one. */
+	handbrakeFraction?: number;
+	/** Clutch pack breakaway torque, in Nm. */
+	differentialPreloadNm?: number;
+	/** Effective radius used to convert differential preload to wheel force. */
+	preloadRadiusM?: number;
 	/** Front static weight share, range [0.3, 0.7]. */
 	frontWeightDistribution: number;
 	/** Center-of-gravity height in mm, range [200, 800]. */
@@ -145,6 +158,8 @@ export interface GearPreset {
 	rotatingMassKg?: number;
 	/** Torque-interruption duration per upshift in seconds (accel solver). */
 	shiftTimeS?: number;
+	/** Optional advanced settings preserved by custom garage saves and backups. */
+	simulation?: AppState['simulation'];
 	/** Chassis and running-gear parameters for load-transfer physics. */
 	runningGear?: RunningGear;
 }
@@ -165,6 +180,18 @@ export interface SetupGuideSelection {
  * @brief Single source of truth shared by all renderers.
  */
 export interface AppState {
+	/** Optional advanced simulation settings; legacy setups keep existing defaults. */
+	simulation?: {
+		limiterMode: 'hard' | 'bounce';
+		shiftTimesS: number[];
+		efficiencyMap?: EfficiencySample[];
+	};
+	/** Graph physical quantity. */
+	graphMode?: 'rpm' | 'force';
+	/** Optional excess-force shading in the wheel-force view. */
+	showTractionMargin?: boolean;
+	/** Visible graph window in SI-friendly km/h and RPM; absent means full view. */
+	graphWindow?: { minKmh: number; maxKmh: number; minRpm: number; maxRpm: number };
 	/** Active display unit. */
 	unit: SpeedUnit;
 	/** Active power display unit (state stores kW). */
@@ -252,6 +279,9 @@ export interface AppState {
  * @brief Pixel geometry plus data limits for coordinate mapping.
  */
 export interface PlotFrame {
+	/** Visible lower bounds, zero for legacy frames. */
+	minSpeed?: number;
+	minRpm?: number;
 	/** Full canvas width in CSS pixels. */
 	width: number;
 	/** Full canvas height in CSS pixels. */

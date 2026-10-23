@@ -1,6 +1,6 @@
 /**
  * @file language-events.ts
- * @brief Bind the EN/IT language toggle.
+ * @brief Bind the interface language selector.
  */
 import { applyI18n, getLang, setLang } from '../../core/i18n/language';
 import type { Lang } from '../../core/i18n/dictionaries';
@@ -14,14 +14,28 @@ const ACTIVE_BTN = 'px-3 py-1 text-xs font-semibold rounded bg-gray-200 text-bla
 const IDLE_BTN = 'px-3 py-1 text-xs font-semibold rounded text-gray-400 hover:text-white';
 
 /**
- * @brief Paint the language toggle to match the active language.
+ * @brief Pair every language with its selector button in layout order.
+ * @param refs Cached DOM handles.
+ * @return Language codes with their buttons.
+ */
+const langButtons = (refs: ElementRefs): { lang: Lang; button: HTMLButtonElement }[] => [
+	{ lang: 'en', button: refs.langEn },
+	{ lang: 'it', button: refs.langIt },
+	{ lang: 'de', button: refs.langDe },
+	{ lang: 'es', button: refs.langEs },
+	{ lang: 'fr', button: refs.langFr },
+];
+
+/**
+ * @brief Paint the language selector to match the active language.
  * @param refs Cached DOM handles.
  * @return void
  */
 export const syncLangToggle = (refs: ElementRefs): void => {
 	const lang = getLang();
-	refs.langEn.className = lang === 'en' ? ACTIVE_BTN : IDLE_BTN;
-	refs.langIt.className = lang === 'it' ? ACTIVE_BTN : IDLE_BTN;
+	langButtons(refs).forEach((entry) => {
+		entry.button.className = entry.lang === lang ? ACTIVE_BTN : IDLE_BTN;
+	});
 };
 
 /**
@@ -44,6 +58,5 @@ export const bindLanguageEvents = (refs: ElementRefs, render: () => void): void 
 		renderCruise(refs);
 		render();
 	};
-	refs.langEn.addEventListener('click', () => switchTo('en'));
-	refs.langIt.addEventListener('click', () => switchTo('it'));
+	langButtons(refs).forEach((entry) => entry.button.addEventListener('click', () => switchTo(entry.lang)));
 };

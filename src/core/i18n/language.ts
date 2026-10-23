@@ -6,6 +6,9 @@ import { dictionaries, type DictKey, type Lang } from './dictionaries';
 
 const STORAGE_KEY = 'haguruma-lang';
 
+/** Interface languages accepted from persisted storage, in selector order. */
+const LANGS: readonly Lang[] = ['en', 'it', 'de', 'es', 'fr'];
+
 /** Currently active interface language. */
 let currentLang: Lang = 'en';
 
@@ -16,6 +19,13 @@ let currentLang: Lang = 'en';
 const hasDom = (): boolean => typeof document !== 'undefined';
 
 /**
+ * @brief Narrow a persisted value to a supported interface language.
+ * @param value Raw value read from storage.
+ * @return True when the value names a supported language.
+ */
+const isLang = (value: string | null): value is Lang => value !== null && LANGS.some((lang) => lang === value);
+
+/**
  * @brief Read the persisted language without throwing on restricted storage.
  * @return Stored language or English by default.
  */
@@ -24,7 +34,8 @@ const readStoredLang = (): Lang => {
 		return 'en';
 	}
 	try {
-		return window.localStorage.getItem(STORAGE_KEY) === 'it' ? 'it' : 'en';
+		const stored = window.localStorage.getItem(STORAGE_KEY);
+		return isLang(stored) ? stored : 'en';
 	} catch {
 		return 'en';
 	}
