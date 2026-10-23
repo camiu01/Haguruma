@@ -1,5 +1,7 @@
 # AGENTS.md — HAGURUMA
 
+Instructions for agents and contributors working in this repository. The narrative architecture lives in [docs/architecture.md](docs/architecture.md); the physics lives in [MATH.md](MATH.md); the documentation map is in [docs/README.md](docs/README.md).
+
 ## Quick start
 ```bash
 npm install
@@ -10,70 +12,26 @@ npm run build            # tsc --noEmit; vite build
 npm run preview          # vite preview (static host test)
 ```
 
-## Architecture
-- Single-page Vite + TypeScript app, **zero backend**.
-- All state lives in `src/core/state/app-state.ts` (mutable singleton).
-- Every refresh goes through `renderAll(refs)` in `src/views/render-all.ts`.
-- Entrypoint: `src/main.ts` → `bootstrap()` on `DOMContentLoaded`.
+## Architecture in one paragraph
+Single-page Vite + TypeScript app, **zero backend**. All state lives in `src/core/state/app-state.ts` (mutable singleton). Every refresh goes through `renderAll(refs)` in `src/views/render-all.ts`. Entry point: `src/main.ts` → `bootstrap()` on `DOMContentLoaded`. Physics is pure and isolated in `src/core/math/`; units are converted only at the display boundary. The full directory layout, module responsibilities, data flow and extension guides are in [docs/architecture.md](docs/architecture.md).
 
-## Directory layout
-```
-src/
-  main.ts                         # bootstrap only
-  core/
-    models.ts                     # SpeedUnit, TireSpec, GearPreset, AppState, etc.
-    math/                         # tire-math, speed-math, aero-math, traction-math, shift-math, accel-math, inertia-math, cruise-math, dynamics-math, dyno-csv (CSV parser + resampling), engine-curve-core (anchor/dyno engine curve)
-    setup/                        # setup-matrix.ts (wizard data) + setup-guide-content.ts (handbook copy)
-    state/app-state.ts            # defaultState + singleton
-    state/engine-curve.ts         # active engine curve (anchors vs sanitized dyno points)
-    units/unit-utils.ts           # getSpeedStep(), getUnitLabel(), getPowerUnitLabel(), formatPower(), getMaxRpm()
-    i18n/                         # dictionary.en.ts + dictionary.it.ts + language.ts (applyI18n)
-    share/share-utils.ts          # URL hash encode/decode (verbose keys, compact `c` token, curve, rg_/crg_ running gear)
-    share/running-gear-share.ts   # rg_/crg_ encode/decode block + numeric param helper
-    share/share-compact.ts        # Packed Base64URL full-state codec (v1) + legacy primary token, no dependencies
-    share/qr-svg.ts               # Dependency-free QR encoder rendering an SVG for the share modal
-  config/
-    presets.ts                    # preset maps built from the catalog loader
-    car-catalog.ts                # CarCatalogEntry model + import.meta.glob loader + validateCatalogEntry() contract
-    cars/                         # one <id>.json per vehicle, drop-in to add (optional finalDrives[] must contain stock fd)
-    diff-presets.ts               # Extensible LSD catalog (open, 1/1.5/2-way, custom, Torsen, spool, OS Giken, Cusco, KAAZ, Wavetrac, Quaife)
-    drivetrain-eff.ts             # Default drivetrain efficiency lookup by FWD/RWD/AWD layout
-    tire-compounds.ts             # Treadwear catalog (Eco 400TW → Slick) with grip gain per compound
-    gear-colors.ts                # 8-color palette
-    graph-constants.ts            # GRAPH_PADDING, GRAPH_STYLE_*, GRAPH_LIMITS
-  services/
-    dom/element-refs.ts           # Typed DOM handles (ElementRefs)
-    dom/focus-trap.ts             # Tab trap helper for drawer and modal overlays
-    graph/                        # canvas-setup, graph-axes, graph-curves, graph-shift-drops, graph-renderer, graph-tooltip, graph-theme, graph-export, graph-layers (static cache), graph-limits, drivetrain-export (sim INI/JSON/JBeam/CSV)
-    events/                       # One binder per control group
-  components/
-    gear-list.ts                  # Editable gear rows + add/remove
-    gear-table.ts                 # Primary breakdown table + KPI strip + accel memo
-    compare-table.ts              # Secondary comparison rows + tire-delta caption + shift-delta panel
-    running-gear-block.ts         # Shared primary/secondary running-gear builder, binder and sync (prefix-parameterized)
-    preset-search.ts              # Searchable preset combobox (grouped dropdown)
-    custom-car.ts                 # Save/load/export/import custom presets
-    setup-guide.ts                # Setup shell injection + card assembly
-    cruise-card.ts                # Tools card: cruise accordion + tire-size accordion + render
-    tire-size-tool.ts             # Stock vs plus-size comparator (speedo error, gearing deltas)
-    running-gear-readouts.ts      # Downforce + coast lock-up/downforce readouts
-    card/                         # base Card + one file per specialized card + index.ts barrel
-  views/render-all.ts             # resizeCanvas + drawGraph + renderTable + renderCruise
-  styles/
-    main.css                      # Hub only: @imports below, no rules
-    tokens.css                    # Theme variables (dark/oled/light)
-    base.css                      # Base elements, safe-area, scrollbars, small viewports
-    drawer.css                    # Slide-over drawer + relocated header controls
-    components.css                # Cards, accordions, tables, inputs, help-dot
-    shell.css                     # Header controls, modal, preset combobox
-    overrides.css                 # OLED + light Tailwind overrides
-    setup-guide.css               # Wizard badges, feel cues, procedure steps
-    print.css                     # Print/PDF summary (window.print)
-index.html                        # Shell layout; feature shells inject into mount points
-capacitor.config.ts               # Native wrapper (webDir dist)
-android/                          # Committed Capacitor scaffold (generated outputs ignored)
-.github/workflows/build-apk.yml   # Manual + on-release workflow: web build + assembleDebug + versioned APK artifact/attachment
-```
+## Documentation map
+| Document | Owns |
+| --- | --- |
+| [README.md](README.md) | Feature overview, requirements, commands, entry point |
+| [docs/README.md](docs/README.md) | Documentation index and reading paths |
+| [docs/user-guide.md](docs/user-guide.md) | Every panel, tool and workflow |
+| [MATH.md](MATH.md) | Formulas, constants, assumptions, validation anchors |
+| [docs/data-formats.md](docs/data-formats.md) | Import and export formats |
+| [docs/presets.md](docs/presets.md) | Vehicle catalog and provenance |
+| [docs/architecture.md](docs/architecture.md) | Structure, modules, how to extend |
+| [docs/testing.md](docs/testing.md) | Test categories, benchmarks, CI |
+| [docs/deployment.md](docs/deployment.md) | Hosting, PWA, offline, Android |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | Diagnostics and recovery |
+| [CHANGELOG.md](CHANGELOG.md) | Completed work |
+| [TODO.md](TODO.md) | Open work |
+
+Keep each topic in its canonical document. Update the owning document rather than restating it elsewhere.
 
 ## Key conventions (must follow)
 - **Tabs** for indentation (never spaces).
@@ -81,9 +39,7 @@ android/                          # Committed Capacitor scaffold (generated outp
 - Every function needs a TSDoc block: `@brief`, `@param`, `@return`.
 - Every file starts with `@file` + `@brief`.
 - Feature modules must stay **under 400 lines**, functions **under 50 lines**.
-- Exempt from the file cap: `index.html` (app shell), `styles/main.css` (import hub),
-  and the dictionary system (`src/core/i18n/dictionaries.ts` wires the per-language
-  `dictionary.en.ts` / `dictionary.it.ts` files and owns the `DictKey` union).
+- Exempt from the file cap: `index.html` (app shell), `styles/main.css` (import hub), and the dictionary system (`src/core/i18n/dictionaries.ts` wires the per-language `dictionary.*.ts` files and owns the `DictKey` union).
   New static markup belongs in component-owned `inject*Shell()` builders, not in `index.html`.
 - Avoid nested conditionals deeper than 3 levels.
 - One component per file in `components/card/` (base `Card`, specialized cards, `index.ts` barrel). Cards receive data via props/options, render with `textContent` only, and cause no side effects.
@@ -94,7 +50,7 @@ android/                          # Committed Capacitor scaffold (generated outp
 
 ## Theme system
 - `src/core/theme/theme.ts` — three themes: `'dark' | 'oled' | 'light'`.
-- Toggle cycles dark → oled → light. Persisted in localStorage.
+- The drawer OLED / Dark / Light segment sets the theme directly (`drawer-utils-events.ts`); `nextTheme()` in `theme-events.ts` is retained but not bound to a control. Persisted in localStorage.
 - CSS uses `[data-theme='dark']`, `[data-theme='oled']`, `[data-theme='light']` selectors.
 - **Every Tailwind text/background/border class needs a light-mode override** in `overrides.css` (e.g. `[data-theme='light'] .text-gray-300 { color: #334155 !important; }`).
 - New feature CSS goes in its own `styles/<feature>.css` module (theme tokens only) and is wired via `@import` in `main.css`, keeping hub order: tokens, base, drawer, components, shell, overrides, feature.
@@ -116,7 +72,7 @@ Dynamic layer, redrawn every render on top of the blitted bitmap:
 - `data-i18n` for text content → `applyI18n()` sets `el.textContent = t(key)`.
 - `data-i18n-tip` for tooltip attributes → sets `title`, `data-tip`, `aria-label`.
 - `data-i18n-ph` for placeholder attributes.
-- All English copy lives in `dictionary.en.ts`, all Italian copy in `dictionary.it.ts` (compile-time parity). Data modules hold `DictKey` references and resolve via `t(key, lang)` — never inline user-facing strings.
+- All English copy lives in `dictionary.en.ts`; `dictionary.it.ts`, `dictionary.de.ts`, `dictionary.es.ts` and `dictionary.fr.ts` mirror the same keys with compile-time parity (`Record<DictKey, string>`). Data modules hold `DictKey` references and resolve via `t(key, lang)` — never inline user-facing strings.
 - All static elements are resolved in `element-refs.ts` via `document.getElementById()`.
 - Feature shells are injected by `inject*Shell(mount)` builders called in `bootstrap()` **before** `getElementRefs()`, so ids, `[data-accordion]` sections and `[data-i18n]` nodes exist for refs, accordion binding and `applyI18n()`.
 - Accordions are never height-capped: `.section-content.open` is `max-height: none` and `services/dom/accordion-height.ts` mirrors `scrollHeight` into an inline value so the transition still animates. Heights self-heal via a document mutation observer, a resize observer on each open section's children and a `<details>` toggle hook; `renderAll()` also re-measures as its last step.
@@ -133,8 +89,7 @@ Dynamic layer, redrawn every render on top of the blitted bitmap:
 - `vitest` framework, tests in `tests/` mirroring `src/`.
 - Run single file: `npx vitest run tests/tire-math.test.ts`.
 - Always run `npx tsc --noEmit` + `npm test` before committing.
-- Coverage for the chassis/aero pass: `tests/dynamics-math.test.ts` (load transfer, friction circle, dyno taper, coast lock, compound gain), `tests/drivetrain-eff.test.ts`, `tests/dyno-csv.test.ts`, `tests/setup-matrix.test.ts`, `tests/brake-math.test.ts`, `tests/recovery-math.test.ts`, `tests/tire-compounds.test.ts`.
-- Coverage for the physics/share/sim passes: `tests/engine-curve-akima.test.ts`, `tests/graph-layers.test.ts`, `tests/share-compact.test.ts`, `tests/catalog-validation.test.ts`, `tests/drivetrain-export.test.ts`, `tests/presets.test.ts`, `tests/qr-svg.test.ts`, `tests/accel-math.test.ts` (splits + reaction), `tests/accordion-height.test.ts` (no height cap).
+- Categories, benchmark behavior and the CI steps are documented in [docs/testing.md](docs/testing.md). Do not restate the test inventory here; extend that document instead.
 
 ## Share/URL
 - Full setup encoded in URL hash, restored on page load via `restoreFromUrl()`.
@@ -144,6 +99,7 @@ Dynamic layer, redrawn every render on top of the blitted bitmap:
 - Comparison keys are the `crg_` mirror of `rg_` (same ranges and enums).
 - Custom dyno curve encoded as `curve=rpm:torque;rpm:torque;...` (decimal dot, capped at `MAX_CURVE_POINTS = 64`).
 - `running-gear-share.ts` owns the `rg_`/`crg_` block, the numeric range table, and a `numParam` helper reused by the other decode groups.
+- Field-by-field detail is in [docs/data-formats.md](docs/data-formats.md).
 
 ## Differential catalog
 - `src/config/diff-presets.ts` — append a row to `DIFF_PRESETS` to add models (id, i18n `labelKey`, physics `type`, `accLock`, `coastLock`).
@@ -169,20 +125,24 @@ Dynamic layer, redrawn every render on top of the blitted bitmap:
 ## Car catalog labels
 - `label` follows one convention: `<Model> (<N>-Speed[, <Type>], <FD> FD)` — e.g. `BMW M3 E36 3.2 (5-Speed, 3.15 FD)`. No prose descriptors ("Test", scenario names, bare years).
 - FD is formatted to two decimals; gearbox type only when it is not a manual (`7-Speed DCT`, `8-Speed Auto`).
+- The catalog contract, provenance caveats and the full table are in [docs/presets.md](docs/presets.md).
 
 ## Engine curve (anchors vs dyno CSV)
 - `core/state/engine-curve.ts` returns the active curve: anchors by default, sanitized dyno points once a CSV is imported.
 - `core/math/dyno-csv.ts` parses header / header-less torque or power rows. Supports `,`, `;`, `\t` delimiters and decimal commas; converts kgm → Nm and cv / hp → kW. Optional Gaussian pre-filter via `parseDynoCsv(text, { smooth: true })`.
 - `core/math/engine-curve-core.ts` is the single source of truth for `engineTorqueAt`, `tractiveForceAt`, `optimalShift*`, and the dyno-tail taper past the last measured RPM. Dyno points interpolate with Akima (exact at nodes, segment-clamped; linear fallback on 2 points).
+- Accepted columns, limits and rejection behavior are in [docs/data-formats.md](docs/data-formats.md).
 
 ## Powertrain efficiency
 - `config/drivetrain-eff.ts` maps FWD → 0.90, RWD → 0.85, AWD → 0.80. The layout selector and preset apply both write `state.drivetrainEff`.
+- An imported efficiency map overrides the constant when present; the lookup and its fallback are described in [MATH.md](MATH.md).
 
 ## Chassis downforce & coast lockup
 - `running-gear.readout` shows the live downforce at 200 km/h (`lift × area × ½·ρ·v²`) and the coast lock-up speed in the active gear.
 - `core/math/dynamics-math.ts` exposes `engineBrakeForceAt`, `maxCoastForceAtSpeed`, and `criticalCoastLockupSpeed`, all using `differentialCoastBias`.
 
-## v3
-- `vite.config.ts` uses `base: './'` for GitHub Pages deployment.
+## Build configuration
+- `vite.config.ts` uses `base: './'` for GitHub Pages deployment, and `rollup-plugin-visualizer` writes `dist/bundle-report.html` on every build.
 - `tsconfig.json`: strict mode, `noEmit`, `moduleResolution: bundler`.
 - Tailwind loaded via CDN (`cdn.tailwindcss.com`) with custom colors in `index.html`.
+- Hosting, PWA, offline caching and the Android workflow are documented in [docs/deployment.md](docs/deployment.md).
