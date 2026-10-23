@@ -38,4 +38,16 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- The trackside session timer reads the WebView geolocation stream while
+         the page is in the foreground. Coarse and fine location are both
+         declared so Android 12+ can grant the approximate-only option, and
+         background location is deliberately absent: the app never needs a fix
+         while it is not visible. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- The timer is usable without a GPS receiver (manual start, or a device
+         with no location hardware), so the feature must not be required. -->
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 </manifest>

@@ -141,21 +141,20 @@ describe('projections through a window', () => {
 describe('grip curve projection', () => {
 	const window: GraphWindow = { minKmh: 100, maxKmh: 200, minRpm: 3000, maxRpm: 7000 };
 
-	it('scales the curve across the visible RPM window, not the plot height', () => {
+	it('projects grip against the full RPM axis while zoomed', () => {
 		const frame = frameWith(window);
 		const peakY = gripCurveY(frame, 1000, 1000);
 		const zeroY = gripCurveY(frame, 0, 1000);
-		expect(peakY).toBeCloseTo(toY(frame, window.maxRpm), 6);
-		expect(zeroY).toBeCloseTo(toY(frame, window.minRpm), 6);
+		expect(peakY).toBeCloseTo(toY(frame, MAX_RPM), 6);
+		expect(zeroY).toBeCloseTo(toY(frame, 0), 6);
 	});
 
-	it('scales the implied engine speed with the visible RPM span', () => {
+	it('keeps the same implied engine speed under different zoom windows', () => {
 		const narrow = frameWith({ minKmh: 0, maxKmh: 300, minRpm: 0, maxRpm: 3500 });
 		const wide = frameWith({ minKmh: 0, maxKmh: 300, minRpm: 0, maxRpm: 7000 });
-		// Half the span puts the same limit force at half the engine speed.
-		expect(rpmAtY(narrow, gripCurveY(narrow, 1000, 1000))).toBeCloseTo(3500, 6);
-		expect(rpmAtY(wide, gripCurveY(wide, 1000, 1000))).toBeCloseTo(7000, 6);
-		expect(rpmAtY(narrow, gripCurveY(narrow, 500, 1000))).toBeCloseTo(1750, 6);
+		expect(rpmAtY(narrow, gripCurveY(narrow, 1000, 1000))).toBeCloseTo(MAX_RPM, 6);
+		expect(rpmAtY(wide, gripCurveY(wide, 1000, 1000))).toBeCloseTo(MAX_RPM, 6);
+		expect(rpmAtY(narrow, gripCurveY(narrow, 500, 1000))).toBeCloseTo(MAX_RPM / 2, 6);
 	});
 
 	it('draws a polyline when the samples are usable', () => {

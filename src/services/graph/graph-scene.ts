@@ -29,7 +29,7 @@ import {
 import { buildPlotFrame, plotMaxRpm, rpmAtY } from './svg-frame';
 import { buildCompareLayer, buildPrimaryLayer, buildReverseLayer } from './svg-curves';
 import { buildShiftDropNodes, buildShiftPoints, type ShiftPoint } from './svg-shift-drops';
-import { buildForceSamples, buildGripNodes, buildSpinNodes, buildWallNodes, samplePeak, spinBands } from './svg-limits';
+import { axisLimitPeak, buildForceSamples, buildGripNodes, buildSpinNodes, buildWallNodes, spinBands } from './svg-limits';
 import { buildPowerNodes, buildComparePowerNodes, type PowerEnvelope } from './svg-power';
 import { group, type SvgPrim } from './svg-nodes';
 import type { CrosshairCompare, CrosshairContext } from './graph-crosshair';
@@ -174,12 +174,12 @@ const gripLayerNodes = (frame: PlotFrame, unit: SpeedUnit, style: GraphPalette, 
 	const gearForce = firstGearForceFn(circM);
 	const nodes: SvgPrim[] = gearForce ? buildSpinNodes(frame, spinBands(frame, unit, gripFn, gearForce)) : [];
 	const samples = buildForceSamples(frame, unit, gripFn);
-	nodes.push(...buildGripNodes(frame, unit, samples, samplePeak(samples), style.grip, true));
+	nodes.push(...buildGripNodes(frame, unit, samples, axisLimitPeak(frame, unit, gripFn), style.grip, true));
 	if (state.compareEnabled) {
 		const crg = state.compRunningGear ?? rg;
 		const compGrip = (vKmh: number): number => maxDriveForceAtSpeed(crg, state.compMassKg, vKmh, 0, 0).limitN;
 		const compSamples = buildForceSamples(frame, unit, compGrip);
-		nodes.push(...buildGripNodes(frame, unit, compSamples, samplePeak(compSamples), style.gripCompare, false));
+		nodes.push(...buildGripNodes(frame, unit, compSamples, axisLimitPeak(frame, unit, compGrip), style.gripCompare, false));
 	}
 	return nodes;
 };

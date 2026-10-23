@@ -8,7 +8,7 @@
  */
 import { GRAPH_DEFS } from './svg-defs';
 import { GRAPH_STROKE, graphFontSize } from '../../config/graph-constants';
-import { toDisplaySpeed } from '../../core/math/speed-math';
+import { fromDisplaySpeed, toDisplaySpeed } from '../../core/math/speed-math';
 import { getUnitLabel } from '../../core/units/unit-utils';
 import { t } from '../../core/i18n/language';
 import type { PlotFrame, SpeedUnit } from '../../core/models';
@@ -66,15 +66,26 @@ export const buildForceSamples = (
 };
 
 /**
- * @brief Peak of a sampled limit curve, used as the vertical scale.
- * @param samples Samples from `buildForceSamples`.
- * @return Largest positive limit, 1 when nothing positive was sampled.
+ * @brief Peak of a limit curve across the whole axis, not the visible window.
+ * @brief The grip layer is scaled by this peak, so it must not follow the zoom:
+ * @brief a peak read from the visible window drops as soon as the plot zooms
+ * @brief into a slower band, which silently lifts the curve on screen. The axis
+ * @brief peak keeps the curve anchored to the engine-speed scale under every
+ * @brief zoom and pan.
+ * @param frame Plot geometry and limits.
+ * @param unit Active display unit.
+ * @param limitFn Limit force in newtons from speed in km/h.
+ * @param samples Scan resolution across the axis, defaults to 160 points.
+ * @return Largest finite limit on the axis, 1 when nothing positive was found.
  */
-export const samplePeak = (samples: LimitSample[]): number => {
+export const axisLimitPeak = (frame: PlotFrame, unit: SpeedUnit, limitFn: (vKmh: number) => number, samples = 160): number => {
+	const maxKmh = fromDisplaySpeed(frame.maxSpeed, unit);
+	const step = maxKmh > 0 && samples > 0 ? maxKmh / samples : 0;
 	let peak = 1;
-	for (const sample of samples) {
-		if (sample.limitN > peak) {
-			peak = sample.limitN;
+	for (let index = 0; step > 0 && index <= samples; index += 1) {
+		const limitN = limitFn(index * step);
+		if (Number.isFinite(limitN) && limitN > peak) {
+			peak = limitN;
 		}
 	}
 	return peak;
@@ -88,7 +99,7 @@ export const samplePeak = (samples: LimitSample[]): number => {
  * @param frame Plot geometry and limits.
  * @param unit Active display unit.
  * @param samples Limit samples.
- * @param peakN Vertical scale in newtons, normally `samplePeak(samples)`.
+ * @param peakN Vertical scale in newtons, normally `axisLimitPeak(frame, unit, limitFn)`.
  * @param color Stroke color for this curve.
  * @param tagged True to label the curve with the grip tag.
  * @return Polyline and label primitives, empty when nothing can be drawn.
@@ -125,19 +136,18 @@ export const buildGripNodes = (
 
 /**
  * @brief Map a limit force onto the engine-speed axis.
- * @brief The force ceiling spans the whole visible RPM window, so the curve is
- * @brief a real RPM-scaled layer rather than a fraction of the plot height.
+ * @brief The force ceiling maps to the full RPM axis before the viewport
+ * @brief projection, preserving its position during zoom and pan.
  * @param frame Plot geometry and limits.
  * @param limitN Limit force in newtons.
  * @param peakN Vertical scale in newtons.
  * @return Y in user units.
  */
 export const gripCurveY = (frame: PlotFrame, limitN: number, peakN: number): number => {
-	const span = frame.window.maxRpm - frame.window.minRpm;
-	if (!(peakN > 0) || !(span > 0)) {
+	if (!(peakN > 0) || !(frame.maxRpm > 0)) {
 		return frame.paddingTop + frame.plotHeight;
 	}
-	const rpm = frame.window.minRpm + (Math.max(0, limitN) / peakN) * span;
+	const rpm = (Math.max(0, limitN) / peakN) * frame.maxRpm;
 	return toY(frame, rpm);
 };
 

@@ -12,19 +12,6 @@
 							<option value='braking' data-i18n='dynamics.brakingView'>Braking / distance</option>
 						</select>
 						<button id='graph-traction-overlay' type='button' class='btn btn--sm' aria-pressed='false' data-i18n='dynamics.marginToggle'>Traction excess overlay</button>
-						<button id='btn-expand-graph' type='button' class='btn-badge flex items-center gap-1' data-i18n-tip='graph.expandTip' title='Expand graph fullscreen' data-tip='Expand graph fullscreen' aria-label='Expand graph fullscreen' aria-expanded='false'>
-							<span class='material-symbols-outlined fs-lead' aria-hidden='true'>fullscreen</span>
-							<span data-i18n='graph.expand'>Expand</span>
-						</button>
-						<button id='graph-zoom-in' type='button' class='btn-badge' data-i18n-tip='graph.zoomIn' title='Zoom in' data-tip='Zoom in' aria-label='Zoom in'>
-							<span class='material-symbols-outlined fs-lead' aria-hidden='true'>zoom_in</span>
-						</button>
-						<button id='graph-zoom-out' type='button' class='btn-badge' data-i18n-tip='graph.zoomOut' title='Zoom out' data-tip='Zoom out' aria-label='Zoom out'>
-							<span class='material-symbols-outlined fs-lead' aria-hidden='true'>zoom_out</span>
-						</button>
-						<button id='graph-fit' type='button' class='btn-badge' data-i18n-tip='graph.fit' title='Fit the whole axis' data-tip='Fit the whole axis' aria-label='Fit the whole axis'>
-							<span class='material-symbols-outlined fs-lead' aria-hidden='true'>fit_screen</span>
-						</button>
 						<button id='btn-export-png' type='button' class='btn-badge' data-i18n='export.png' data-i18n-tip='export.pngTip' title='Export graph as PNG' data-tip='Export graph as PNG' aria-label='Export graph as PNG'>PNG</button>
 						<button id='btn-export-svg' type='button' class='btn-badge' data-i18n='export.svg' data-i18n-tip='export.svgTip' title='Export graph as vector SVG' data-tip='Export graph as vector SVG' aria-label='Export graph as vector SVG'>SVG</button>
 						<div class='relative'>
@@ -72,7 +59,21 @@
 				</div>
 				<div id='graph-host' class='graph-wrap relative w-full aspect-[16/9] min-h-[320px] bg-canvas-plot rounded border border-border-hairline overflow-hidden select-none'>
 					<svg id='graph-svg' class='w-full h-full block' viewBox='0 0 1000 562.5' preserveAspectRatio='none' role='img' aria-labelledby='graph-title' tabindex='0'></svg>
-					<div id='graph-hud' class='absolute top-3 right-3 z-20 bg-surface-subtle/95 backdrop-blur-md px-3 py-1.5 rounded border border-neon-cyan/80 shadow-md fs-small font-mono text-text-output max-w-[70%]'></div>
+					<div id='graph-map-controls' class='graph-map-controls'>
+						<button id='graph-zoom-in' type='button' class='graph-map-btn' data-i18n-tip='graph.zoomIn' title='Zoom in' data-tip='Zoom in' aria-label='Zoom in'>
+							<span class='material-symbols-outlined' aria-hidden='true'>add</span>
+						</button>
+						<button id='graph-zoom-out' type='button' class='graph-map-btn' data-i18n-tip='graph.zoomOut' title='Zoom out' data-tip='Zoom out' aria-label='Zoom out'>
+							<span class='material-symbols-outlined' aria-hidden='true'>remove</span>
+						</button>
+						<button id='graph-fit' type='button' class='graph-map-btn' data-i18n-tip='graph.fit' title='Fit the whole axis' data-tip='Fit the whole axis' aria-label='Fit the whole axis'>
+							<span class='material-symbols-outlined' aria-hidden='true'>fit_screen</span>
+						</button>
+						<button id='btn-expand-graph' type='button' class='graph-map-btn' data-i18n-tip='graph.expandTip' title='Expand graph fullscreen' data-tip='Expand graph fullscreen' aria-label='Expand graph fullscreen' aria-expanded='false'>
+							<span class='material-symbols-outlined' aria-hidden='true'>fullscreen</span>
+						</button>
+					</div>
+					<div id='graph-hud' class='absolute top-3 left-3 z-20 bg-surface-subtle/95 backdrop-blur-md px-3 py-1.5 rounded border border-neon-cyan/80 shadow-md fs-small font-mono text-text-output max-w-[70%]'></div>
 					<div id='graph-tooltip' class='absolute pointer-events-none hidden bg-canvas border border-border rounded px-2 py-1 fs-small font-mono text-text-main z-30 shadow-lg'></div>
 				</div>
 				<div class='graph-legend mt-3 flex flex-wrap gap-x-4 gap-y-1.5 fs-base'>

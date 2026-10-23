@@ -11,6 +11,10 @@
  * The window is bounded by the axis, so a drag can only reveal what is off
  * screen: while the whole axis is visible there is nothing to pan to and only
  * zooming in creates room. Dragging past the edge simply stops at the edge.
+ *
+ * The gestures only run in the RPM view: the force and braking plots are
+ * composed from their own axis pair, so a window written there would be
+ * invisible and would only surprise the user on the next view switch.
  */
 import { state } from '../../core/state/app-state';
 import type { GraphWindow, PlotFrame } from '../../core/models';
@@ -33,6 +37,14 @@ export const ZOOM_OUT_FACTOR = VIEW_LIMITS.step;
 
 /** True once the pointer and wheel bindings are attached. */
 let bound = false;
+
+/**
+ * @brief Check whether the viewport gestures apply to the current view.
+ * @brief Only the RPM plot projects through the window, so the force and
+ * @brief braking views must not move a window they cannot draw.
+ * @return True when the plot is the RPM view.
+ */
+const viewportActive = (): boolean => state.dynamics.graphView === 'rpm';
 
 /** Press position and the window captured when the drag started. */
 interface DragState {
@@ -168,6 +180,9 @@ const panByPixels = (window: GraphWindow, frame: PlotFrame, dx: number, dy: numb
  * @return void
  */
 const onWheel = (refs: ElementRefs, event: WheelEvent): void => {
+	if (!viewportActive()) {
+		return;
+	}
 	event.preventDefault();
 	const frame = liveFrame();
 	const rect = refs.graphSvg.getBoundingClientRect();
@@ -199,7 +214,7 @@ const onWheel = (refs: ElementRefs, event: WheelEvent): void => {
  * @return void
  */
 const onPointerDown = (refs: ElementRefs, event: PointerEvent): void => {
-	if (event.button !== 0) {
+	if (event.button !== 0 || !viewportActive()) {
 		return;
 	}
 	drag = { clientX: event.clientX, clientY: event.clientY, window: activeWindow(), moved: false, pointerId: event.pointerId };
@@ -259,6 +274,9 @@ const onPointerUp = (refs: ElementRefs, event: PointerEvent): void => {
  * @return void
  */
 const onKeyDown = (refs: ElementRefs, event: KeyboardEvent): void => {
+	if (!viewportActive()) {
+		return;
+	}
 	if (event.key === '+' || event.key === '=') {
 		event.preventDefault();
 		zoomGraph(refs, ZOOM_IN_FACTOR);

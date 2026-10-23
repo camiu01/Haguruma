@@ -206,6 +206,9 @@ const renderDynamicsGraph = (refs: ElementRefs, width: number, height: number): 
 	const title = document.getElementById('graph-title');
 	const legend = refs.graphSvg.closest('.graph-card')?.querySelector<HTMLElement>('.graph-legend');
 	if (legend) legend.hidden = view !== 'rpm';
+	// The viewport window only projects the RPM plot, so the map controls would
+	// be dead buttons in the force and braking views.
+	refs.graphMapControls.hidden = view !== 'rpm';
 	for (const button of refs.graphLayerButtons) {
 		const key = LAYER_SETTINGS[layerSlug(button.dataset.graphLayer)];
 		button.hidden = view === 'braking' || (view === 'force' && key !== 'gripLimit');
@@ -235,12 +238,15 @@ export const toggleGraphExpand = (refs: ElementRefs): void => {
 	}
 	const open = !card.classList.contains('graph-fullscreen');
 	card.classList.toggle('graph-fullscreen', open);
+	const tipKey = open ? 'graph.collapseTip' : 'graph.expandTip';
+	const tip = t(tipKey);
 	refs.btnExpandGraph.setAttribute('aria-expanded', String(open));
-	refs.btnExpandGraph.textContent = open ? t('graph.collapse') : t('graph.expand');
-	const tip = open ? t('graph.collapseTip') : t('graph.expandTip');
+	refs.btnExpandGraph.setAttribute('data-i18n-tip', tipKey);
 	refs.btnExpandGraph.setAttribute('title', tip);
 	refs.btnExpandGraph.setAttribute('data-tip', tip);
-	refs.btnExpandGraph.setAttribute('aria-label', tip);
+	refs.btnExpandGraph.setAttribute('aria-label', open ? t('graph.collapse') : t('graph.expand'));
+	const icon = refs.btnExpandGraph.querySelector('.material-symbols-outlined');
+	if (icon) icon.textContent = open ? 'fullscreen_exit' : 'fullscreen';
 	document.body.style.overflow = open ? 'hidden' : '';
 	renderGraph(refs);
 };

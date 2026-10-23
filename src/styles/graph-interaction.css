@@ -1,15 +1,54 @@
 /**
  * @file graph-interaction.css
- * @brief Touch and pointer behaviour of the SVG plot surface.
+ * @brief Pointer behaviour and viewport controls of the SVG plot surface.
  *
- * The plot is navigated with a pointer drag, the wheel, the toolbar buttons
- * and the keyboard; the buttons themselves use the shared `.btn-badge` recipe
- * in the graph toolbar. This module only owns the gesture behaviour of the
- * plot surface, so it holds a single rule.
+ * The plot is navigated with a pointer drag, the wheel, the overlaid map
+ * controls and the keyboard. This module owns the gesture surface and the
+ * map-style control cluster that floats on top of it.
  */
 
 /* The plot consumes raw pointer gestures, so the browser must not scroll or
    zoom the page while a drag is in progress. */
 #graph-svg {
 	touch-action: none;
+}
+
+/* Map-style viewport controls, anchored to the top-right corner of the plot
+   like a map widget instead of the card toolbar. */
+.graph-map-controls {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	z-index: 20;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 2px;
+	border: 1px solid var(--border-hairline);
+	border-radius: var(--radius-md);
+	background-color: color-mix(in srgb, var(--bg-surface-subtle) 82%, transparent);
+	backdrop-filter: blur(6px);
+}
+
+.graph-map-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border: 0;
+	border-radius: var(--radius-sm);
+	background-color: transparent;
+	color: var(--text-main);
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.graph-map-btn:hover {
+	background-color: var(--bg-surface-raised);
+	color: var(--accent-cyan);
+}
+
+.graph-map-btn .material-symbols-outlined {
+	font-size: 18px;
 }

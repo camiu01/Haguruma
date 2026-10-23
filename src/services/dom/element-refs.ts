@@ -100,6 +100,7 @@ export interface ElementRefs {
 	graphTooltip: HTMLElement;
 	graphLayerToggles: HTMLElement;
 	graphLayerButtons: NodeListOf<HTMLElement>;
+	graphMapControls: HTMLElement;
 	graphZoomIn: HTMLButtonElement;
 	graphZoomOut: HTMLButtonElement;
 	graphFit: HTMLButtonElement;
@@ -258,6 +259,7 @@ const REF_IDS: Record<keyof StaticRefs, string> = {
 	graphHud: 'graph-hud',
 	graphTooltip: 'graph-tooltip',
 	graphLayerToggles: 'graph-layer-toggles',
+	graphMapControls: 'graph-map-controls',
 	graphZoomIn: 'graph-zoom-in',
 	graphZoomOut: 'graph-zoom-out',
 	graphFit: 'graph-fit',
