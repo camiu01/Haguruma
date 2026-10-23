@@ -5,7 +5,7 @@
 import { GRAPH_STYLE } from '../../config/graph-constants';
 import { calculateRpm } from '../../core/math/speed-math';
 import type { PeakPoint, PlotFrame, SpeedUnit } from '../../core/models';
-import { toX } from './canvas-setup';
+import { toX, toY } from './canvas-setup';
 
 /**
  * Draw vertical redline shift-drop connectors.
@@ -31,6 +31,9 @@ export const drawShiftDrops = (
 /**
  * Draw one drop line with landing marker.
  * @brief Keep the loop body small and testable.
+ * @brief Returns early when the upshift does not lose RPM: that only happens
+ * @brief with a non-descending gear list, and drawing the marker then puts it
+ * @brief above the limiter line, clamped to the top of the plot.
  */
 export const drawSingleDrop = (
 	ctx: CanvasRenderingContext2D,
@@ -40,7 +43,10 @@ export const drawSingleDrop = (
 ): void => {
 	const maxRpm = frame.maxRpm;
 	const clampedRpm = Math.max(0, Math.min(nextRpm, maxRpm));
-	const landingY = frame.paddingTop + frame.plotHeight - (clampedRpm / maxRpm) * frame.plotHeight;
+	const landingY = toY(frame, clampedRpm);
+	if (landingY <= peak.endY) {
+		return;
+	}
 	ctx.strokeStyle = GRAPH_STYLE.shiftDrop;
 	ctx.lineWidth = 1.5;
 	ctx.setLineDash([2, 3]);

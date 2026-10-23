@@ -33,6 +33,12 @@ describe('toX', () => {
 	it('is linear at half scale', () => {
 		expect(toX(makeFrame(), 150)).toBeCloseTo(412.5, 5);
 	});
+	it('honours a non-zero window minimum', () => {
+		const window = { ...makeFrame(), minSpeed: 100 };
+		expect(toX(window, 100)).toBe(55);
+		expect(toX(window, 200)).toBeCloseTo(412.5, 5);
+		expect(toX(window, 300)).toBeCloseTo(770, 5);
+	});
 });
 
 describe('toY', () => {
@@ -41,5 +47,11 @@ describe('toY', () => {
 	});
 	it('maps max rpm to the plot top', () => {
 		expect(toY(makeFrame(), 8000)).toBe(25);
+	});
+	it('honours a non-zero window minimum', () => {
+		const window = { ...makeFrame(), minRpm: 2000 };
+		expect(toY(window, 2000)).toBe(460);
+		expect(toY(window, 5000)).toBeCloseTo(242.5, 5);
+		expect(toY(window, 8000)).toBe(25);
 	});
 });

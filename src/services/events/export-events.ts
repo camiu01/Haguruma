@@ -18,6 +18,13 @@ import {
 } from '../graph/drivetrain-export';
 
 /**
+ * @brief Largest `drivetrain.ini` accepted, in bytes.
+ * @brief A real file is a couple of kilobytes; the bound keeps a wrong pick
+ * @brief from being read into memory and parsed line by line.
+ */
+const MAX_INI_BYTES = 1_000_000;
+
+/**
  * @brief Wire export, print and drivetrain exchange buttons exactly once.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback.
@@ -37,6 +44,10 @@ export const bindExportEvents = (refs: ElementRefs, render: () => void): void =>
 		const file = refs.drivetrainImportInput.files?.[0];
 		refs.drivetrainImportInput.value = '';
 		if (!file) {
+			return;
+		}
+		if (file.size > MAX_INI_BYTES) {
+			showDrivetrainStatus(refs, false, 0);
 			return;
 		}
 		void readTextFile(file).then((text) => {

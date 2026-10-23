@@ -45,6 +45,13 @@ export const bindEngineEvents = (refs: ElementRefs, render: () => void): void =>
 };
 
 /**
+ * @brief Largest dyno CSV accepted, in bytes.
+ * @brief A dyno sheet is a few kilobytes; anything larger is a wrong file and
+ * @brief would be split line by line before the parser could reject it.
+ */
+const MAX_DYNO_CSV_BYTES = 5_000_000;
+
+/**
  * @brief Bind the dyno CSV file picker and the back-to-anchors action.
  * @param refs Cached DOM handles.
  * @param render Full refresh callback.
@@ -58,6 +65,10 @@ const bindCsvImport = (refs: ElementRefs, render: () => void): void => {
 		const file = refs.csvImportInput.files?.[0];
 		refs.csvImportInput.value = '';
 		if (!file) {
+			return;
+		}
+		if (file.size > MAX_DYNO_CSV_BYTES) {
+			showCsvStatus(refs, 'error', 0);
 			return;
 		}
 		void readCsvFile(file).then((text) => {

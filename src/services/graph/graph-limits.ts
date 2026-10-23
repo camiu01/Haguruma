@@ -3,7 +3,10 @@
  * @brief Grip-limit curve and wheelspin shading overlay.
  */
 import type { PlotFrame } from '../../core/models';
-import { toX } from './canvas-setup';
+import { toX, toY } from './canvas-setup';
+import { getMaxRpm } from '../../core/units/unit-utils';
+import { state } from '../../core/state/app-state';
+import { fromDisplaySpeed } from '../../core/math/speed-math';
 
 /**
  * @brief Draw the friction-limited drive-force curve.
@@ -22,22 +25,25 @@ export const drawGripCurve = (
 	fill: boolean = false,
 ): void => {
 	let peak = 1;
-	for (let v = 0; v <= frame.maxSpeed; v += 5) {
-		const f = fn(v);
+	// Keep the force scale fixed while the viewport changes.
+	const axisMax = state.maxGraphSpeed;
+	for (let v = 0; v <= axisMax; v += 5) {
+		const f = fn(fromDisplaySpeed(v, state.unit));
 		if (Number.isFinite(f) && f > peak) {
 			peak = f;
 		}
 	}
-	const yOf = (f: number): number => frame.paddingTop + frame.plotHeight - (Math.max(0, f) / peak) * frame.plotHeight;
+	const axisRpm = getMaxRpm(state.compareEnabled ? Math.max(state.primaryRedline, state.compRedline) : state.primaryRedline);
+	const yOf = (f: number): number => toY(frame, (Math.max(0, f) / peak) * axisRpm);
 	ctx.save();
 	ctx.strokeStyle = color;
 	ctx.lineWidth = 1.5;
 	ctx.setLineDash([6, 4]);
 	ctx.beginPath();
 	let started = false;
-	for (let v = 0; v <= frame.maxSpeed; v += 5) {
+	for (let v = frame.minSpeed ?? 0; v <= frame.maxSpeed; v += 5) {
 		const x = toX(frame, v);
-		const y = yOf(fn(v));
+		const y = yOf(fn(fromDisplaySpeed(v, state.unit)));
 		if (!started) {
 			ctx.moveTo(x, y);
 			started = true;
@@ -59,7 +65,7 @@ export const drawGripCurve = (
 	ctx.fillStyle = color;
 	ctx.font = '10px Inter, sans-serif';
 	ctx.textAlign = 'left';
-	ctx.fillText('GRIP', toX(frame, frame.maxSpeed) - 38, yOf(fn(frame.maxSpeed)) - 8);
+	ctx.fillText('GRIP', toX(frame, frame.maxSpeed) - 38, yOf(fn(fromDisplaySpeed(frame.maxSpeed, state.unit))) - 8);
 	ctx.restore();
 };
 
@@ -79,12 +85,12 @@ export const shadeWheelspin = (
 ): void => {
 	ctx.save();
 	ctx.fillStyle = 'rgba(239,68,68,0.08)';
-	for (let v = 0; v <= frame.maxSpeed; v += 5) {
+	for (let v = frame.minSpeed ?? 0; v <= frame.maxSpeed; v += 5) {
 		let grip = 0;
 		let force = 0;
 		try {
-			grip = fn(v);
-			force = gearForceFn(v);
+			grip = fn(fromDisplaySpeed(v, state.unit));
+			force = gearForceFn(fromDisplaySpeed(v, state.unit));
 		} catch {
 			continue;
 		}
