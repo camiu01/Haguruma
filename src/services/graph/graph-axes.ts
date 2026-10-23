@@ -7,7 +7,7 @@ import { getGraphStyle } from './graph-theme';
 import { toDisplaySpeed } from '../../core/math/speed-math';
 import { getSpeedStep } from '../../core/units/unit-utils';
 import type { PlotFrame, SpeedUnit } from '../../core/models';
-import { toX, toY } from './canvas-setup';
+import { alignPixel, toX, toY } from './canvas-setup';
 /**
  * Draw the dark plot background.
  * @brief Reset the frame before every render.
@@ -31,14 +31,15 @@ export const drawSpeedGrid = (
 	unit: SpeedUnit,
 ): void => {
 	const step = getSpeedStep(unit);
-	ctx.lineWidth = 1;
+	const dpr = ctx.getTransform().a || 1;
+	ctx.lineWidth = 1 / dpr;
 	ctx.strokeStyle = getGraphStyle().grid;
 	ctx.fillStyle = getGraphStyle().axisText;
 	ctx.font = '10px \'JetBrains Mono\', monospace';
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'alphabetic';
-	for (let s = 0; s <= frame.maxSpeed; s += step) {
-		const x = toX(frame, s);
+	for (let s = Math.ceil((frame.minSpeed ?? 0) / step) * step; s <= frame.maxSpeed; s += step) {
+		const x = alignPixel(toX(frame, s), dpr);
 		ctx.beginPath();
 		ctx.moveTo(x, frame.paddingTop);
 		ctx.lineTo(x, frame.paddingTop + frame.plotHeight);
@@ -59,8 +60,10 @@ export const drawRpmGrid = (
 	ctx.textBaseline = 'middle';
 	ctx.strokeStyle = getGraphStyle().grid;
 	ctx.fillStyle = getGraphStyle().axisText;
-	for (let r = 0; r <= frame.maxRpm; r += GRAPH_LIMITS.rpmStep) {
-		const y = toY(frame, r);
+	const dpr = ctx.getTransform().a || 1;
+	ctx.lineWidth = 1 / dpr;
+	for (let r = Math.ceil((frame.minRpm ?? 0) / GRAPH_LIMITS.rpmStep) * GRAPH_LIMITS.rpmStep; r <= frame.maxRpm; r += GRAPH_LIMITS.rpmStep) {
+		const y = alignPixel(toY(frame, r), dpr);
 		ctx.beginPath();
 		ctx.moveTo(frame.paddingLeft, y);
 		ctx.lineTo(frame.paddingLeft + frame.plotWidth, y);
@@ -80,7 +83,7 @@ export const drawRedlineBand = (
 	frame: PlotFrame,
 	redline: number,
 ): void => {
-	const redlineY = toY(frame, redline);
+	const redlineY = Math.max(frame.paddingTop, Math.min(frame.paddingTop + frame.plotHeight, toY(frame, redline)));
 	ctx.fillStyle = getGraphStyle().redlineFill;
 	ctx.fillRect(frame.paddingLeft, frame.paddingTop, frame.plotWidth, Math.max(0, redlineY - frame.paddingTop));
 	ctx.strokeStyle = getGraphStyle().redlineLine;
@@ -138,7 +141,7 @@ export const shadeAeroWall = (
 	if (limitDisplay <= 0 || limitDisplay >= frame.maxSpeed) {
 		return;
 	}
-	const x = toX(frame, limitDisplay);
+	const x = Math.max(frame.paddingLeft, toX(frame, limitDisplay));
 	ctx.fillStyle = fill;
 	ctx.fillRect(x, frame.paddingTop, frame.paddingLeft + frame.plotWidth - x, frame.plotHeight);
 };

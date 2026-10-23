@@ -18,6 +18,7 @@ import { blitStaticLayer } from './graph-layers';
 import { drawComparisonCurves, drawPrimaryCurves, drawReverseCurve } from './graph-curves';
 import { drawShiftDrops } from './graph-shift-drops';
 import { drawGripCurve, shadeWheelspin } from './graph-limits';
+import { drawForceGraph } from './force-graph';
 
 /**
  * Render the full RPM vs speed graph.
@@ -28,6 +29,10 @@ import { drawGripCurve, shadeWheelspin } from './graph-limits';
  * @return void
  */
 export const drawGraph = (refs: ElementRefs): void => {
+	if (state.graphMode === 'force') {
+		drawForceGraph(refs.canvas, refs.ctx);
+		return;
+	}
 	const primaryTire = parseTire(state.primaryTire);
 	if (!primaryTire) {
 		return;
@@ -41,6 +46,10 @@ export const drawGraph = (refs: ElementRefs): void => {
 	}
 	const { ctx } = refs;
 	blitStaticLayer(ctx, refs.canvas, frame, state.unit, state.primaryRedline);
+	ctx.save();
+	ctx.beginPath();
+	ctx.rect(frame.paddingLeft, frame.paddingTop, frame.plotWidth, frame.plotHeight);
+	ctx.clip();
 	const peaks = drawPrimaryCurves(ctx, frame, state.gears, state.primaryFd, circM, state.primaryRedline, state.unit);
 	if (state.reverseRatio !== null && state.reverseRatio > 0) {
 		drawReverseCurve(ctx, frame, state.reverseRatio, state.primaryFd, circM, state.primaryRedline, state.unit);
@@ -51,6 +60,7 @@ export const drawGraph = (refs: ElementRefs): void => {
 	drawOptionalComparison(ctx, frame);
 	drawOptionalCompAeroLimit(ctx, frame);
 	drawOptionalGripLimit(ctx, frame, circM);
+	ctx.restore();
 };
 
 /**

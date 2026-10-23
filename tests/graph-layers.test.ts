@@ -2,11 +2,27 @@
  * @file graph-layers.test.ts
  * @brief Unit tests for dual-layer cache keys and aero-wall shading.
  */
-import { describe, expect, it } from 'vitest';
-import { buildStaticKey, type StaticLayerKey } from '../src/services/graph/graph-layers';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { buildStaticKey, createStaticSurface, type StaticLayerKey } from '../src/services/graph/graph-layers';
 import { shadeAeroWall } from '../src/services/graph/graph-axes';
 import { toX } from '../src/services/graph/canvas-setup';
 import type { PlotFrame } from '../src/core/models';
+afterEach(() => vi.unstubAllGlobals());
+
+it('falls back when OffscreenCanvas creation fails or has no 2D context', () => {
+	const canvas = { width: 0, height: 0 };
+	vi.stubGlobal('document', { createElement: () => canvas });
+	for (const broken of [class { constructor() { throw new Error('unsupported'); } }, class { getContext() { return null; } }]) {
+		vi.stubGlobal('OffscreenCanvas', broken);
+		expect(createStaticSurface(800, 450)).toBe(canvas);
+		expect(canvas).toEqual({ width: 800, height: 450 });
+	}
+});
+it('uses an available offscreen 2D bitmap without allocating a DOM canvas', () => {
+	class Offscreen { getContext() { return {}; } }
+	vi.stubGlobal('OffscreenCanvas', Offscreen);
+	expect(createStaticSurface(800, 450)).toBeInstanceOf(Offscreen);
+});
 
 /**
  * @brief Base static key fixture.

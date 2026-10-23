@@ -4,6 +4,8 @@
  */
 import { GRAPH_PADDING } from '../../config/graph-constants';
 import type { PlotFrame } from '../../core/models';
+import { state } from '../../core/state/app-state';
+import { toDisplaySpeed } from '../../core/math/speed-math';
 
 /**
  * Enable crisp rendering on HiDPI displays.
@@ -82,6 +84,12 @@ export const buildPlotFrame = (
 		plotHeight,
 		maxSpeed,
 		maxRpm,
+		...(state.graphWindow ? {
+			minSpeed: toDisplaySpeed(state.graphWindow.minKmh, state.unit),
+			maxSpeed: toDisplaySpeed(state.graphWindow.maxKmh, state.unit),
+			minRpm: state.graphWindow.minRpm,
+			maxRpm: state.graphWindow.maxRpm,
+		} : {}),
 	};
 };
 
@@ -93,7 +101,8 @@ export const buildPlotFrame = (
  * @returns Canvas X in CSS pixels.
  */
 export const toX = (frame: PlotFrame, speed: number): number => {
-	return frame.paddingLeft + (speed / frame.maxSpeed) * frame.plotWidth;
+	const min = frame.minSpeed ?? 0;
+	return frame.paddingLeft + ((speed - min) / (frame.maxSpeed - min)) * frame.plotWidth;
 };
 
 /**
@@ -104,5 +113,14 @@ export const toX = (frame: PlotFrame, speed: number): number => {
  * @returns Canvas Y in CSS pixels.
  */
 export const toY = (frame: PlotFrame, rpm: number): number => {
-	return frame.paddingTop + frame.plotHeight - (rpm / frame.maxRpm) * frame.plotHeight;
+	const min = frame.minRpm ?? 0;
+	return frame.paddingTop + frame.plotHeight - ((rpm - min) / (frame.maxRpm - min)) * frame.plotHeight;
 };
+
+/**
+ * @brief Align a one-device-pixel grid stroke at any backing-store ratio.
+ * @param value Coordinate in CSS pixels.
+ * @param dpr Device pixels per CSS pixel.
+ * @return Center of the nearest physical pixel.
+ */
+export const alignPixel = (value: number, dpr: number): number => (Math.floor(value * dpr) + 0.5) / dpr;

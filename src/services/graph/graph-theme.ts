@@ -32,11 +32,19 @@ export interface GraphPalette {
  */
 export const getGraphStyle = (): GraphPalette => {
 	const theme = getTheme();
-	if (theme === 'light') {
-		return GRAPH_STYLE_LIGHT;
+	const fallback = theme === 'light' ? GRAPH_STYLE_LIGHT : theme === 'oled' ? GRAPH_STYLE_OLED : GRAPH_STYLE;
+	if (typeof document === 'undefined' || typeof getComputedStyle === 'undefined') {
+		return fallback;
 	}
-	if (theme === 'oled') {
-		return GRAPH_STYLE_OLED;
-	}
-	return GRAPH_STYLE;
+	const css = getComputedStyle(document.documentElement);
+	const read = (name: string, value: string): string => css.getPropertyValue(name).trim() || value;
+	return {
+		background: read('--bg-canvas', fallback.background),
+		grid: read('--border', fallback.grid),
+		axisText: read('--text-dim', fallback.axisText),
+		redlineFill: read('--accent-red-overlay', fallback.redlineFill),
+		redlineLine: read('--accent-red', fallback.redlineLine),
+		shiftDrop: read('--accent-red', fallback.shiftDrop),
+		compare: read('--accent-yellow', fallback.compare),
+	};
 };

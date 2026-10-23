@@ -24,6 +24,9 @@ export interface ElementRefs {
 	unitGroup: HTMLElement;
 	langEn: HTMLButtonElement;
 	langIt: HTMLButtonElement;
+	langDe: HTMLButtonElement;
+	langEs: HTMLButtonElement;
+	langFr: HTMLButtonElement;
 	presetSelector: HTMLSelectElement;
 	setupLevel: HTMLSelectElement;
 	compLevel: HTMLSelectElement;
@@ -90,6 +93,15 @@ export interface ElementRefs {
 	customList: HTMLElement;
 	customError: HTMLElement;
 	canvas: HTMLCanvasElement;
+	graphZoomIn: HTMLButtonElement;
+	graphMode: HTMLSelectElement;
+	graphTractionMargin: HTMLInputElement;
+	graphZoomOut: HTMLButtonElement;
+	graphFit: HTMLButtonElement;
+	graphFitMargin: HTMLInputElement;
+	graphExportFooter: HTMLInputElement;
+	graphReadout: HTMLOutputElement;
+	graphCrosshair: HTMLElement;
 	ctx: CanvasRenderingContext2D;
 	tooltip: HTMLElement;
 	breakdownBody: HTMLElement;
@@ -185,6 +197,9 @@ export const getElementRefs = (): ElementRefs => {
 		unitGroup: get<HTMLElement>('unit-group'),
 		langEn: get<HTMLButtonElement>('lang-en'),
 		langIt: get<HTMLButtonElement>('lang-it'),
+		langDe: get<HTMLButtonElement>('lang-de'),
+		langEs: get<HTMLButtonElement>('lang-es'),
+		langFr: get<HTMLButtonElement>('lang-fr'),
 		presetSelector: get<HTMLSelectElement>('preset-selector'),
 		setupLevel: get<HTMLSelectElement>('setup-level'),
 		compLevel: get<HTMLSelectElement>('comp-level'),
@@ -251,6 +266,15 @@ export const getElementRefs = (): ElementRefs => {
 		customList: get<HTMLElement>('custom-list'),
 		customError: get<HTMLElement>('custom-error'),
 		canvas,
+		graphZoomIn: get<HTMLButtonElement>('graph-zoom-in'),
+		graphMode: get<HTMLSelectElement>('graph-mode'),
+		graphTractionMargin: get<HTMLInputElement>('graph-traction-margin'),
+		graphZoomOut: get<HTMLButtonElement>('graph-zoom-out'),
+		graphFit: get<HTMLButtonElement>('graph-fit'),
+		graphFitMargin: get<HTMLInputElement>('graph-fit-margin'),
+		graphExportFooter: get<HTMLInputElement>('graph-export-footer'),
+		graphReadout: get<HTMLOutputElement>('graph-readout'),
+		graphCrosshair: get<HTMLElement>('graph-crosshair'),
 		ctx,
 		tooltip: get<HTMLElement>('canvas-tooltip'),
 		breakdownBody: get<HTMLElement>('gear-breakdown-body'),

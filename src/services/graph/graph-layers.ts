@@ -9,6 +9,7 @@
 import { getTheme } from '../../core/theme/theme';
 import type { PlotFrame, SpeedUnit } from '../../core/models';
 import { drawAxisTitles, drawBackground, drawRedlineBand, drawRpmGrid, drawSpeedGrid } from './graph-axes';
+import { getGraphStyle } from './graph-theme';
 
 /** Inputs identifying one static bitmap. */
 export interface StaticLayerKey {
@@ -26,13 +27,34 @@ export interface StaticLayerKey {
 	theme: string;
 	/** Primary rev limiter in RPM. */
 	redline: number;
+	minSpeed?: number;
+	minRpm?: number;
+	palette?: string;
 }
 
 /** Cached offscreen bitmap, null until the first paint. */
-let cachedCanvas: HTMLCanvasElement | null = null;
+let cachedCanvas: HTMLCanvasElement | OffscreenCanvas | null = null;
 
 /** Key of the cached bitmap, empty when nothing is cached. */
 let cachedKey = '';
+
+/**
+ * @brief Prefer a usable offscreen surface, falling back on constructor/context failure.
+ * @param width Backing width.
+ * @param height Backing height.
+ * @return Worker-ready bitmap where supported, otherwise a detached canvas.
+ */
+export const createStaticSurface = (width: number, height: number): HTMLCanvasElement | OffscreenCanvas => {
+	if (typeof OffscreenCanvas !== 'undefined') {
+		try {
+			const off = new OffscreenCanvas(width, height);
+			if (off.getContext('2d')) return off;
+		} catch { /* Some embedded WebViews expose the constructor but cannot create a 2D context. */ }
+	}
+	const off = document.createElement('canvas');
+	off.width = width; off.height = height;
+	return off;
+};
 
 /**
  * @brief Build the cache key for one static bitmap.
@@ -40,7 +62,7 @@ let cachedKey = '';
  * @return Pipe-joined key string.
  */
 export const buildStaticKey = (key: StaticLayerKey): string => {
-	return [key.width, key.height, key.maxSpeed, key.maxRpm, key.unit, key.theme, key.redline].join('|');
+	return [key.width, key.height, key.maxSpeed, key.maxRpm, key.unit, key.theme, key.redline, key.minSpeed ?? 0, key.minRpm ?? 0, key.palette ?? ''].join('|');
 };
 
 /**
@@ -62,7 +84,7 @@ export const invalidateStaticLayer = (): void => {
  * @return void
  */
 const paintStaticLayer = (
-	off: HTMLCanvasElement,
+	off: HTMLCanvasElement | OffscreenCanvas,
 	frame: PlotFrame,
 	unit: SpeedUnit,
 	redline: number,
@@ -73,11 +95,11 @@ const paintStaticLayer = (
 	}
 	const dpr = frame.width > 0 ? off.width / frame.width : 1;
 	offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-	drawBackground(offCtx, frame);
-	drawSpeedGrid(offCtx, frame, unit);
-	drawRpmGrid(offCtx, frame);
-	drawRedlineBand(offCtx, frame, redline);
-	drawAxisTitles(offCtx, frame, unit);
+	drawBackground(offCtx as CanvasRenderingContext2D, frame);
+	drawSpeedGrid(offCtx as CanvasRenderingContext2D, frame, unit);
+	drawRpmGrid(offCtx as CanvasRenderingContext2D, frame);
+	drawRedlineBand(offCtx as CanvasRenderingContext2D, frame, redline);
+	drawAxisTitles(offCtx as CanvasRenderingContext2D, frame, unit);
 };
 
 /**
@@ -104,11 +126,12 @@ export const blitStaticLayer = (
 		unit,
 		theme: getTheme(),
 		redline,
+		minSpeed: frame.minSpeed,
+		minRpm: frame.minRpm,
+		palette: JSON.stringify(getGraphStyle()),
 	});
 	if (!cachedCanvas || cachedKey !== key) {
-		const off = document.createElement('canvas');
-		off.width = canvas.width;
-		off.height = canvas.height;
+		const off = createStaticSurface(canvas.width, canvas.height);
 		paintStaticLayer(off, frame, unit, redline);
 		cachedCanvas = off;
 		cachedKey = key;

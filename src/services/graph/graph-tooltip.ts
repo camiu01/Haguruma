@@ -13,7 +13,11 @@ import { getMaxRpm } from '../../core/units/unit-utils';
 import { getGearColor } from '../../config/gear-colors';
 import { t } from '../../core/i18n/language';
 import type { ElementRefs } from '../dom/element-refs';
-import { buildPlotFrame } from './canvas-setup';
+import { buildPlotFrame, toY } from './canvas-setup';
+import { nearestGraphGear } from './graph-snap';
+import { getUnitLabel } from '../../core/units/unit-utils';
+import { lightHaptic } from '../hardware/device-feedback';
+import { forceGraphFrame, forceGraphPoints } from './force-graph';
 
 /**
  * Handle pointer or touch positions on the graph canvas.
@@ -26,6 +30,10 @@ export const handleCanvasPointer = (
 	point: { clientX: number; clientY: number },
 	refs: ElementRefs,
 ): void => {
+	if (state.graphMode === 'force') {
+		handleForcePointer(point, refs);
+		return;
+	}
 	const rect = refs.canvas.getBoundingClientRect();
 	const mouseX = point.clientX - rect.left;
 	const mouseY = point.clientY - rect.top;
@@ -37,11 +45,42 @@ export const handleCanvasPointer = (
 	}
 	if (isOutsidePlot(frame, mouseX, mouseY)) {
 		refs.tooltip.classList.add('hidden');
+		refs.graphCrosshair.hidden = true;
 		return;
 	}
-	const hoveredSpeed = ((mouseX - frame.paddingLeft) / frame.plotWidth) * frame.maxSpeed;
-	const hoveredRpm = ((frame.paddingTop + frame.plotHeight - mouseY) / frame.plotHeight) * frame.maxRpm;
-	renderTooltip(refs, hoveredSpeed, hoveredRpm, mouseX, mouseY);
+	const hoveredSpeed = (frame.minSpeed ?? 0) + ((mouseX - frame.paddingLeft) / frame.plotWidth) * (frame.maxSpeed - (frame.minSpeed ?? 0));
+	const hoveredRpm = (frame.minRpm ?? 0) + ((frame.paddingTop + frame.plotHeight - mouseY) / frame.plotHeight) * (frame.maxRpm - (frame.minRpm ?? 0));
+	const snap = nearestGraphGear(hoveredSpeed, hoveredRpm);
+	refs.graphCrosshair.hidden = !snap;
+	refs.graphCrosshair.style.left = `${mouseX}px`;
+	refs.graphCrosshair.style.top = `${snap ? toY(frame, snap.rpm) : mouseY}px`;
+	renderTooltip(refs, hoveredSpeed, snap?.rpm ?? hoveredRpm, mouseX, snap ? toY(frame, snap.rpm) : mouseY);
+	syncGraphReadout(refs, hoveredSpeed, hoveredRpm);
+	void lightHaptic();
+};
+
+/**
+ * @brief Inspect the nearest gear force without announcing RPM-axis coordinates.
+ * @param point Pointer location.
+ * @param refs Cached handles.
+ * @return void
+ */
+const handleForcePointer = (point: { clientX: number; clientY: number }, refs: ElementRefs): void => {
+	const rect = refs.canvas.getBoundingClientRect();
+	const frame = forceGraphFrame(refs.canvas);
+	if (!frame || isOutsidePlot(frame, point.clientX - rect.left, point.clientY - rect.top)) {
+		refs.graphCrosshair.hidden = true; refs.tooltip.classList.add('hidden'); return;
+	}
+	const speed = (frame.minSpeed ?? 0) + (point.clientX - rect.left - frame.paddingLeft) / frame.plotWidth * (frame.maxSpeed - (frame.minSpeed ?? 0));
+	const target = (frame.paddingTop + frame.plotHeight - point.clientY + rect.top) / frame.plotHeight * frame.maxRpm;
+	const selected = forceGraphPoints(speed).sort((a, b) => Math.abs(a.forceN - target) - Math.abs(b.forceN - target))[0];
+	refs.graphCrosshair.hidden = !selected;
+	refs.graphCrosshair.style.left = `${point.clientX - rect.left}px`;
+	refs.graphCrosshair.style.top = `${selected ? toY(frame, selected.forceN) : point.clientY - rect.top}px`;
+	refs.tooltip.classList.add('hidden');
+	refs.graphReadout.textContent = selected
+		? `G${selected.index + 1} · ${speed.toFixed(1)} ${getUnitLabel(state.unit)} · ${Math.round(selected.rpm)} RPM · ${Math.round(selected.forceN)} N`
+		: t('graph.noCurve');
 };
 
 /**
@@ -88,7 +127,7 @@ const renderTooltip = (
 		return;
 	}
 	const circM = effectiveCircumferenceM(primaryTire, state.rollingFactor);
-	let content = `<div class='font-bold border-b border-gray-700 pb-1 mb-1 text-red-400'>${Math.round(speed)} ${state.unit} @ ${Math.round(rpm)} RPM</div>`;
+	let content = `<div class='font-bold border-b border-gray-700 pb-1 mb-1 text-red-400'>${Math.round(speed)} ${getUnitLabel(state.unit)} @ ${Math.round(rpm)} RPM</div>`;
 	state.gears.forEach((gearRatio, idx) => {
 		const rpmAtSpeed = calculateRpm(speed, gearRatio, state.primaryFd, circM, state.unit);
 		if (rpmAtSpeed <= state.primaryRedline + 400) {
@@ -106,6 +145,34 @@ const renderTooltip = (
 	const th = refs.tooltip.offsetHeight;
 	refs.tooltip.style.left = `${clampTip(mouseX + 12, tw, box.width)}px`;
 	refs.tooltip.style.top = `${clampTip(mouseY - th - 12, th, box.height)}px`;
+};
+
+/**
+ * @brief Announce the snapped gear, engine speed and wheel force.
+ * @param refs Cached DOM handles.
+ * @param speed Display speed at the crosshair.
+ * @param rpm Pointer RPM used to choose the nearest gear.
+ * @return void
+ */
+const syncGraphReadout = (refs: ElementRefs, speed: number, rpm: number): void => {
+	const snap = nearestGraphGear(speed, rpm);
+	if (!snap) {
+		refs.graphReadout.textContent = t('graph.noCurve');
+		return;
+	}
+	const tire = parseTire(snap.compare ? state.compTire : state.primaryTire);
+	const curve = snap.compare ? {
+		peakTorqueRpm: state.compPeakTorqueRpm, peakTorqueNm: state.compPeakTorqueNm,
+		peakPowerRpm: state.compPeakPowerRpm, peakPowerKw: state.compPowerKw, redline: state.compRedline,
+	} : activeEngineCurve();
+	if (!tire || !curve) {
+		return;
+	}
+	const circ = effectiveCircumferenceM(tire, state.rollingFactor);
+	const ratio = (snap.compare ? state.compGears : state.gears)[snap.index];
+	const fd = snap.compare ? state.compFd : state.primaryFd;
+	const force = tractiveForceAt(snap.rpm, ratio, fd, dynamicRadiusM(circ), curve, state.drivetrainEff);
+	refs.graphReadout.textContent = `${snap.compare ? t('compare.secondary') + ' · ' : ''}G${snap.index + 1} · ${speed.toFixed(1)} ${getUnitLabel(state.unit)} · ${Math.round(snap.rpm)} RPM · ${Math.round(force)} N`;
 };
 
 /**

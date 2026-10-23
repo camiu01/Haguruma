@@ -1,0 +1,159 @@
+/**
+ * @file graph-interaction.css
+ * @brief Graph touch controls, accessible readout and short-screen layout.
+ */
+.graph-controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+/* Header chips stay on one line; the row wraps instead of clipping them. */
+.graph-chips button,
+.graph-chips select {
+	white-space: nowrap;
+}
+/* Two export domains share the row, so each keeps a visible label. */
+.chip-group {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+.chip-group-divider {
+	border-left: 1px solid var(--border);
+	padding-left: 8px;
+}
+.chip-group-label {
+	font-size: 10px;
+	line-height: 1;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--text-dim);
+}
+/* The format select and its Export button read as one control. */
+.chip-attached {
+	display: inline-flex;
+}
+.chip-attached select {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+.chip-attached button {
+	border-left: 0;
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
+.graph-controls button,
+.graph-controls select,
+.graph-controls input[type='number'] {
+	min-height: 44px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--bg-input);
+	color: var(--text-main);
+	/* Matches the drawer buttons and the graph header chips. */
+	padding: 8px 12px;
+	font-size: 12px;
+	font-weight: 600;
+}
+.graph-controls input[type='number'] {
+	width: 64px;
+}
+.graph-controls label {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	color: var(--text-dim);
+	cursor: pointer;
+}
+
+/* Map-style navigation floating over the canvas. */
+.graph-overlay {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	z-index: 5;
+	display: grid;
+	gap: 4px;
+	grid-template-columns: 36px;
+}
+.graph-btn {
+	width: 36px;
+	height: 36px;
+	min-height: 36px;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--bg-card);
+	color: var(--text-dim);
+	cursor: pointer;
+}
+.graph-btn svg {
+	width: 18px;
+	height: 18px;
+}
+.graph-btn:hover,
+.graph-btn:focus-visible {
+	border-color: var(--accent-cyan);
+	color: var(--text-main);
+}
+.graph-btn[aria-expanded='true'] {
+	border-color: var(--accent-cyan);
+	color: var(--accent-cyan);
+}
+.graph-help,
+.graph-readout {
+	display: block;
+	font-size: 12px;
+	color: var(--text-dim);
+	margin-block: 8px;
+}
+.graph-readout {
+	min-height: 24px;
+	font-family: 'JetBrains Mono', monospace;
+	font-variant-numeric: tabular-nums;
+	overflow-wrap: anywhere;
+}
+#graph-canvas {
+	touch-action: none;
+}
+.graph-crosshair {
+	position: absolute;
+	pointer-events: none;
+	width: 8px;
+	height: 8px;
+	border: 2px solid var(--text-output);
+	border-radius: 50%;
+	transform: translate(-50%, -50%);
+}
+@media (max-height: 500px) and (orientation: landscape) {
+	#mobile-drawer {
+		width: min(360px, 60vw);
+		padding-block: env(safe-area-inset-top) env(safe-area-inset-bottom);
+	}
+	.drawer-section-row {
+		min-height: 44px;
+	}
+	.graph-card.graph-fullscreen {
+		display: flex;
+		flex-direction: column;
+		height: 100dvh;
+		padding: 8px max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left));
+		overflow-y: auto;
+	}
+	.graph-card.graph-fullscreen .graph-wrap {
+		min-height: 120px;
+		height: auto;
+		flex: 1 0 120px;
+		aspect-ratio: auto;
+	}
+	.graph-fullscreen .graph-help,
+	.graph-fullscreen .graph-legend {
+		display: none;
+	}
+}

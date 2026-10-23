@@ -15,6 +15,10 @@ import { getSpeedStep, getMaxRpm, getUnitLabel } from '../../core/units/unit-uti
 import { GRAPH_PADDING, GRAPH_LIMITS } from '../../config/graph-constants';
 import { getGraphStyle, type GraphPalette } from './graph-theme';
 import type { PlotFrame, SpeedUnit } from '../../core/models';
+import { toDisplaySpeed } from '../../core/math/speed-math';
+import { toX, toY } from './canvas-setup';
+import { escapeSvgText } from './graph-export-footer';
+import { buildForceGraphSvg } from './force-graph-svg';
 
 /** Fallback canvas size when getBoundingClientRect reports zero. */
 const FALLBACK_SIZE = { width: 800, height: 450 };
@@ -39,8 +43,23 @@ const downloadBlob = (blob: Blob, filename: string): void => {
  * @param canvas Graph canvas element.
  * @return void
  */
-export const exportGraphPng = (canvas: HTMLCanvasElement): void => {
-	canvas.toBlob((blob) => {
+export const exportGraphPng = (canvas: HTMLCanvasElement, metadata = ''): void => {
+	const target = metadata ? document.createElement('canvas') : canvas;
+	if (metadata) {
+		target.width = canvas.width;
+		target.height = canvas.height + 64;
+		const ctx = target.getContext('2d');
+		if (!ctx) {
+			return;
+		}
+		ctx.fillStyle = getGraphStyle().background;
+		ctx.fillRect(0, 0, target.width, target.height);
+		ctx.drawImage(canvas, 0, 0);
+		ctx.fillStyle = getGraphStyle().axisText;
+		ctx.font = '18px sans-serif';
+		ctx.fillText(metadata, 12, canvas.height + 38, target.width - 24);
+	}
+	target.toBlob((blob) => {
 		if (blob) {
 			downloadBlob(blob, 'haguruma-graph.png');
 		}
@@ -68,27 +87,12 @@ const buildFrame = (canvas: HTMLCanvasElement): PlotFrame => {
 		plotHeight: height - GRAPH_PADDING.top - GRAPH_PADDING.bottom,
 		maxSpeed: state.maxGraphSpeed,
 		maxRpm: getMaxRpm(redline),
+		...(state.graphWindow ? {
+			minSpeed: toDisplaySpeed(state.graphWindow.minKmh, state.unit),
+			maxSpeed: toDisplaySpeed(state.graphWindow.maxKmh, state.unit),
+			minRpm: state.graphWindow.minRpm, maxRpm: state.graphWindow.maxRpm,
+		} : {}),
 	};
-};
-
-/**
- * @brief Map a data speed to canvas X inside the frame.
- * @param frame Plot frame.
- * @param speed Display-unit speed.
- * @return X coordinate in CSS pixels.
- */
-const toX = (frame: PlotFrame, speed: number): number => {
-	return frame.paddingLeft + (speed / frame.maxSpeed) * frame.plotWidth;
-};
-
-/**
- * @brief Map an RPM to canvas Y inside the frame.
- * @param frame Plot frame.
- * @param rpm Engine RPM.
- * @return Y coordinate in CSS pixels.
- */
-const toY = (frame: PlotFrame, rpm: number): number => {
-	return frame.paddingTop + frame.plotHeight - (rpm / frame.maxRpm) * frame.plotHeight;
 };
 
 /**
@@ -101,7 +105,7 @@ const toY = (frame: PlotFrame, rpm: number): number => {
 const svgSpeedGrid = (frame: PlotFrame, style: GraphPalette, unit: SpeedUnit): string => {
 	const step = getSpeedStep(unit);
 	const parts: string[] = [];
-	for (let s = 0; s <= frame.maxSpeed; s += step) {
+	for (let s = Math.ceil((frame.minSpeed ?? 0) / step) * step; s <= frame.maxSpeed; s += step) {
 		const x = toX(frame, s).toFixed(1);
 		parts.push(
 			`<line x1='${x}' y1='${frame.paddingTop}' x2='${x}' y2='${frame.paddingTop + frame.plotHeight}' stroke='${style.grid}' stroke-width='1' />`,
@@ -121,7 +125,7 @@ const svgSpeedGrid = (frame: PlotFrame, style: GraphPalette, unit: SpeedUnit): s
  */
 const svgRpmGrid = (frame: PlotFrame, style: GraphPalette): string => {
 	const parts: string[] = [];
-	for (let r = GRAPH_LIMITS.rpmStep; r <= frame.maxRpm; r += GRAPH_LIMITS.rpmStep) {
+	for (let r = Math.max(GRAPH_LIMITS.rpmStep, Math.ceil((frame.minRpm ?? 0) / GRAPH_LIMITS.rpmStep) * GRAPH_LIMITS.rpmStep); r <= frame.maxRpm; r += GRAPH_LIMITS.rpmStep) {
 		const y = toY(frame, r).toFixed(1);
 		parts.push(
 			`<line x1='${frame.paddingLeft}' y1='${y}' x2='${frame.paddingLeft + frame.plotWidth}' y2='${y}' stroke='${style.grid}' stroke-width='1' />`,
@@ -185,30 +189,36 @@ const svgShiftDrops = (frame: PlotFrame, circM: number, redline: number, style: 
  * @param canvas Graph canvas used for sizing.
  * @return SVG markup string, or null when the tire is invalid.
  */
-export const buildGraphSvg = (canvas: HTMLCanvasElement): string | null => {
+export const buildGraphSvg = (canvas: HTMLCanvasElement, metadata = ''): string | null => {
 	const tire = parseTire(state.primaryTire);
 	if (!tire) {
 		return null;
 	}
 	const frame = buildFrame(canvas);
+	if (state.graphMode === 'force') {
+		return buildForceGraphSvg(frame, svgSpeedGrid(frame, getGraphStyle(), state.unit), metadata);
+	}
 	const circM = effectiveCircumferenceM(tire, state.rollingFactor);
 	const style = getGraphStyle();
 	const redline = state.primaryRedline;
 	const gearLines = state.gears.map((g, i) => svgGearLine(frame, circM, g, state.primaryFd, redline, i)).join('');
-	const redY = toY(frame, redline).toFixed(1);
+	const redY = Math.max(frame.paddingTop, Math.min(frame.paddingTop + frame.plotHeight, toY(frame, redline))).toFixed(1);
 	const label = getUnitLabel(state.unit);
 	const title = `HAGURUMA - ${state.primaryTire} · ${state.primaryFd.toFixed(2)} FD · ${redline} RPM`;
 	return [
-		`<svg xmlns='http://www.w3.org/2000/svg' width='${frame.width}' height='${frame.height}' viewBox='0 0 ${frame.width} ${frame.height}'>`,
-		`<rect width='${frame.width}' height='${frame.height}' fill='${style.background}' />`,
+		`<svg xmlns='http://www.w3.org/2000/svg' width='${frame.width}' height='${frame.height + (metadata ? 40 : 0)}' viewBox='0 0 ${frame.width} ${frame.height + (metadata ? 40 : 0)}'>`,
+		`<rect width='${frame.width}' height='${frame.height + (metadata ? 40 : 0)}' fill='${style.background}' />`,
+		`<defs><clipPath id='plot'><rect x='${frame.paddingLeft}' y='${frame.paddingTop}' width='${frame.plotWidth}' height='${frame.plotHeight}' /></clipPath></defs>`,
 		svgSpeedGrid(frame, style, state.unit),
 		svgRpmGrid(frame, style),
 		`<rect x='${frame.paddingLeft}' y='${frame.paddingTop}' width='${frame.plotWidth}' height='${Math.max(0, Number(redY) - frame.paddingTop)}' fill='${style.redlineFill}' />`,
 		`<line x1='${frame.paddingLeft}' y1='${redY}' x2='${frame.paddingLeft + frame.plotWidth}' y2='${redY}' stroke='${style.redlineLine}' stroke-width='1.5' stroke-dasharray='6 4' />`,
-		gearLines,
+		`<g clip-path='url(#plot)'>${gearLines}`,
 		svgShiftDrops(frame, circM, redline, style),
+		`</g>`,
 		`<text x='${frame.paddingLeft}' y='${frame.height - 8}' fill='${style.axisText}' font-size='11'>${label}</text>`,
 		`<text x='${frame.paddingLeft + frame.plotWidth}' y='${frame.height - 8}' fill='${style.axisText}' font-size='11' text-anchor='end'>${title}</text>`,
+		metadata ? `<text x='12' y='${frame.height + 25}' fill='${style.axisText}' font-size='11'>${escapeSvgText(metadata)}</text>` : '',
 		`</svg>`,
 	].join('');
 };
@@ -218,8 +228,8 @@ export const buildGraphSvg = (canvas: HTMLCanvasElement): string | null => {
  * @param canvas Graph canvas used for sizing.
  * @return void
  */
-export const exportGraphSvg = (canvas: HTMLCanvasElement): void => {
-	const svg = buildGraphSvg(canvas);
+export const exportGraphSvg = (canvas: HTMLCanvasElement, metadata = ''): void => {
+	const svg = buildGraphSvg(canvas, metadata);
 	if (!svg) {
 		return;
 	}

@@ -56,6 +56,7 @@ export const drawPrimaryCurves = (
 		const redlineSpeed = calculateSpeed(redline, gearRatio, finalDrive, circM, unit);
 		const endX = toX(frame, redlineSpeed);
 		const endY = toY(frame, redline);
+		drawGearFill(ctx, frame, endX, endY, color);
 		ctx.strokeStyle = color;
 		ctx.lineWidth = 2.5;
 		ctx.beginPath();
@@ -66,6 +67,29 @@ export const drawPrimaryCurves = (
 		drawGearLabel(ctx, frame, redlineSpeed, redline, idx, color);
 	});
 	return peaks;
+};
+
+/**
+ * @brief Fade each gear's operating band toward the plot baseline.
+ * @param ctx Rendering context.
+ * @param frame Plot geometry.
+ * @param endX Redline X coordinate.
+ * @param endY Redline Y coordinate.
+ * @param color Gear color.
+ * @return void
+ */
+const drawGearFill = (ctx: CanvasRenderingContext2D, frame: PlotFrame, endX: number, endY: number, color: string): void => {
+	const bottom = frame.paddingTop + frame.plotHeight;
+	const fill = ctx.createLinearGradient(0, endY, 0, bottom);
+	fill.addColorStop(0, `${color}22`);
+	fill.addColorStop(1, `${color}00`);
+	ctx.fillStyle = fill;
+	ctx.beginPath();
+	ctx.moveTo(toX(frame, 0), toY(frame, 0));
+	ctx.lineTo(endX, endY);
+	ctx.lineTo(endX, bottom);
+	ctx.closePath();
+	ctx.fill();
 };
 
 /**
