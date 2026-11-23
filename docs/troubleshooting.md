@@ -1,5 +1,7 @@
 # Troubleshooting
 
+[← README](../README.md) · [Docs index](README.md)
+
 This page covers observable problems: rejected inputs, suspicious results, import failures, stored-data recovery, stale offline assets, sharing limits, platform features and the native build. It does not restate the physics — for why a model behaves as it does, read [../MATH.md](../MATH.md). For the exact shape and limits of every import and export, read [data-formats.md](data-formats.md).
 
 Two things apply to everything below:

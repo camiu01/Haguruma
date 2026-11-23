@@ -1,5 +1,7 @@
 # Testing
 
+[← README](../README.md) · [Docs index](README.md)
+
 Haguruma is a pure client-side SPA with no backend: physics, codec and
 presentation modules are unit-tested with Vitest, the vehicle catalog is
 checked as data, and one warm-run timing guard keeps the acceleration solver

@@ -1,5 +1,7 @@
 # Deployment
 
+[← README](../README.md) · [Docs index](README.md)
+
 Haguruma ships to three targets from one Vite build: a static web bundle
 (`dist/`), the same bundle published to GitHub Pages, and a Capacitor-wrapped
 debug APK for Android. There is no server component and no database; deployment

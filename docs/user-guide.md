@@ -1,5 +1,7 @@
 # HAGURUMA — User Guide
 
+[← README](../README.md) · [Docs index](README.md)
+
 HAGURUMA plots engine RPM against vehicle speed for every gear, computes the RPM you land on after each upshift, estimates road-load physics (mass, aero drag, rolling resistance, grade), and suggests shift points from tractive-force analysis.
 
 It is a single-page app with no backend. Everything you enter stays in your browser (localStorage) unless you deliberately share a link or export a file.
