@@ -232,3 +232,9 @@ Layer switches live in `state.graphLayers` (`core/models.ts`). The four `[data-g
 - `dynamics-share.ts` appends validated non-default `d_*`, `rg_dp/af/cl/tv/hd/ha` and `crg_*` sidecars. Never change the frozen v1 compact payload; merge sidecars after decoding its running-gear blocks.
 - The efficiency map and ABS/kinetic-slip constants are engineering assumptions, not manufacturer-verified data. Keep that caveat in the UI and MATH.md.
 - Run `npm run bench` for anchor/64-point dyno/active-AWD timings; `tests/accel-performance.test.ts` guards a warm median below 3 ms.
+
+## Documentation conventions
+
+README, TODO, CHANGELOG and `docs/` follow the shared rules in
+[CONTRIBUTING.md](CONTRIBUTING.md#documentation-conventions). Read them before editing any Markdown
+file, and never add AI attribution lines to commits or pull requests.
