@@ -47,3 +47,7 @@ Thumbs.db
 # Local analysis tooling (code graph index, design tooling state)
 .codegraph/
 .impeccable/
+
+# Windows folder customisation (FolderMania)
+desktop.ini
+.foldermania*

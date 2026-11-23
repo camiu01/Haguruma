@@ -1,5 +1,7 @@
 # Vehicle presets and the catalog
 
+[← README](../README.md) · [Docs index](README.md)
+
 A preset is a starting point for the primary or secondary vehicle: tire size, final drive, rev limiter, gear ratios, road-load data and running-gear parameters. Loading one fills the inputs; it does not lock them.
 
 The catalog is a convenience list for comparison work, not a specification database. Read the [provenance](#provenance) section before quoting any value from it.

@@ -1,5 +1,7 @@
 # Data formats
 
+[← README](../README.md) · [Docs index](README.md)
+
 HAGURUMA is a client-side single-page app: every format below is read and written in the browser, and no file leaves the device. This is the canonical reference for those formats; limits, ranges and rejection rules are quoted from the implementing module, cited in each section. The physics that consumes imported data is in [../MATH.md](../MATH.md); presets and the catalog contract are in [presets.md](presets.md), the UI walkthrough in [user-guide.md](user-guide.md), and failure symptoms in [troubleshooting.md](troubleshooting.md).
 
 ## Summary

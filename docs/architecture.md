@@ -1,5 +1,7 @@
 # Architecture
 
+[← README](../README.md) · [Docs index](README.md)
+
 This document describes the code that exists. It covers the directory layout, what each module owns, how a change flows from an input to the screen, and where to add new behavior. The mandatory coding conventions live in [../AGENTS.md](../AGENTS.md), and the physics lives in [../MATH.md](../MATH.md).
 
 ## Shape of the application

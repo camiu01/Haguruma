@@ -1,10 +1,18 @@
-# HAGURUMA
+<div align="center">
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.4.5-blue.svg)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.2.0-purple.svg)](https://vitejs.dev/)
-[![Vitest](https://img.shields.io/badge/Vitest-1.6.0-green.svg)](https://vitest.dev/)
-[![PWA](https://img.shields.io/badge/PWA-ready-purple.svg)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
+# HAGURUMA
+### Browser-based gearing and shift-point calculator
+
+[![License GPLv3](https://img.shields.io/badge/License_GPLv3-blue)](LICENSE)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-5A0FC8?logo=pwa&logoColor=white)
+
+<img src="docs/assets/app-desktop-dark.png" alt="Haguruma desktop view, dark theme" width="640" />
+
+[Live app](https://camiu01.github.io/Haguruma/) · [Math model](MATH.md) · [What it does](#what-it-does) · [Getting started](#getting-started) · [Usage](#usage) · [Configuration](#configuration) · [How it works](#how-it-works) · [Limitations](#limitations) · [Development](#development) · [License](#license)
+
+</div>
 
 HAGURUMA is a client-side TypeScript single-page application for exploring
 vehicle setups: it plots engine RPM against vehicle speed for every gear,
@@ -19,23 +27,6 @@ parameters are encoded in URL hashes.
 Architecture** — Version **0.9.0** (`package.json`). The physics model, its
 assumptions and its validation anchors are documented in
 [MATH.md](MATH.md).
-
-[What it does](#what-it-does) · [Requirements](#requirements) ·
-[Build and run](#build-and-run) ·
-[Controls and everyday use](#controls-and-everyday-use) ·
-[Configuration](#configuration) · [Architecture](#architecture) ·
-[Limitations and troubleshooting](#limitations-and-troubleshooting) ·
-[Development](#development) · [Credits and license](#credits-and-license)
-
-## See it in action
-
-| Desktop, dark theme | Desktop, light theme |
-|:---:|:---:|
-| ![Desktop dark](docs/assets/app-desktop-dark.png) | ![Desktop light](docs/assets/app-desktop-light.png) |
-
-| Tools column | Mobile |
-|:---:|:---:|
-| ![Tools dark](docs/assets/app-tools-dark.png) | ![Mobile dark](docs/assets/app-mobile-dark.png) |
 
 ## What it does
 
@@ -66,7 +57,19 @@ canonical page: [docs/presets.md](docs/presets.md),
 [docs/data-formats.md](docs/data-formats.md) and
 [docs/testing.md](docs/testing.md).
 
-## Requirements
+### See it in action
+
+| Desktop, dark theme | Desktop, light theme |
+|:---:|:---:|
+| ![Desktop dark](docs/assets/app-desktop-dark.png) | ![Desktop light](docs/assets/app-desktop-light.png) |
+
+| Tools column | Mobile |
+|:---:|:---:|
+| ![Tools dark](docs/assets/app-tools-dark.png) | ![Mobile dark](docs/assets/app-mobile-dark.png) |
+
+## Getting started
+
+### Requirements
 
 | Purpose | Requirement |
 |:---|:---|
@@ -75,28 +78,28 @@ canonical page: [docs/presets.md](docs/presets.md),
 | Build the Android APK locally | JDK **21**, Android SDK platform `android-35`, build-tools `35.0.0`, and the committed Gradle wrapper under `android/`. The CI workflow installs exactly these. |
 | Clone the repository | Git (optional — the repo is not required to use a published build). |
 
-## Build and run
+### Build and run
 
-### 1. Prerequisites
+#### 1. Prerequisites
 
 **Node.js 20 or newer** with npm (all three GitHub workflows pin Node 20; no
 `engines` field is declared in `package.json`), plus Git for cloning. See
 [Requirements](#requirements) for the Android toolchain.
 
-### 2. Clone
+#### 2. Clone
 
 ```bash
 git clone https://github.com/camiu01/haguruma.git
 cd haguruma
 ```
 
-### 3. Install dependencies
+#### 3. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 4. Run locally
+#### 4. Run locally
 
 ```bash
 npm run dev   # Vite dev server on http://localhost:5173
@@ -110,7 +113,7 @@ npx tsc --noEmit   # typecheck, no output on success
 npm test           # vitest run
 ```
 
-### 5. Build and preview
+#### 5. Build and preview
 
 ```bash
 npm run build    # = npx tsc --noEmit && npx vite build → dist/
@@ -126,7 +129,8 @@ Optional extras live outside this quick start: the benchmark
 (`npm run androidAPP`) in [Development](#development) and
 [docs/deployment.md](docs/deployment.md).
 
-## Controls and everyday use
+<a id="controls-and-everyday-use"></a>
+## Usage
 
 **Header.** The fixed top bar holds the hamburger drawer button and two
 readout chips kept live by `header-bar.ts`: the current speed unit and the
@@ -208,7 +212,8 @@ Exact keys and ranges: [docs/data-formats.md](docs/data-formats.md).
 gearing detail, Full exposes everything (including the differential dynamics
 fields). Level changes re-run `applySetupLevel()` and then `renderAll()`.
 
-## Architecture
+<a id="architecture"></a>
+## How it works
 
 One mutable state singleton feeds one renderer; the physics lives in pure,
 unit-tested modules:
@@ -237,7 +242,8 @@ unit-tested modules:
 The full directory tree, module tables and render order live in
 [docs/architecture.md](docs/architecture.md).
 
-## Limitations and troubleshooting
+<a id="limitations-and-troubleshooting"></a>
+## Limitations
 
 - **Every number is a model estimate.** No manufacturer data is bundled; the
   efficiency map, ABS constants and compound gains are engineering assumptions
@@ -328,7 +334,8 @@ Conventional Commits.
 | Errors and recovery | [docs/troubleshooting.md](docs/troubleshooting.md) |
 | Release history | [CHANGELOG.md](CHANGELOG.md) · Roadmap [TODO.md](TODO.md) |
 
-## Credits and license
+<a id="credits-and-license"></a>
+## License
 
 Maintained by **Camiu** ([@camiu01](https://github.com/camiu01)).
 
