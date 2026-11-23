@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@capacitor/android": "7.6.9",
-    "@capacitor/core": "7.6.9",
+    "@capacitor/core": "8.6.2",
     "qrcode": "1.5.4"
   }
 }
