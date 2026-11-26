@@ -15,6 +15,7 @@ For work that is still open, see [TODO.md](TODO.md). For what each capability do
 
 ### Changed
 
+- Relicensed from GPL-3.0-only to AGPL-3.0-or-later. Releases up to v0.9.0 remain available under GPL-3.0-only.
 - Documentation aligned with the shared camiu01 conventions: README layout, TODO grouped by area, this changelog format and the docs/ index.
 
 ## [0.9.0] - 2026-10-23

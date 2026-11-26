@@ -3,7 +3,7 @@
 # HAGURUMA
 ### Browser-based gearing and shift-point calculator
 
-[![License GPLv3](https://img.shields.io/badge/License_GPLv3-blue)](LICENSE)
+[![License AGPL-3.0](https://img.shields.io/badge/License_AGPL--3.0-blue)](LICENSE)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-5A0FC8?logo=pwa&logoColor=white)
@@ -348,4 +348,4 @@ Share Tech / Share Tech Mono, loaded from Google Fonts; drawer and header icons
 from [Icons8](https://icons8.com) (used under its free license — see the
 [Icons8 terms](https://icons8.com/license)).
 
-Licensed under **GPL-3.0-only** — see [LICENSE](LICENSE).
+Licensed under **AGPL-3.0-or-later** — see [LICENSE](LICENSE) and [NOTICE](NOTICE). Releases up to v0.9.0 were published under GPL-3.0-only.
