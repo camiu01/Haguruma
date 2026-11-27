@@ -54,7 +54,7 @@ src/
     card/                          # base Card + one file per specialized card + index.ts barrel
   views/render-all.ts              # renderGraph + renderTable + KPI/readout syncs
   styles/                          # main.css hub + tokens/base/drawer/components/shell/overrides/setup-guide/telemetry/print modules
-capacitor.config.ts                # native wrapper (webDir dist)
+capacitor.config.json              # native wrapper (webDir dist)
 android/                           # committed Capacitor scaffold (generated outputs ignored)
 ```
 

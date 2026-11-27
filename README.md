@@ -181,7 +181,7 @@ backend and no `.env`-style settings to supply. Runtime choices — language,
 speed/power unit, theme, setup level — are made in the UI and persisted in the
 browser (`localStorage` keys below). Development and build settings live in
 repository config files (`vite.config.ts`, `tsconfig.json`,
-`postcss.config.cjs`, `tailwind.config.cjs`, `capacitor.config.ts`) and apply
+`postcss.config.cjs`, `tailwind.config.cjs`, `capacitor.config.json`) and apply
 only when building from source. Not every piece of state is persisted: the
 current setup itself (including an imported dyno curve) lives in memory and is
 carried only by the URL hash when shared — see below.

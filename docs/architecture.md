@@ -71,7 +71,7 @@ src/
   styles/                          # main.css hub + tokens/base/drawer/components/controls/shell/overrides/
                                    # setup-guide/telemetry/print/dynamics/graph-interaction modules
 index.html                         # shell layout; feature shells inject into mount points
-capacitor.config.ts                # native wrapper (webDir: dist)
+capacitor.config.json              # native wrapper (webDir: dist)
 android/                           # committed Capacitor scaffold; generated outputs are ignored
 tests/                             # vitest suites mirroring src/, plus dynamics-fixtures.ts and the benchmark
 ```
