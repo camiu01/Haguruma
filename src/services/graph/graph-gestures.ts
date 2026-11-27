@@ -185,20 +185,81 @@ const onWheel = (refs: ElementRefs, event: WheelEvent): void => {
 	}
 	event.preventDefault();
 	const frame = liveFrame();
-	const rect = refs.graphSvg.getBoundingClientRect();
-	if (!frame || rect.width <= 0 || rect.height <= 0) {
+	const anchor = frame ? anchorAt(refs, frame, event.clientX, event.clientY) : null;
+	if (!frame || !anchor) {
 		return;
 	}
-	const userX = ((event.clientX - rect.left) / rect.width) * frame.width;
-	const userY = ((event.clientY - rect.top) / rect.height) * frame.height;
-	const anchor = {
-		speed: clampNum(speedAtX(frame, userX), frame.window.minKmh, frame.window.maxKmh),
-		rpm: clampNum(rpmAtY(frame, userY), frame.window.minRpm, frame.window.maxRpm),
-	};
 	const { maxSpeed, maxRpm } = currentAxisCeilings();
 	const factor = event.deltaY < 0 ? 1 / WHEEL_STEP : WHEEL_STEP;
 	storeWindow(zoomWindow(frame.window, factor, maxSpeed, maxRpm, anchor));
 	renderGraph(refs);
+};
+
+/**
+ * @brief Convert a viewport point into the speed/RPM value under it.
+ * @param refs Cached DOM handles.
+ * @param frame Frame the plot is composed with.
+ * @param clientX Viewport X in pixels.
+ * @param clientY Viewport Y in pixels.
+ * @return Zoom anchor, null while the plot has no measurable size.
+ */
+const anchorAt = (refs: ElementRefs, frame: PlotFrame, clientX: number, clientY: number): { speed: number; rpm: number } | null => {
+	const rect = refs.graphSvg.getBoundingClientRect();
+	if (rect.width <= 0 || rect.height <= 0) {
+		return null;
+	}
+	const userX = ((clientX - rect.left) / rect.width) * frame.width;
+	const userY = ((clientY - rect.top) / rect.height) * frame.height;
+	return {
+		speed: clampNum(speedAtX(frame, userX), frame.window.minKmh, frame.window.maxKmh),
+		rpm: clampNum(rpmAtY(frame, userY), frame.window.minRpm, frame.window.maxRpm),
+	};
+};
+
+/** Active touch points on the plot, by pointer id. */
+const touches = new Map<number, { x: number; y: number }>();
+
+/** Two-finger gesture: start distance, start window and the anchored value. */
+let pinch: { distance: number; window: GraphWindow; anchor: { speed: number; rpm: number } } | null = null;
+
+/**
+ * @brief Distance between the first two active touch points.
+ * @return Distance in viewport pixels.
+ */
+const touchDistance = (): number => {
+	const [a, b] = [...touches.values()];
+	return Math.hypot(a.x - b.x, a.y - b.y);
+};
+
+/**
+ * @brief Start a pinch when a second finger lands; the pan of the first one stops.
+ * @param refs Cached DOM handles.
+ * @return void
+ */
+const startPinch = (refs: ElementRefs): void => {
+	const frame = liveFrame();
+	const [a, b] = [...touches.values()];
+	const anchor = frame ? anchorAt(refs, frame, (a.x + b.x) / 2, (a.y + b.y) / 2) : null;
+	if (!frame || !anchor || touchDistance() <= 0) {
+		return;
+	}
+	drag = null;
+	pinch = { distance: touchDistance(), window: frame.window, anchor };
+};
+
+/**
+ * @brief Zoom around the pinch midpoint by the finger-distance ratio.
+ * @param refs Cached DOM handles.
+ * @return void
+ */
+const updatePinch = (refs: ElementRefs): void => {
+	const distance = touchDistance();
+	if (!pinch || distance <= 0) {
+		return;
+	}
+	const { maxSpeed, maxRpm } = currentAxisCeilings();
+	storeWindow(zoomWindow(pinch.window, pinch.distance / distance, maxSpeed, maxRpm, pinch.anchor));
+	scheduleRender(refs);
 };
 
 /**
@@ -217,6 +278,13 @@ const onPointerDown = (refs: ElementRefs, event: PointerEvent): void => {
 	if (event.button !== 0 || !viewportActive()) {
 		return;
 	}
+	if (event.pointerType === 'touch') {
+		touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+		if (touches.size === 2) {
+			startPinch(refs);
+			return;
+		}
+	}
 	drag = { clientX: event.clientX, clientY: event.clientY, window: activeWindow(), moved: false, pointerId: event.pointerId };
 	try {
 		refs.graphSvg.setPointerCapture(event.pointerId);
@@ -232,6 +300,13 @@ const onPointerDown = (refs: ElementRefs, event: PointerEvent): void => {
  * @return void
  */
 const onPointerMove = (refs: ElementRefs, event: PointerEvent): void => {
+	if (touches.has(event.pointerId)) {
+		touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+		if (pinch) {
+			updatePinch(refs);
+			return;
+		}
+	}
 	if (!drag || event.pointerId !== drag.pointerId) {
 		return;
 	}
@@ -256,6 +331,10 @@ const onPointerMove = (refs: ElementRefs, event: PointerEvent): void => {
  * @return void
  */
 const onPointerUp = (refs: ElementRefs, event: PointerEvent): void => {
+	touches.delete(event.pointerId);
+	if (touches.size < 2) {
+		pinch = null;
+	}
 	if (!drag || event.pointerId !== drag.pointerId) {
 		return;
 	}
@@ -312,4 +391,9 @@ export const bindGraphGestures = (refs: ElementRefs): void => {
 	refs.graphSvg.addEventListener('pointerup', (event) => onPointerUp(refs, event));
 	refs.graphSvg.addEventListener('pointercancel', (event) => onPointerUp(refs, event));
 	refs.graphSvg.addEventListener('keydown', (event) => onKeyDown(refs, event));
+	refs.graphSvg.addEventListener('dblclick', () => {
+		if (viewportActive()) {
+			resetGraphWindow(refs);
+		}
+	});
 };

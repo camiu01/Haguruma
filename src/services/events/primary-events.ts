@@ -1,11 +1,13 @@
 /**
  * @file primary-events.ts
- * @brief Primary setup inputs: final drive, redline and graph max.
+ * @brief Primary setup inputs: final drive, redline, graph max and its auto-fit.
  *
  * Tire geometry is owned by `setup-controls.ts` (pills + validation); the
  * hidden `#primary-tire` carrier is written by that module.
  */
 import { state } from '../../core/state/app-state';
+import { effectiveCircumferenceM, parseTire } from '../../core/math/tire-math';
+import { autoFitMaxSpeed } from '../../core/math/speed-math';
 import type { ElementRefs } from '../dom/element-refs';
 import { renderGraph } from '../graph/graph-renderer';
 
@@ -37,5 +39,15 @@ export const bindPrimaryEvents = (refs: ElementRefs, render: () => void): void =
 			state.maxGraphSpeed = v;
 			renderGraph(refs);
 		}
+	});
+	document.getElementById('btn-autofit-speed')?.addEventListener('click', () => {
+		const circM = effectiveCircumferenceM(parseTire(state.primaryTire), state.rollingFactor);
+		if (!(circM > 0)) {
+			return;
+		}
+		state.maxGraphSpeed = autoFitMaxSpeed(state.gears, state.primaryFd, circM, state.primaryRedline, state.unit);
+		state.graphWindow = null;
+		refs.graphMaxSpeed.value = String(state.maxGraphSpeed);
+		render();
 	});
 };

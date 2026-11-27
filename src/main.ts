@@ -12,6 +12,7 @@ import { syncRunningGearInputs } from './services/events/running-gear-events';
 import { refreshPresetOptions } from './services/events/preset-events';
 import { syncComparisonInputs, applyComparisonVisibility } from './services/events/comparison-events';
 import { restoreFromUrl } from './services/events/share-events';
+import { bindHistoryEvents } from './services/events/history-events';
 import { renderCustomList } from './components/custom-car';
 import { initTheme } from './core/theme/theme';
 import { initPowerUnit, initUnit, formatPowerInput } from './core/units/unit-utils';
@@ -100,6 +101,7 @@ const bootstrap = (): void => {
 	restoreFromUrl(refs, render);
 	renderCruise(refs);
 	renderAll(refs);
+	bindHistoryEvents(refs, render);
 };
 
 /**

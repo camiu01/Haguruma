@@ -126,7 +126,7 @@ const gearRowHtml = (binding: StackBinding, idx: number, ratio: number): string 
 	const removable = binding.gears.length > 1 ? removeButtonHtml(binding, idx) : '';
 	return (
 		`<span class='w-1.5 h-4 rounded-sm' style='background-color: ${color}'></span>` +
-		`<span class='w-5 text-center font-mono fs-tiny font-bold' style='color: ${color}' title='${t('gear.prefix')} ${idx + 1}'>G${idx + 1}</span>` +
+		`<span class='w-5 text-center font-mono fs-tiny font-bold' style='color: var(--gear-${(idx % 8) + 1}, ${color})' title='${t('gear.prefix')} ${idx + 1}'>G${idx + 1}</span>` +
 		`<input type='number' inputmode='decimal' step='0.001' min='${GRAPH_LIMITS.minGearRatio}' max='${GRAPH_LIMITS.maxGearRatio}' value='${ratio}' data-index='${idx}' aria-label='${t('gear.prefix')} ${idx + 1}' class='${binding.inputClass} w-16 bg-transparent text-right font-mono fs-title font-semibold text-text-output outline-none' />` +
 		`<span class='font-mono fs-tiny text-text-muted'>:1</span>` +
 		`<span class='ml-auto whitespace-nowrap font-mono fs-tiny text-text-dim' data-tot-index='${idx}'>${formatTot(binding, ratio)}</span>` +

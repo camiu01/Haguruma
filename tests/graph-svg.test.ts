@@ -14,7 +14,7 @@ import { state, defaultState } from '../src/core/state/app-state';
 import { getGraphStyle } from '../src/services/graph/graph-theme';
 import { axisSpeedStep, buildPlotFrame, plotMaxRpm, rpmAtY, speedAtX, toX, toY } from '../src/services/graph/svg-frame';
 import { buildSpeedTicks } from '../src/services/graph/svg-axes';
-import { buildGearRays, buildPrimaryLayer } from '../src/services/graph/svg-curves';
+import { buildGearFills, buildGearRays, buildPrimaryLayer } from '../src/services/graph/svg-curves';
 import { buildPowerEnvelope, buildPowerNodes, crossingSpeedKmh } from '../src/services/graph/svg-power';
 import { buildSceneData, composeNodes } from '../src/services/graph/graph-scene';
 import type { SvgPrim } from '../src/services/graph/svg-nodes';
@@ -136,6 +136,21 @@ describe('gear rays and the aero wall fade', () => {
 		expect(buildGearRays({ ...baseInput, wallSpeed: null }).every((ray) => ray.wallSpeed === null)).toBe(true);
 		const above = buildGearRays({ ...baseInput, wallSpeed: 500 });
 		expect(above.every((ray) => ray.wallSpeed === null)).toBe(true);
+	});
+
+	it('fills each gear from its post-shift landing RPM up to the limiter', () => {
+		const input = { ...baseInput, wallSpeed: null };
+		const rays = buildGearRays(input);
+		const [defs, ...fills] = buildGearFills(input, rays);
+		expect(defs.tag).toBe('defs');
+		expect(defs.children).toHaveLength(2);
+		expect(fills).toHaveLength(2);
+		const landingRpm = (7200 * 0.68) / 3.58;
+		const [landX, landY] = String(fills[1].attrs?.points).split(' ')[0].split(',').map(Number);
+		expect(landY).toBeCloseTo(toY(input.frame, landingRpm), 6);
+		expect(landX).toBeCloseTo(toX(input.frame, (rays[1].topSpeed * landingRpm) / 7200), 6);
+		expect(String(fills[0].attrs?.points).startsWith(`${toX(input.frame, 0)},${toY(input.frame, 0)}`)).toBe(true);
+		expect(buildGearFills(input, [])).toEqual([]);
 	});
 
 	it('draws one solid segment plus one faded tail per cut ray', () => {

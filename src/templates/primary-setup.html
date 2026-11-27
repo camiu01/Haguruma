@@ -49,7 +49,10 @@
 						<select id='drivetrain-opt-variant' class='hidden mt-1.5 w-full field-input field-input--compact' data-i18n-tip='primary.drivOptTip' title='Aftermarket gearsets, final drives and LSDs for this chassis' aria-label='Aftermarket gearsets, final drives and LSDs for this chassis'></select>
 						<div class='mt-1.5'>
 							<label class='field-label field-label--mono' for='graph-max-speed'><span data-i18n='primary.maxSpeed'>Graph Max Speed</span> (<span class='unit-label'>km/h</span>)</label>
-							<input type='number' inputmode='decimal' step='10' min='100' max='500' id='graph-max-speed' value='300' class='w-full field-input field-input--recessed field-input--compact' />
+							<div class='flex gap-1.5'>
+								<input type='number' inputmode='decimal' step='10' min='100' max='500' id='graph-max-speed' value='300' class='w-full field-input field-input--recessed field-input--compact' />
+								<button id='btn-autofit-speed' type='button' class='btn btn--sm btn--mono' data-i18n='primary.autoFit' data-i18n-tip='primary.autoFitTip'>Auto</button>
+							</div>
 						</div>
 						<!-- Gear ratio stack (nested, level-gated at Full) -->
 						<div class='mt-3 border-t border-border-hairline pt-2' data-accordion='gears'>

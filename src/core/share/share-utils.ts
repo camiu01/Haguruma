@@ -11,6 +11,7 @@ import { decodeCurvePoints, encodeCurvePoints } from './curve-share';
 import { decodeGripParams, encodeRunningGear, numParam } from './running-gear-share';
 import { decodeCompactHash, decodeCompactSetup, encodeCompactHash } from './share-compact';
 import { decodeDynamicsParams, encodeDynamicsParams } from './dynamics-share';
+import { decodeViewParams, encodeViewParams } from './view-share';
 
 /**
  * @brief Serialize current state into a compact hash string.
@@ -22,6 +23,7 @@ import { decodeDynamicsParams, encodeDynamicsParams } from './dynamics-share';
 export const encodeState = (s: AppState): string => {
 	const p = new URLSearchParams();
 	encodeDynamicsParams(p, s);
+	encodeViewParams(p, s);
 	if (encodeCompactPrimary(p, s)) {
 		return p.toString();
 	}
@@ -110,6 +112,7 @@ export const decodeState = (hash: string): Partial<AppState> => {
 		...decodeRoadParams(params),
 		...decodeEngineParams(params),
 		...decodeGripParams(params),
+		...decodeViewParams(params),
 	};
 	return { ...base, ...decodeDynamicsParams(params, base) };
 };

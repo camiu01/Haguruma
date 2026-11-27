@@ -24,7 +24,7 @@ session logs are stored locally in the browser, while shareable setup
 parameters are encoded in URL hashes.
 
 **Heuristic Application for Gear-ratio, Up-shift, & Redline Unit Mapping
-Architecture** — Version **0.9.0** (`package.json`). The physics model, its
+Architecture** — Version **1.0.0** (`package.json`). The physics model, its
 assumptions and its validation anchors are documented in
 [MATH.md](MATH.md).
 

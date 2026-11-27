@@ -1,6 +1,6 @@
 {
   "name": "haguruma",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "private": true,
   "license": "AGPL-3.0-or-later",
   "author": "Camiu (https://github.com/camiu01)",
@@ -11,13 +11,19 @@
     "preview": "vite preview",
     "test": "vitest run",
     "bench": "vitest bench --run",
-    "androidAPP": "npm run build && npx cap sync android && cd android && .\\gradlew.bat assembleDebug"
+    "androidAPP": "npm run build && npx cap sync android && cd android && .\\gradlew.bat assembleDebug",
+    "e2e": "playwright test",
+    "analyze": "vite build --mode analyze"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.1",
     "@capacitor/cli": "7.6.9",
+    "@playwright/test": "^1.65.1",
     "@types/qrcode": "1.5.6",
     "autoprefixer": "^10.7.0",
+    "fast-check": "^4.11.0",
     "postcss": "^8.5.33",
+    "rollup-plugin-visualizer": "^7.3.0",
     "tailwindcss": "^3.4.17",
     "typescript": "7.0.2",
     "vite": "8.3.8",

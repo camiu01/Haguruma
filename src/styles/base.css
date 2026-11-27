@@ -156,3 +156,16 @@ input[type='number'] {
 .custom-scroll::-webkit-scrollbar-thumb:hover {
 	background: var(--text-muted);
 }
+
+/* Edge-to-edge displays: keep content clear of notches, rounded corners and
+   the gesture bar in both orientations (viewport-fit=cover in index.html). */
+body {
+	padding-left: env(safe-area-inset-left);
+	padding-right: env(safe-area-inset-right);
+	padding-bottom: env(safe-area-inset-bottom);
+}
+#mobile-drawer {
+	padding-top: env(safe-area-inset-top);
+	padding-bottom: env(safe-area-inset-bottom);
+	padding-left: env(safe-area-inset-left);
+}

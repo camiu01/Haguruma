@@ -1,21 +1,12 @@
 # TODO
 
-> Last reviewed: 2026-11-23
+> Last reviewed: 2026-11-27
 
 Development task management for the Haguruma vehicle dynamics simulator.
 Open items carry their planned milestone in parentheses; completed items keep their original tags.
 
 ## Tests, CI and release
 
-- [ ] **Property-based testing with `fast-check` (v0.9.0)** — automated math tests on `speed-math.ts` and `traction-math.ts` to validate monotonicity and prevent `NaN` or `Infinity` `#tests`
-- [ ] **Bundle size & visualizer analyzer (v0.9.0)** — add `rollup-plugin-visualizer` to the Vite pipeline to monitor the PWA weight impact `#ci` `#perf`
-- [ ] **Ground truth test suite on official datasheets (v1.0.0)** — regression tests with <0.5% tolerance on gears and speeds computed at 1000 rpm / limiter for Miata NA6, S2000 AP1 and E46 M3 against factory data `#tests` `#physics`
-- [ ] **Canvas visual regression test (v1.0.0)** — automatic graphical snapshots in the CI test run to prevent visual drift on axes, fonts and color scales `#tests` `#ci`
-- [ ] **Release pipeline & signed Android APK (v1.0.0)** — GitHub Actions automation with verified ProGuard/R8 (`proguard-rules.pro`) to produce release-signed APKs downloadable as GitHub assets `#infra` `#android`
-- [ ] **Engineering documentation & handbook schema (v1.0.0)** — repository page or section formally documenting every physics and kinematic formula used `#docs`
-- [ ] **Automated changelog and versioning (v1.0.0)** — generate release notes from Conventional Commits and bump the version in `package.json` on release `#infra` `#docs`
-- [ ] **End-to-end smoke test in CI (v1.0.0)** — run the built app through `vite preview` with a headless browser to catch bootstrap, boot and render regressions `#tests` `#ci`
-- [ ] **Content Security Policy and privacy statement (v1.0.0)** — strict CSP meta/headers and an explicit no-telemetry, offline-only data statement `#security` `#docs`
 - [x] `dynamics-math.ts`: longitudinal/lateral load transfer, per-wheel loads, Kamm friction circle, differential torque bias, downforce, friction-limited drive force, critical wheelspin speed (+ `tests/dynamics-math.test.ts`)
 - [x] Build script fails on type errors (`npx tsc --noEmit && npx vite build`)
 - [x] README physics-engine module table (traction/speed/aero/dynamics/shift)
@@ -43,14 +34,6 @@ Open items carry their planned milestone in parentheses; completed items keep th
 
 ## Interface, mobile and accessibility
 
-- [ ] **Color-coded gear badges in the comparison table (deferred from v0.6.0)** — visually align the comparison rows with the colored dots of the primary gear stack via `gear-colors.ts` `#ux` `#theme`
-- [ ] **Compact mobile landscape layout (deferred from v0.6.0)** — `@media (max-height: 500px) and (orientation: landscape)` in `shell.css` / `drawer.css` to shrink the drawers and expand the plot full-viewport for in-cabin use `#mobile` `#ux`
-- [ ] **Keyboard-accessible tooltip readout (deferred from v0.6.0)** — `aria-live` region so the snapping HUD is announced without a pointer `#a11y` `#graph`
-- [ ] **First-paint theme flash guard (deferred from v0.6.0)** — apply the stored theme and language before first paint to remove the flash of the default theme on cold start `#theme` `#perf`
-- [ ] **Reduced-motion graph mode (deferred from v0.6.0)** — gate any animated crosshair, marker or curve transition behind `prefers-reduced-motion` `#a11y` `#graph`
-- [ ] **Extra languages with parity gate (v0.9.0)** — add German / Spanish / French dictionaries and extend the EN/IT parity test to every locale `#i18n` `#tests`
-- [ ] **WCAG AA accessibility & keyboard navigation audit (v1.0.0)** — verify all sliders, tab order, ARIA roles and color contrast across Light, Dark and OLED themes `#a11y` `#ux`
-- [ ] **Accessibility conformance report (v1.0.0)** — publish a short WCAG AA conformance note covering the audited themes and controls `#a11y` `#docs`
 - [x] Card component system (`components/card/`: base `Card`, one file per card, barrel)
 - [x] Per-language dictionaries (`dictionary.en.ts` / `dictionary.it.ts`, compile-time parity)
 - [x] Slide-over drawer: focus trap, Escape/backdrop close, scroll lock, focus restore
@@ -136,11 +119,6 @@ Open items carry their planned milestone in parentheses; completed items keep th
 
 ## Telemetry, export and data
 
-- [ ] **Zoom/pan window in the share URL (deferred from v0.6.0)** — encode the visible speed window (`z_` keys) next to the existing compact token so a zoomed view can be shared and restored `#share` `#graph`
-- [ ] **Export footer option (deferred from v0.6.0)** — optional legend/metadata strip (units, preset name, date) burned into the PNG/SVG export in `graph-export.ts` `#export` `#graph`
-- [ ] **Share protocol immutability (v1.0.0)** — rigid version prefix in the Base64URL payloads (`share-compact.ts`) and a golden URL test suite to guarantee full backward compatibility `#share` `#tests`
-- [ ] **Transparent custom-store migration (v1.0.0)** — full rehearsal of the saved `localStorage` settings migration with a locked `1.0.0` schema version against future field changes `#data` `#pwa`
-- [ ] **Cross-version data guarantees (v1.0.0)** — document and test the supported schema range for shared URLs and the custom store across every released major `#data` `#share`
 - [x] Share trigger as icon-only in header on mobile + FAB
 - [x] Share URL encodes running gear (`rg_`/`crg_` keys); legacy hashes still decode
 - [x] Chart export to PNG and SVG (`graph-export.ts`) #export
@@ -164,9 +142,6 @@ Open items carry their planned milestone in parentheses; completed items keep th
 
 ## Graph and visualization
 
-- [ ] **Pinch-to-zoom and multi-touch pan (deferred from v0.6.0)** — touch gestures (`PointerEvents`) on the plot to zoom into speed windows and scroll the RPM range, with instant double-tap reset `#graph` `#mobile`
-- [ ] **Per-gear gradient fill (deferred from v0.6.0)** — translucent vertical fill fading to zero toward the X axis to highlight the useful power band and the rpm drop `#graph` `#ux`
-- [ ] **Axis auto-fit (deferred from v0.6.0)** — recompute `maxGraphSpeed` from the tallest gear's redline speed plus a configurable margin instead of relying on the manual value alone `#graph` `#ux`
 - [x] HiDPI canvas (`devicePixelRatio` capped at 2)
 - [x] ResizeObserver canvas auto-redraw
 - [x] Touch/pointer tooltip (tap-to-pin, dismiss on outside tap)
@@ -191,9 +166,6 @@ Open items carry their planned milestone in parentheses; completed items keep th
 
 ## Setup tools
 
-- [ ] **Interactive tire pyrometer analyzer (v0.9.0)** — input UI for tread temperatures (inner/center/outer on all 4 wheels) with camber, pressure and drift-instability diagnosis (single-tire 3-zone calculator shipped in v0.6.0) `#setup` `#dynamics`
-- [ ] **Setup conflict detector (v0.9.0)** — detection of contradictory adjustments inside the setup matrix (e.g. stiffer rear ARB combined with softer springs) `#setup` `#dynamics`
-- [ ] **Setup sensitivity analyzer (v0.9.0)** — rank which inputs (gear ratios, FD, tire, mass, grip) move the shift points and top speed the most, shown as a tornado chart `#setup` `#ux`
 - [x] Setup troubleshooting wizard + handbook view (Entry/Mid/Exit/Pyrometer/Procedure cards)
 - [x] Setup split and rename: wizard card retitled Setup/Assetto, feel/procedure handbook moved to a separate `data-accordion="handbook"` card with `nav.handbook` entry `#setup` `#ux`
 - [x] Merged Assetto card: wizard and handbook accordions under one `merged-card` with h2 title, like Vehicle Setup `#setup` `#ux`
@@ -215,9 +187,6 @@ Open items carry their planned milestone in parentheses; completed items keep th
 
 ## Android and PWA
 
-- [ ] **Android haptic feedback (v0.9.0)** — subtle haptics via `@capacitor/haptics` while scrubbing the shift-rpm cursor and when saving custom vehicles `#android` `#ux`
-- [ ] **Edge-to-edge layout & safe areas (v0.9.0)** — refine `env(safe-area-inset-*)` in `shell.css` for modern displays with notches and hidden system bars `#android` `#ux`
-- [ ] **Release-to-store pipeline (v1.0.0)** — publish the signed APK/AAB to a Play Store internal track alongside the GitHub release asset `#android` `#infra`
 - [x] Capacitor Android scaffold + manual Build APK workflow (debug artifact)
 - [x] manifest.webmanifest with standalone display, 192/512 maskable icons
 - [x] Service worker with offline-first app shell caching
@@ -298,6 +267,10 @@ Open items carry their planned milestone in parentheses; completed items keep th
 - [x] Multiple final-drive variants: optional `finalDrives` on `GearPreset` (must contain stock `fd`), Miata NA6 / AE86 / S2000 option lists, FD variant select under the primary input (`preset-events.ts` `syncFdVariants()`), validator + tests #presets #ux
 
 ## Milestone notes
+
+**v1.0.0 — Release (2026-11-27)**
+
+Every open item shipped or was confirmed already in the tree; see the 1.0.0 section of [CHANGELOG.md](CHANGELOG.md). New work starts here.
 
 **v0.5.0 milestone — Physics Polish & Dynamic Chassis Convergence (in development, last release 0.4.0)**
 

@@ -106,9 +106,21 @@ const fallbackCopy = (text: string): boolean => {
  * @return void
  */
 export const restoreFromUrl = (refs: ElementRefs, render: () => void): void => {
-	const patch = decodeState(window.location.hash);
+	applyHashState(refs, render, window.location.hash);
+};
+
+/**
+ * @brief Apply an encoded setup hash to state and realign every input.
+ * @brief Shared by the URL restore and the undo/redo history.
+ * @param refs Cached DOM handles.
+ * @param render Full refresh callback.
+ * @param hash Encoded setup, with or without leading #.
+ * @return True when at least one field was applied.
+ */
+export const applyHashState = (refs: ElementRefs, render: () => void, hash: string): boolean => {
+	const patch = decodeState(hash);
 	if (!applySharedState(patch)) {
-		return;
+		return false;
 	}
 	syncPrimaryInputs(refs);
 	syncRestoredCompInputs(refs);
@@ -118,6 +130,7 @@ export const restoreFromUrl = (refs: ElementRefs, render: () => void): void => {
 	syncUnitToggle(refs);
 	applyUnitLabels(refs);
 	renderGearsList(refs, () => render());
+	return true;
 };
 
 /**

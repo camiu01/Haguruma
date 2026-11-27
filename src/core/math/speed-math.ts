@@ -158,3 +158,29 @@ export const calculateRpm = (
 ): number => {
 	return rpmFromKmh(fromDisplaySpeed(speed, unit), gearRatio, finalDrive, tireCircumferenceMeters);
 };
+
+/**
+ * @brief Fit the graph speed axis to the tallest gear at the limiter.
+ * @brief The result is rounded up to the next 10 display units and clamped to
+ * @brief the 100-500 range accepted by the graph max-speed input.
+ * @param gears Gear ratios.
+ * @param finalDrive Differential ratio.
+ * @param tireCircumferenceMeters Rolling circumference in metres.
+ * @param redline Rev limiter in RPM.
+ * @param unit Display unit of the axis.
+ * @param margin Headroom above the top speed as a fraction (0.1 = 10%).
+ * @return Axis ceiling in display units.
+ */
+export const autoFitMaxSpeed = (
+	gears: number[],
+	finalDrive: number,
+	tireCircumferenceMeters: number,
+	redline: number,
+	unit: SpeedUnit = 'kmh',
+	margin = 0.1,
+): number => {
+	const tallest = gears.length > 0 ? Math.min(...gears) : 0;
+	const top = calculateSpeed(redline, tallest, finalDrive, tireCircumferenceMeters, unit);
+	const fitted = Math.ceil((top * (1 + Math.max(0, margin))) / 10) * 10;
+	return Math.min(500, Math.max(100, fitted));
+};

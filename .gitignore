@@ -51,3 +51,5 @@ Thumbs.db
 # Windows folder customisation (FolderMania)
 desktop.ini
 .foldermania*
+test-results/
+playwright-report/

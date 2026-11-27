@@ -1,7 +1,20 @@
 name: Build APK
 
+# Release-signed, R8-minified APK when the signing secrets are configured:
+#   ANDROID_KEYSTORE_BASE64  base64 of the release .jks keystore
+#   ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+# Without them the job falls back to a debug APK so forks still build.
+# With PLAY_SERVICE_ACCOUNT_JSON as well, a signed AAB goes to the Play
+# internal track (the app must already exist in the Play Console).
+
 on:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag to attach the APK to
+        type: string
+        required: true
   release:
     types: [published]
 
@@ -11,6 +24,9 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    env:
+      HAS_SIGNING: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      HAS_PLAY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -45,21 +61,64 @@ jobs:
       - name: Grant Gradle wrapper
         run: chmod +x android/gradlew
 
-      - name: Assemble debug APK
-        working-directory: android
-        run: ./gradlew assembleDebug
+      - name: Restore release keystore
+        if: env.HAS_SIGNING == 'true'
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.jks"
 
-      - name: Rename APK with release tag
-        run: mv android/app/build/outputs/apk/debug/app-debug.apk "android/app/build/outputs/apk/debug/haguruma-${{ github.ref_name }}.apk"
+      - name: Assemble signed release APK
+        if: env.HAS_SIGNING == 'true'
+        working-directory: android
+        env:
+          HAGURUMA_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+          HAGURUMA_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          HAGURUMA_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          HAGURUMA_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease
+          mkdir -p ../apk-out
+          mv app/build/outputs/apk/release/app-release.apk "../apk-out/haguruma-${{ inputs.tag || github.ref_name }}.apk"
+
+      - name: Verify APK signature
+        if: env.HAS_SIGNING == 'true'
+        run: '"$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" verify --print-certs apk-out/haguruma-*.apk'
+
+      - name: Assemble debug APK (no signing secrets)
+        if: env.HAS_SIGNING != 'true'
+        working-directory: android
+        run: |
+          ./gradlew assembleDebug
+          mkdir -p ../apk-out
+          mv app/build/outputs/apk/debug/app-debug.apk "../apk-out/haguruma-${{ inputs.tag || github.ref_name }}-debug.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
-          name: haguruma-debug-apk
-          path: android/app/build/outputs/apk/debug/haguruma-*.apk
+          name: haguruma-apk
+          path: apk-out/haguruma-*.apk
+
+      - name: Build signed App Bundle for Play
+        if: env.HAS_SIGNING == 'true' && env.HAS_PLAY == 'true'
+        working-directory: android
+        env:
+          HAGURUMA_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+          HAGURUMA_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          HAGURUMA_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          HAGURUMA_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease
+
+      - name: Publish to Play internal track
+        if: env.HAS_SIGNING == 'true' && env.HAS_PLAY == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.haguruma.app
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
 
       - name: Attach APK to release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || inputs.tag != ''
         uses: softprops/action-gh-release@v3
         with:
-          files: android/app/build/outputs/apk/debug/haguruma-*.apk
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          files: apk-out/haguruma-*.apk

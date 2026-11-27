@@ -6,6 +6,8 @@
 
 | Document | What it covers |
 | :--- | :--- |
+| [Accessibility](accessibility.md) | WCAG 2.1 AA conformance report: method, results per criterion and known limitations. |
+| [Privacy and CSP](privacy.md) | No-telemetry, offline-only data statement and the production Content Security Policy. |
 | [Architecture](architecture.md) | Directory layout, module ownership and data flow of the app as it exists today. |
 | [Data formats](data-formats.md) | HAGURUMA is a client-side single-page app: every format below is read and written in the browser, and no file leaves the device. |
 | [Deployment](deployment.md) | Haguruma ships to three targets from one Vite build: a static web bundle (`dist/`), the same bundle published to GitHub Pages, and a Capacitor-wrapped debug… |

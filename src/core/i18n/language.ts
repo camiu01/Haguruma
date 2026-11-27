@@ -100,11 +100,18 @@ export const applyI18n = (): void => {
 	});
 	document.querySelectorAll('[data-i18n-tip]').forEach((el) => {
 		const key = (el as HTMLElement).dataset.i18nTip as DictKey | undefined;
-		if (key) {
-			el.setAttribute('title', t(key));
-			el.setAttribute('data-tip', t(key));
-			el.setAttribute('aria-label', t(key));
+		if (!key) {
+			return;
 		}
+		el.setAttribute('title', t(key));
+		el.setAttribute('data-tip', t(key));
+		// A visible label stays the accessible name (WCAG 2.5.3); the tip becomes its description.
+		if ((el as HTMLElement).dataset.i18n) {
+			el.removeAttribute('aria-label');
+			el.setAttribute('aria-description', t(key));
+			return;
+		}
+		el.setAttribute('aria-label', t(key));
 	});
 };
 

@@ -300,3 +300,18 @@ curve=2000:180.0;4000:260.0;6000:240.0
 **Decode and unknown keys.** `decodeState` merges the decoders in this order: packed token, primary, comparison, road load, engine, running gear, and the dynamics sidecars last, so later groups override earlier ones and the sidecars win on top of everything else. Unknown keys are ignored, and a key whose value is missing or out of range is dropped without affecting the rest of the link. A packed token that fails to decode yields no fields at all, and the legacy token is tried only after the full token fails. An empty hash yields an empty patch.
 
 **QR payload.** The QR modal calls `syncUrlHash()` and encodes the full share URL (`src/core/share/qr-svg.ts`). The generator uses byte mode at error-correction level L, versions 1–10, a fixed mask and a 5-pixel module size. It returns an empty result when the payload exceeds version 10-L capacity (271 data bytes) or contains characters outside Latin-1; the modal then shows the "share URL too long" message instead of a code. Covered by `tests/share-utils.test.ts`, `tests/share-compact.test.ts`, `tests/dynamics-share.test.ts` and `tests/qr-svg.test.ts`.
+
+## 12. Compatibility guarantees (from v1.0.0)
+
+Shared links and saved cars outlive releases, so both formats are frozen at v1.0.0:
+
+| Format | Version marker | Guarantee |
+| :--- | :--- | :--- |
+| Packed share token `c=` | First byte `COMPACT_HASH_VERSION = 1` | Every 1.x release encodes a given setup to the same token and decodes every v1 token. A token with an unknown version byte is ignored, never misread. |
+| Verbose share keys (`tire`, `fd`, `g`, `curve`, `rg_*`, `crg_*`, `d_*`, `z`) | Key names | Keys are only ever added. Unknown keys are ignored; a missing key keeps the default. |
+| Zoom window `z=minKmh:maxKmh:minRpm:maxRpm` | — | Optional, added in 1.0.0. Invalid or out-of-range values are dropped. |
+| Custom store (`haguruma-custom-presets`) | `schemaVersion: 1` | Every 1.x release reads v1 envelopes and the pre-envelope bare map. A future schema version is refused instead of overwritten. |
+
+`tests/share-golden.test.ts` holds frozen URLs and the `tests/fixtures/custom-store-v1.json`
+fixture. Those literals must never be edited to make a test pass: a deliberate format change
+needs a new version byte or schema version plus a new fixture, with the old ones kept.

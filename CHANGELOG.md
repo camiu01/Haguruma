@@ -7,17 +7,77 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Completed work, grouped by milestone. Entries record what was implemented and why; they are not release announcements.
 
-Git tags record the released milestones: `v0.2.0`, `v0.3.0`, `v0.4.0`, `v0.5.0`, `v0.5.1`, `v0.6.0`, `v0.7.0-alpha.1`, `v.0.7.0` and `v0.8.0` (plus a `backup/local-0.6-0.9-pass` backup tag). `package.json` currently reports **0.9.0**, while `android/app/build.gradle` still carries `versionName "0.8.0"` with `versionCode 11` — the native version lags the web version. The 0.5.x sections below shipped as `v0.5.0` / `v0.5.1`; the closing "Milestone items and their current state" section records which planned items are in the tree and which are not.
+Git tags record the released milestones: `v0.2.0`, `v0.3.0`, `v0.4.0`, `v0.5.0`, `v0.5.1`, `v0.6.0`, `v0.7.0-alpha.1`, `v.0.7.0`, `v0.8.0`, `v0.9.0` and `v1.0.0` (plus a `backup/local-0.6-0.9-pass` backup tag). From 1.0.0 on, release-please writes new sections and keeps `package.json` and the Android `versionName` in step. The 0.5.x sections below shipped as `v0.5.0` / `v0.5.1`; the closing "Milestone items and their current state" section records which planned items are in the tree and which are not.
 
 For work that is still open, see [TODO.md](TODO.md). For what each capability does, see [README.md](README.md) and [docs/](docs/README.md).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-27
+
+Closes every open TODO item. Several of them were already in the tree before this
+release and are recorded here only to close them: German/Spanish/French dictionaries with
+the parity gate, the reduced-motion rule, the export footer, the setup conflict and
+sensitivity analyzers, and the formula reference (`MATH.md`).
+
+### Added
+
+- Undo / redo of setup edits: header buttons plus Ctrl/Cmd+Z, Ctrl+Y and Ctrl/Cmd+Shift+Z
+  (50 steps, debounced so one stepper burst is one step; text fields keep their own undo;
+  panning or zooming the plot is not recorded).
+- Four-corner pyrometer analysis: 12 tread inputs, per-corner camber advice, axle and side
+  balance, and a drift-instability warning (`pyrometer-axle-math.ts`, `pyrometer-axle.ts`).
+- Per-gear gradient fill under each ray, from the post-shift landing RPM to the limiter.
+- Axis auto-fit button: graph max speed = top gear at the limiter + 10%, rounded to 10.
+- Two-finger pinch zoom and double-tap / double-click reset on the plot.
+- Zoom window in share links (`z=minKmh:maxKmh:minRpm:maxRpm`).
+- Haptic ticks (Vibration API) when the crosshair snaps to a shift point and when a car is
+  saved; disabled under `prefers-reduced-motion`.
+- Comparison table gear dots use the per-gear palette.
+- Phone landscape layout (`max-height: 500px`): slimmer header, the plot fills the viewport.
+- Safe-area padding for edge-to-edge displays (body sides/bottom, drawer).
+- Pre-paint theme and language guard (`public/boot-theme.js`), so the dark theme no longer
+  flashes on a cold start.
+- Tests: property-based speed/traction invariants (`fast-check`), ground truth against
+  hand-computed datasheet speeds for Miata NA6, S2000 AP1 and E46 M3 (<0.5%), SVG visual
+  snapshots per theme, golden share URLs and a frozen custom-store v1 fixture, zoom-window
+  share, pyrometer four-corner, auto-fit and gear-fill suites.
+- Playwright end-to-end smoke test and axe-core WCAG 2.1 AA gate for all three themes, run
+  in CI (`npm run e2e`).
+- Bundle size report and treemap in CI (`npm run analyze`, `rollup-plugin-visualizer`).
+- Release automation: release-please keeps a release PR with the generated changelog and the
+  bumped `package.json`, lockfile and Android `versionName`; merging it tags, publishes and
+  builds the APK.
+- Release-signed, R8-minified APK when signing secrets are configured (debug fallback
+  otherwise), with signature verification, plus optional upload of a signed AAB to the Play
+  internal track.
+- Docs: [accessibility conformance report](docs/accessibility.md),
+  [privacy and CSP](docs/privacy.md), compatibility guarantees in
+  [data-formats.md](docs/data-formats.md), signing and release steps in
+  [deployment.md](docs/deployment.md).
+
 ### Changed
 
-- Relicensed from GPL-3.0-only to AGPL-3.0-or-later. Releases up to v0.9.0 remain available under GPL-3.0-only.
-- Documentation aligned with the shared camiu01 conventions: README layout, TODO grouped by area, this changelog format and the docs/ index.
+- Relicensed from GPL-3.0-only to AGPL-3.0-or-later. Releases up to v0.9.0 remain available
+  under GPL-3.0-only.
+- Documentation aligned with the shared camiu01 conventions: README layout, TODO grouped by
+  area, this changelog format and the docs/ index.
+- Light theme accents, gear labels and plot legend colors darkened to reach 4.5:1 contrast.
+- Android `versionName` 1.0.0 / `versionCode` 12, now in step with `package.json`.
+- Service-worker cache bumped to `haguruma-v4`.
 
+### Fixed
+
+- Disabled groups (comparison, road load, LSD lock fields) are now `inert`: keyboard focus
+  and screen readers no longer reach the dimmed controls.
+- Buttons with visible text keep it as their accessible name; the tooltip moves to
+  `aria-description` (WCAG 2.5.3).
+- The plot snap readout is a polite live region, so keyboard stepping is announced.
+
+### Security
+
+- Strict Content Security Policy injected into production builds: same-origin scripts only,
+  Google Fonts as the single third-party host, `object-src 'none'`.
 ## [0.9.0] - 2026-10-23
 
 The `v0.9.0` work sits at HEAD (`909e9be`, "restore 0.9.0 setup tools, stabilize the grip layer and move viewport controls into the plot") and is not tagged yet. The milestone bullets under "Milestone items already completed in the working tree" below record the planned scope; the setup tools, grip-layer stabilisation and in-plot viewport controls from the commit are part of it.

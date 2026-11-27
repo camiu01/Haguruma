@@ -153,14 +153,52 @@ export const buildGearTag = (frame: PlotFrame, ray: GearRay, redline: number, la
 	);
 };
 
+/** Top opacity of the per-gear band fill; it fades to zero at the X axis. */
+const FILL_OPACITY = 0.16;
+
 /**
- * @brief Build the primary gear layer: solid rays, faded tails and gear tags.
+ * @brief Build the translucent per-gear fill of the usable band.
+ * @brief Each gear is filled from the RPM it lands on after the upshift into it
+ * @brief (0 for first gear) up to the limiter, with a vertical gradient fading
+ * @brief toward the X axis, so the power band and the RPM drop read at a glance.
+ * @param input Frame, gearing and redline.
+ * @param rays Ray geometry from `buildGearRays`.
+ * @return Gradient defs plus one polygon per gear, empty without gears.
+ */
+export const buildGearFills = (input: RayInput, rays: GearRay[]): SvgPrim[] => {
+	if (rays.length === 0) {
+		return [];
+	}
+	const y0 = toY(input.frame, 0);
+	const gradients: SvgPrim[] = [];
+	const fills: SvgPrim[] = [];
+	rays.forEach((ray, idx) => {
+		const id = `hg-gear-fill-${ray.gear}`;
+		gradients.push({
+			tag: 'linearGradient',
+			attrs: { id, x1: 0, y1: 0, x2: 0, y2: 1 },
+			children: [
+				prim('stop', { offset: '0%', 'stop-color': ray.color, 'stop-opacity': FILL_OPACITY }),
+				prim('stop', { offset: '100%', 'stop-color': ray.color, 'stop-opacity': 0 }),
+			],
+		});
+		const landingRpm = idx === 0 ? 0 : (input.redline * ray.ratio) / rays[idx - 1].ratio;
+		const landX = toX(input.frame, (ray.topSpeed * landingRpm) / input.redline);
+		const landY = toY(input.frame, landingRpm);
+		const points = `${landX},${landY} ${ray.endX},${ray.endY} ${ray.endX},${y0} ${landX},${y0}`;
+		fills.push(prim('polygon', { points, fill: `url(#${id})`, 'data-gear-fill': ray.gear }));
+	});
+	return [{ tag: 'defs', children: gradients }, ...fills];
+};
+
+/**
+ * @brief Build the primary gear layer: band fills, solid rays, faded tails and gear tags.
  * @param input Frame, gearing, redline, unit and optional wall speed.
  * @return Ray geometry plus the mountable primitives.
  */
 export const buildPrimaryLayer = (input: RayInput): { rays: GearRay[]; nodes: SvgPrim[] } => {
 	const rays = buildGearRays(input);
-	const nodes: SvgPrim[] = [];
+	const nodes: SvgPrim[] = buildGearFills(input, rays);
 	for (const ray of rays) {
 		nodes.push(...raySegments(input, ray));
 	}
