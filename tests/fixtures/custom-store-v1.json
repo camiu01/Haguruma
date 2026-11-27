@@ -1,0 +1,19 @@
+{
+	"schemaVersion": 1,
+	"presets": {
+		"track-miata": {
+			"tire": "195/50R15",
+			"fd": 4.3,
+			"redline": 7200,
+			"gears": [3.136, 1.888, 1.33, 1.0, 0.814],
+			"reverseRatio": 3.758,
+			"massKg": 960,
+			"dragCd": 0.38,
+			"frontalAreaM2": 1.7,
+			"powerKw": 85,
+			"peakTorqueRpm": 4500,
+			"peakTorqueNm": 140,
+			"peakPowerRpm": 6600
+		}
+	}
+}

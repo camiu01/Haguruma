@@ -238,3 +238,11 @@ Layer switches live in `state.graphLayers` (`core/models.ts`). The four `[data-g
 README, TODO, CHANGELOG and `docs/` follow the shared rules in
 [CONTRIBUTING.md](CONTRIBUTING.md#documentation-conventions). Read them before editing any Markdown
 file, and never add AI attribution lines to commits or pull requests.
+
+## v1.0
+- `npm run e2e` runs Playwright (`e2e/*.e2e.ts`) against `vite preview` of the built app: boot/CSP smoke plus the axe-core WCAG 2.1 AA gate in all three themes. Fix a contrast or ARIA failure at its source (tokens, `inert`, labels); never relax the rule set.
+- Production CSP lives in `vite.config.ts` (`CSP`, build-only plugin). No inline scripts: pre-paint code goes in `public/` (`boot-theme.js`).
+- Frozen formats: `tests/share-golden.test.ts` and `tests/fixtures/custom-store-v1.json` must never be edited to pass; a format change needs a new version byte / schema version and a new fixture. See `docs/data-formats.md` §12.
+- `tests/graph-visual.test.ts` snapshots the plot scene per theme; accept intentional changes with `-u` after reviewing the diff.
+- Shared view state: `core/share/view-share.ts` (`z` zoom window). Haptics: `services/dom/haptics.ts` (Vibration API, no plugin). Four-corner pyrometer: `core/math/pyrometer-axle-math.ts` + `components/pyrometer-axle.ts`.
+- Releases: release-please (`release.yml`) bumps `package.json`, the lockfile and Android `versionName`; raise `versionCode` by hand in the release PR. Signing/Play secrets are documented in `docs/deployment.md`.

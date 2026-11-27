@@ -173,3 +173,23 @@
 	background: #ffffff !important;
 	border-color: #cbd5e1 !important;
 }
+
+/* Phone in landscape (in-cabin mount): slim chrome, plot fills the viewport. */
+@media (max-height: 500px) and (orientation: landscape) {
+	.app-header {
+		height: 44px;
+	}
+	.graph-wrap {
+		aspect-ratio: auto;
+		height: calc(100dvh - 56px);
+		min-height: 200px;
+	}
+	#mobile-drawer {
+		width: min(320px, 60vw);
+	}
+	#mycars-modal,
+	#qr-modal {
+		max-height: 100dvh;
+		overflow-y: auto;
+	}
+}

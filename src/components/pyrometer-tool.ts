@@ -15,6 +15,7 @@ import {
 	type WindowVerdict,
 } from '../core/math/pyrometer-math';
 import { PYRO_DEFAULTS, PYRO_ID, PYRO_PILL_CLASS, buildPyrometerCard } from './pyrometer-shell';
+import { bindAxleSection, renderAxleSection } from './pyrometer-axle';
 
 /** Dictionary keys for each camber verdict. */
 const CAMBER_TEXT: Record<CamberAdvice, DictKey> = {
@@ -141,6 +142,7 @@ export const bindPyrometerEvents = (onChange: () => void): void => {
 	for (const input of inputs) {
 		input.addEventListener('input', onChange);
 	}
+	bindAxleSection(onChange);
 };
 
 /**
@@ -231,6 +233,7 @@ export const renderPyrometer = (): void => {
 	const target = readNumber(handles.targetTemp, PYRO_DEFAULTS.target);
 	const hotPressure = readNumber(handles.hotPressure, PYRO_DEFAULTS.pressure);
 	applyVerdictPill(handles.verdict, windowVerdict(inner, center, outer, target));
+	renderAxleSection(hotPressure);
 	const camber = camberAdvice(inner, outer);
 	writeI18nText(handles.camber, CAMBER_TEXT[camber]);
 	tintAdvice(handles.camber, camber === 'balanced');

@@ -7,6 +7,7 @@
 import { t } from '../core/i18n/language';
 import type { DictKey } from '../core/i18n/dictionaries';
 import { buildToolShell } from './card/accordion-shell';
+import { buildAxleSection } from './pyrometer-axle';
 
 /** Element ids fixed by the v0.6.0 pyrometer card, shared by shell and reads. */
 export const PYRO_ID = {
@@ -242,6 +243,7 @@ const buildBody = (): HTMLElement => {
 		}),
 		spreads,
 		makeI18n('p', 'fs-tiny text-text-dim leading-relaxed', 'pyro.note.text'),
+		buildAxleSection(),
 	);
 	return body;
 };

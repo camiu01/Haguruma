@@ -200,6 +200,7 @@ export const setLockVisibility = (prefix: string, modelId: string): void => {
 		for (const wrap of document.querySelectorAll(`#${prefix}-${suffix}`)) {
 			wrap.classList.toggle('opacity-40', !active);
 			wrap.classList.toggle('pointer-events-none', !active);
+			(wrap as HTMLElement).inert = !active;
 		}
 	}
 };

@@ -24,12 +24,14 @@ import { syncOpenAccordionHeights } from '../services/dom/accordion-height';
 import { renderDynamics } from '../components/dynamics-tool';
 import { syncActiveDiffControls } from '../components/active-diff-controls';
 import { state } from '../core/state/app-state';
+import { scheduleHistorySnapshot } from '../services/events/history-events';
 
 /**
  * Refresh the plot, table and readouts from current state.
  * @brief Single refresh entry used by every input handler.
  * @brief Open accordions are re-measured last so content injected by the
- * @brief render pass never stays clipped under a stale inline max-height.
+ * @brief render pass never stays clipped under a stale inline max-height,
+ * @brief then the settled setup is queued as an undo step.
  * @param refs Cached DOM handles.
  * @return void
  */
@@ -55,4 +57,5 @@ export const renderAll = (refs: ElementRefs): void => {
 	syncActiveDiffControls('rg', state.runningGear);
 	syncActiveDiffControls('crg', state.compRunningGear);
 	syncOpenAccordionHeights();
+	scheduleHistorySnapshot();
 };

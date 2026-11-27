@@ -1,0 +1,14 @@
+{
+	"$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+	"packages": {
+		".": {
+			"release-type": "node",
+			"package-name": "haguruma",
+			"changelog-path": "CHANGELOG.md",
+			"include-v-in-tag": true,
+			"extra-files": [
+				{ "type": "generic", "path": "android/app/build.gradle" }
+			]
+		}
+	}
+}

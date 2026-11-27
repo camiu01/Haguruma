@@ -10,6 +10,7 @@ import { formatPower } from '../core/units/unit-utils';
 import { describeAllShiftDeltas } from '../core/math/shift-math';
 import { topsForSetup } from '../core/compare/compare-utils';
 import { t } from '../core/i18n/language';
+import { getGearColor } from '../config/gear-colors';
 import type { ElementRefs } from '../services/dom/element-refs';
 
 /**
@@ -157,7 +158,7 @@ const buildCompareRow = (idx: number, ratio: number, top: number, primaryTop: nu
 	const delta = primaryTop === undefined ? '-' : formatDelta(top - primaryTop);
 	const deltaCls = describeDeltaClass(top, primaryTop);
 	const power = describeCompRoadLoad(top);
-	tr.innerHTML = `<td class='td td--tight font-semibold'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full bg-accent-compare shrink-0'></span><span>${t('gear.prefix')} ${idx + 1}'</span></span></td><td class='td td--tight font-semibold text-text-output'>${ratio.toFixed(2)}:1</td><td class='td td--right td--tight font-bold text-text-output'>${top.toFixed(1)}</td><td class='td td--right td--tight font-semibold ${deltaCls}'>${delta}</td><td class='td td--right td--tight text-text-dim hidden md:table-cell'>${power}</td>`;
+	tr.innerHTML = `<td class='td td--tight font-semibold'><span class='inline-flex items-center gap-2 whitespace-nowrap'><span class='w-2 h-2 rounded-full shrink-0' style='background-color: ${getGearColor(idx)}'></span><span>${t('gear.prefix')} ${idx + 1}'</span></span></td><td class='td td--tight font-semibold text-text-output'>${ratio.toFixed(2)}:1</td><td class='td td--right td--tight font-bold text-text-output'>${top.toFixed(1)}</td><td class='td td--right td--tight font-semibold ${deltaCls}'>${delta}</td><td class='td td--right td--tight text-text-dim hidden md:table-cell'>${power}</td>`;
 	return tr;
 };
 

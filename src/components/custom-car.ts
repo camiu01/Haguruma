@@ -3,6 +3,7 @@
  * @brief Save, load, export and import user-defined car presets.
  */
 import { parseTire } from '../core/math/tire-math';
+import { haptic } from '../services/dom/haptics';
 import { deleteCustomPreset, loadCustomPresets, parseGearsInput, saveCustomPreset, CUSTOM_PREFIX } from '../core/presets/custom-store';
 import { fromDisplayPower } from '../core/units/unit-utils';
 import { state } from '../core/state/app-state';
@@ -223,6 +224,7 @@ export const applyCustomFormToSlot = (refs: ElementRefs, target: CustomTarget, r
 		return false;
 	}
 	saveCustomPreset(parsed.name, parsed.preset);
+	haptic(15);
 	refreshPresetOptions(refs);
 	if (target === 'compare') {
 		applyCompPresetData(refs, parsed.preset, render);

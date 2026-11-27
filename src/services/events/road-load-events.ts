@@ -98,11 +98,9 @@ export const bindRoadLoadEvents = (refs: ElementRefs, render: () => void): void 
  * @return void
  */
 const applyRoadLoadVisibility = (refs: ElementRefs): void => {
-	if (state.roadLoadEnabled) {
-		refs.roadLoadFields.classList.remove('opacity-40', 'pointer-events-none');
-		return;
-	}
-	refs.roadLoadFields.classList.add('opacity-40', 'pointer-events-none');
+	refs.roadLoadFields.classList.toggle('opacity-40', !state.roadLoadEnabled);
+	refs.roadLoadFields.classList.toggle('pointer-events-none', !state.roadLoadEnabled);
+	refs.roadLoadFields.inert = !state.roadLoadEnabled;
 };
 
 /**

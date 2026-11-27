@@ -13,6 +13,7 @@
 import { t } from '../../core/i18n/language';
 import { getUnitLabel } from '../../core/units/unit-utils';
 import type { ElementRefs } from '../dom/element-refs';
+import { haptic } from '../dom/haptics';
 import { clampNum, rpmAtY, speedAtX, toX } from './svg-frame';
 import { snapPointFor, type ShiftPoint } from './svg-shift-drops';
 import { appendPrim, clearChildren, prim } from './svg-nodes';
@@ -56,6 +57,9 @@ let snapIndex = 0;
 
 /** True once the pointer and keyboard bindings are attached. */
 let bound = false;
+
+/** Shift point the cursor last snapped onto, so a haptic tick fires once per point. */
+let lastSnapGear: number | null = null;
 
 /**
  * @brief Store the context of the current render.
@@ -141,6 +145,11 @@ const drawCrosshair = (refs: ElementRefs): void => {
 	const { frame, snap } = context;
 	const point = snap ? snapPointFor(context.points, pointer.speed, frame.maxSpeed) : null;
 	const speed = point ? point.speed : pointer.speed;
+	const snapKey = point ? point.fromGear : null;
+	if (snapKey !== null && snapKey !== lastSnapGear) {
+		haptic();
+	}
+	lastSnapGear = snapKey;
 	const x = toX(frame, speed);
 	const top = frame.paddingTop;
 	handles.line.setAttribute('x1', String(x));

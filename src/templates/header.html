@@ -17,6 +17,14 @@
 			</div>
 		</div>
 		<div class='flex items-center gap-2 md:gap-3 flex-shrink-0'>
+			<div class='flex items-center gap-1'>
+				<button id='btn-undo' type='button' class='btn btn--sm btn--icon' disabled data-i18n-tip='history.undo' title='Undo (Ctrl+Z)' aria-label='Undo (Ctrl+Z)'>
+					<span class='material-symbols-outlined' aria-hidden='true'>undo</span>
+				</button>
+				<button id='btn-redo' type='button' class='btn btn--sm btn--icon' disabled data-i18n-tip='history.redo' title='Redo (Ctrl+Y)' aria-label='Redo (Ctrl+Y)'>
+					<span class='material-symbols-outlined' aria-hidden='true'>redo</span>
+				</button>
+			</div>
 			<div id='header-chip' class='hidden sm:flex items-center gap-2 bg-surface-recessed px-2.5 py-1 rounded border border-border-hairline'>
 				<span class='h-2 w-2 rounded-full bg-neon-green'></span>
 				<span id='header-unit-label' class='fs-tiny font-mono font-bold text-text-main tracking-wider'>METRIC</span>

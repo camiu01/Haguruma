@@ -110,11 +110,13 @@ export const bindComparisonEvents = (refs: ElementRefs, render: () => void): voi
 export const applyComparisonVisibility = (refs: ElementRefs): void => {
 	if (state.compareEnabled) {
 		refs.comparisonFields.classList.remove('opacity-40', 'pointer-events-none');
+		refs.comparisonFields.inert = false;
 		refs.compLegend.classList.remove('hidden');
 		refs.compLegend.classList.add('inline-flex');
 		return;
 	}
 	refs.comparisonFields.classList.add('opacity-40', 'pointer-events-none');
+	refs.comparisonFields.inert = true;
 	refs.compLegend.classList.add('hidden');
 	refs.compLegend.classList.remove('inline-flex');
 };

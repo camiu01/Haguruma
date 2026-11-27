@@ -33,6 +33,8 @@ commands in [Commands](#commands) to verify against a newer tree.
 | `npx tsc --noEmit` | TypeScript type checking of `src/` and `vite.config.ts` |
 | `npm run bench` | `vitest bench --run` — the acceleration benchmark workload |
 | `npm run build` | `npx tsc --noEmit && npx vite build` (typecheck, then production bundle) |
+| `npm run e2e` | Playwright smoke + WCAG AA suites against `vite preview` (run `npm run build` first; first run needs `npx playwright install chromium`) |
+| `npm run analyze` | Production build plus the bundle treemap `dist/stats.html` |
 
 There is **no lint script**: the catalog checks are ordinary suites
 (`tests/catalog-validation.test.ts`, `tests/catalog-quality.test.ts`) and run
@@ -264,17 +266,25 @@ for datasheet validation".
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` — job `verify` on `ubuntu-latest`, triggered by
-pushes to `main` and pull requests targeting `main`. Steps, in order:
+`.github/workflows/ci.yml` runs on pushes to `main` and pull requests targeting `main`.
+
+Job `verify` (`ubuntu-latest`, Node 20):
 
 | Step | Guards |
 |:--|:--|
-| `actions/checkout@v4` | Source availability |
-| `actions/setup-node@v4` (`node-version: '20'`, `cache: npm`) | A Node release matching the workflow line; `package.json` declares no `engines` field |
 | `npm ci` | Lockfile-installed dependencies |
 | `npx tsc --noEmit` | Types in `src/` and `vite.config.ts` |
-| `npm test` | The whole Vitest suite, timing guard included |
+| `npm test` | The whole Vitest suite: timing guard, property tests (`fast-check`), ground truth, golden URLs, SVG visual snapshots |
 | `npm run build` | The production bundle still builds (typecheck runs again inside the script) |
+| Bundle size report | `ANALYZE=1` build; a per-file byte / gzip table goes to the job summary and the treemap `dist/stats.html` is uploaded as the `bundle-stats` artifact |
+
+Job `e2e` (after `verify`): installs Playwright Chromium, builds, and runs `npm run e2e`
+against `vite preview`:
+
+- `e2e/smoke.e2e.ts`: the app boots, the plot and KPIs render, no console error (CSP
+  violations included), the stored theme is applied before boot, the CSP meta is present.
+- `e2e/a11y.e2e.ts`: axe-core WCAG 2.1 A/AA in the dark, OLED and light themes, plus keyboard
+  focus on the plot and the live snap readout. See [accessibility.md](accessibility.md).
 
 There is no lint step and no bench step: the catalog checks are part of
 `npm test`, and the benchmark is an on-demand command.
@@ -283,10 +293,16 @@ There is no lint step and no bench step: the catalog checks are part of
 `npm ci` and `npm run build` on Node 20 and publishes `dist/` to GitHub Pages;
 it does not run the suite.
 
-`.github/workflows/build-apk.yml` (manual or release-triggered) runs `npm ci`
-and `npm run build`, then assembles the debug APK with JDK 21 and Android SDK
-`platforms;android-35` + `build-tools;35.0.0`. **It does not run `npm test`** —
-the APK path trusts CI to have passed.
+`.github/workflows/build-apk.yml` and `.github/workflows/release.yml` build the Android
+package and drive releases (see [deployment.md](./deployment.md)). **They do not run
+`npm test`**: the release path trusts CI to have passed on `main`.
+
+### Visual snapshots
+
+`tests/graph-visual.test.ts` serialises the composed plot scene per theme to
+`tests/__snapshots__/graph-visual.test.ts.snap`. An intentional visual change is accepted
+with `npx vitest run tests/graph-visual.test.ts -u`; review the snapshot diff before
+committing it.
 
 ## Manual checks
 

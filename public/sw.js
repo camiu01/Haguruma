@@ -8,7 +8,7 @@
  * Versioned JSON payloads additionally expire by max-age: a stale catalog
  * entry is dropped and re-fetched instead of served.
  */
-const CACHE = 'haguruma-v3';
+const CACHE = 'haguruma-v4';
 
 /** Maximum cached asset entries before the oldest is evicted. */
 const MAX_ENTRIES = 60;

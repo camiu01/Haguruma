@@ -9,6 +9,7 @@ import { t } from '../core/i18n/language';
 import { state } from '../core/state/app-state';
 import { parseTire } from '../core/math/tire-math';
 import { parseGearsInput, saveCustomPreset } from '../core/presets/custom-store';
+import { haptic } from '../services/dom/haptics';
 import { fromDisplayPower } from '../core/units/unit-utils';
 import type { GearPreset } from '../core/models';
 import { buildToolShell } from './card/accordion-shell';
@@ -216,6 +217,7 @@ const saveWizardCar = (): void => {
 		return;
 	}
 	saveCustomPreset(parsed.name, parsed.preset);
+	haptic(15);
 	savedHook?.();
 	status.classList.add('text-neon-green');
 	status.setAttribute('data-i18n', 'wiz.saved');
