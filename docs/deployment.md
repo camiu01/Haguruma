@@ -158,7 +158,7 @@ payload is re-fetched instead of served.
 
 ## Android / Capacitor
 
-`capacitor.config.ts`:
+`capacitor.config.json` (plain JSON: the Capacitor CLI cannot load a `.ts` config with TypeScript 7, which no longer ships the JavaScript compiler API):
 
 | Field | Value |
 |:--|:--|

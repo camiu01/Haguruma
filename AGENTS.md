@@ -83,7 +83,7 @@ src/
     telemetry.css                 # v0.6.0 feature: graph pills, HUD, tire pills, steppers, badges
     print.css                     # Print/PDF summary (window.print)
 index.html                        # Shell layout; feature shells inject into mount points
-capacitor.config.ts               # Native wrapper (webDir dist)
+capacitor.config.json             # Native wrapper (webDir dist)
 android/                          # Committed Capacitor scaffold (generated outputs ignored)
 .github/workflows/build-apk.yml   # Manual + on-release workflow: web build + assembleDebug + versioned APK artifact/attachment
 ```
