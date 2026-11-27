@@ -11,6 +11,47 @@ Git tags record the released milestones: `v0.2.0`, `v0.3.0`, `v0.4.0`, `v0.5.0`,
 
 For work that is still open, see [TODO.md](TODO.md). For what each capability does, see [README.md](README.md) and [docs/](docs/README.md).
 
+## [1.1.0](https://github.com/camiu01/Haguruma/compare/haguruma-v1.0.0...haguruma-v1.1.0) (2026-11-27)
+
+
+### Features
+
+* add dynamics, telemetry and diagnostic tool suites ([15d8524](https://github.com/camiu01/Haguruma/commit/15d852457143a6f17fe0827327d9a93edfec2083))
+* add v0.7.0-alpha.1 vehicle dynamics ([303dcfd](https://github.com/camiu01/Haguruma/commit/303dcfd9203103066f32af63e3dca7f0d0723f08))
+* **android:** capacitor scaffold, manual APK workflow and docs ([c7f9ee7](https://github.com/camiu01/Haguruma/commit/c7f9ee709ff9f19e62af5b8e65414691153a57d2))
+* **cards:** modular card system with per-language dictionaries ([e559e0f](https://github.com/camiu01/Haguruma/commit/e559e0fc71486ff2597a6abfb3800d26a2f1db27))
+* **catalog:** per-vehicle JSON catalog with glob loader ([d47d981](https://github.com/camiu01/Haguruma/commit/d47d9813740dfeb48043e3a545484db61a7f7276))
+* **ci:** attach APK to published releases automatically ([1498b97](https://github.com/camiu01/Haguruma/commit/1498b978f831799efff1c6057356333a42f58d4b))
+* design system, shared chrome and power-layer readability ([259035a](https://github.com/camiu01/Haguruma/commit/259035a4fb195f615d12d26bde87e378f42997e9))
+* finish todo backlog, graph UX pass and docs cleanup ([da23d49](https://github.com/camiu01/Haguruma/commit/da23d49c4f3d44bc30a961bd0de0f2ba45ca5141))
+* initial release of HAGURUMA powertrain and kinematics simulator ([a63c757](https://github.com/camiu01/Haguruma/commit/a63c7578113b97b32d1bc57bfe686e5ea9ab25a6))
+* JSON car catalog, searchable preset combobox, and desktop dropdown fix ([890a452](https://github.com/camiu01/Haguruma/commit/890a452b0731b71d85c4a98f187433e4e7e0e1b3))
+* mobile PWA overhaul with accordion setup, full secondary physics and responsive my-cars modal ([30afec6](https://github.com/camiu01/Haguruma/commit/30afec62997e7b1861a105cc0f10a926a2a03439))
+* mount the tool shells and wire the export footer ([b70af6e](https://github.com/camiu01/Haguruma/commit/b70af6e0a124abc7f658f373fd5c29b7c8d45bfb))
+* move graph navigation into the canvas with drag-to-pan ([9825a63](https://github.com/camiu01/Haguruma/commit/9825a63ed61e94ef63cec4219db00a439e9d07f0))
+* physics polish, setup levels and comparison parity, bump to 0.5.0 ([33c501e](https://github.com/camiu01/Haguruma/commit/33c501e7b4c8bd68a30f62087bc6fec1fad3972f))
+* physics, share and sim exchange pass, bump to 0.4.0 ([203ddde](https://github.com/camiu01/Haguruma/commit/203ddde9068d0c6f7ecc6f042832081c6ad59af9))
+* release 1.0.0 ([#18](https://github.com/camiu01/Haguruma/issues/18)) ([5126420](https://github.com/camiu01/Haguruma/commit/5126420c8aabdd3d7158bd67edcc0f35f356152c))
+* restore 0.9.0 setup tools, stabilize the grip layer and move viewport controls into the plot ([909e9be](https://github.com/camiu01/Haguruma/commit/909e9be5101204dee0e07e8abc54cc68747b1baa))
+* running-gear grip physics, SI unit refactor and shareable chassis state ([9b002bc](https://github.com/camiu01/Haguruma/commit/9b002bcf2cec46a847308dee574f5fd13c6ef1a5))
+* **setup:** troubleshooting wizard, setup guide view and modular styles ([d12e108](https://github.com/camiu01/Haguruma/commit/d12e108c2a9a305ac4383f92f937712c05a5c83f))
+* ship v0.8.0 telemetry, gear lab, sessions and data tools ([323c2b0](https://github.com/camiu01/Haguruma/commit/323c2b0a19be17aa3812fba7e95589b504a6b982))
+* **units:** add kW/cv power display unit toggle ([f837cc4](https://github.com/camiu01/Haguruma/commit/f837cc47c0412011fbe8de92c3264c2fee89ff2a))
+* v0.6.0 design system, shared chrome and power-layer readability ([0291da2](https://github.com/camiu01/Haguruma/commit/0291da279903d629a4d09229cf9831f44d7b6173))
+
+
+### Bug Fixes
+
+* anchor graph overlays to the viewport and bound importer input ([fee0fbb](https://github.com/camiu01/Haguruma/commit/fee0fbb0bc45df1772ef8c6e117774594be75ae1))
+* **android:** use a JSON Capacitor config so cap sync works with TypeScript 7 ([#19](https://github.com/camiu01/Haguruma/issues/19)) ([8bfb232](https://github.com/camiu01/Haguruma/commit/8bfb232ab03760d67b7711c52e5d0d6528cfc25c))
+* **ci:** build APK with JDK 21 required by capacitor-android ([2b109d0](https://github.com/camiu01/Haguruma/commit/2b109d0b96621cd2a238a1b43c875b5a2f1cee45))
+* **ci:** drop local JDK pin and bump version to 0.3.0 ([45b8b07](https://github.com/camiu01/Haguruma/commit/45b8b07ee4cb5c4355d63422110079a2c2b7e96d))
+* **ci:** install Android packages directly instead of broken setup-android action ([291f84c](https://github.com/camiu01/Haguruma/commit/291f84cd4ed3eec25deec13f8ffedf63194ab48d))
+* **ci:** use setup-java v5 and absolute sdkmanager path ([81df7a7](https://github.com/camiu01/Haguruma/commit/81df7a7c148985f4d11494be4d95373f5bd8da0d))
+* self-heal accordion heights so readouts stay visible ([6f9d30c](https://github.com/camiu01/Haguruma/commit/6f9d30cad61c5e91871e8216d48fb8a34381996b))
+* stop open accordions clipping tall setup content ([bd21439](https://github.com/camiu01/Haguruma/commit/bd214395f1c3179890cec6f673740f157c4c60e1))
+* **tests:** tolerate slower shared CI runners in accel perf guard ([760d186](https://github.com/camiu01/Haguruma/commit/760d1862262c9795bbfa50d6f5d0c849315c101b))
+
 ## [Unreleased]
 
 ## [1.0.0] - 2026-11-27
